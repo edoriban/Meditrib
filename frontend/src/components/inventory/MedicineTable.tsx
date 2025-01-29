@@ -14,6 +14,8 @@ export function MedicineTable() {
         }
     })
 
+    //TODO: Corregir llamado a api/medicines
+
     if (error) {
         return <div className="text-red-500">Error al cargar los datos</div>
     }
