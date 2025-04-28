@@ -1,6 +1,8 @@
 from fastapi import FastAPI
-from backend.database import engine
-from backend.models import Base
+
+# Actualizar importaciones para apuntar a la carpeta 'core'
+from backend.core.database import engine
+from backend.core.models import Base
 from backend.routers import medicines, suppliers
 
 # Create database tables
