@@ -20,16 +20,36 @@ router = APIRouter(
 
 
 # Ejemplo de ruta usando las nuevas importaciones
-@router.get("/", response_model=List[schemas.Medicine])  # Usar schemas importado
-# Usar get_db importado
+@router.get("/", response_model=List[schemas.Medicine])
 def read_medicines(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    # Llamar a la función CRUD importada
     medicines = crud_medicines.get_medicines(db, skip=skip, limit=limit)
     return medicines
-    # return [{"name": "Placeholder Medicine - Updated Imports"}] # Placeholder return
 
 
-# ... resto de las rutas para medicines ...
-# Asegúrate de actualizar 'schemas.' en todas las anotaciones de tipo y response_model
-# Ejemplo: @router.post("/", response_model=schemas.Medicine)
-# Ejemplo: def create_medicine(medicine: schemas.MedicineCreate, db: Session = Depends(get_db)):
+@router.post("/", response_model=schemas.Medicine)
+def create_medicine(medicine: schemas.MedicineCreate, db: Session = Depends(get_db)):
+    return crud_medicines.create_medicine(db=db, medicine=medicine)
+
+
+@router.get("/{medicine_id}", response_model=schemas.Medicine)
+def read_medicine(medicine_id: int, db: Session = Depends(get_db)):
+    db_medicine = crud_medicines.get_medicine(db, medicine_id=medicine_id)
+    if db_medicine is None:
+        raise HTTPException(status_code=404, detail="Medicamento no encontrado")
+    return db_medicine
+
+
+@router.put("/{medicine_id}", response_model=schemas.Medicine)
+def update_medicine(medicine_id: int, medicine: schemas.MedicineUpdate, db: Session = Depends(get_db)):
+    db_medicine = crud_medicines.get_medicine(db, medicine_id=medicine_id)
+    if db_medicine is None:
+        raise HTTPException(status_code=404, detail="Medicamento no encontrado")
+    return crud_medicines.update_medicine(db=db, medicine_id=medicine_id, medicine=medicine)
+
+
+@router.delete("/{medicine_id}", response_model=schemas.Medicine)
+def delete_medicine(medicine_id: int, db: Session = Depends(get_db)):
+    db_medicine = crud_medicines.get_medicine(db, medicine_id=medicine_id)
+    if db_medicine is None:
+        raise HTTPException(status_code=404, detail="Medicamento no encontrado")
+    return crud_medicines.delete_medicine(db=db, medicine_id=medicine_id)

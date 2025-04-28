@@ -29,7 +29,31 @@ def read_suppliers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
     # return [{"name": "Placeholder Supplier - Updated Imports"}] # Placeholder return
 
 
-# ... resto de las rutas para suppliers ...
-# Asegúrate de actualizar 'schemas.' en todas las anotaciones de tipo y response_model
-# Ejemplo: @router.post("/", response_model=schemas.Supplier)
-# Ejemplo: def create_supplier(supplier: schemas.SupplierCreate, db: Session = Depends(get_db)):
+# Implementación de rutas CRUD faltantes
+@router.post("/", response_model=schemas.Supplier)
+def create_supplier(supplier: schemas.SupplierCreate, db: Session = Depends(get_db)):
+    return crud_suppliers.create_supplier(db=db, supplier=supplier)
+
+
+@router.get("/{supplier_id}", response_model=schemas.Supplier)
+def read_supplier(supplier_id: int, db: Session = Depends(get_db)):
+    db_supplier = crud_suppliers.get_supplier(db, supplier_id=supplier_id)
+    if db_supplier is None:
+        raise HTTPException(status_code=404, detail="Proveedor no encontrado")
+    return db_supplier
+
+
+@router.put("/{supplier_id}", response_model=schemas.Supplier)
+def update_supplier(supplier_id: int, supplier: schemas.SupplierUpdate, db: Session = Depends(get_db)):
+    db_supplier = crud_suppliers.get_supplier(db, supplier_id=supplier_id)
+    if db_supplier is None:
+        raise HTTPException(status_code=404, detail="Proveedor no encontrado")
+    return crud_suppliers.update_supplier(db=db, supplier_id=supplier_id, supplier=supplier)
+
+
+@router.delete("/{supplier_id}", response_model=schemas.Supplier)
+def delete_supplier(supplier_id: int, db: Session = Depends(get_db)):
+    db_supplier = crud_suppliers.get_supplier(db, supplier_id=supplier_id)
+    if db_supplier is None:
+        raise HTTPException(status_code=404, detail="Proveedor no encontrado")
+    return crud_suppliers.delete_supplier(db=db, supplier_id=supplier_id)
