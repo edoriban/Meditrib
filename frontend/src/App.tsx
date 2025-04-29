@@ -1,5 +1,5 @@
 import { BrowserRouter as Router } from "react-router-dom";
-import { Layout } from "./app/Layout";
+import Layout from "./app/Layout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./hooks/use-theme";
 import axios from "axios";
