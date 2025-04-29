@@ -22,4 +22,30 @@ def create_supplier(db: Session, supplier: schemas.SupplierCreate):
     return db_supplier
 
 
+def update_supplier(db: Session, supplier_id: int, supplier: schemas.SupplierUpdate):
+    db_supplier = db.query(models.Supplier).filter(models.Supplier.id == supplier_id).first()
+    if db_supplier:
+        for key, value in supplier.model_dump().items():
+            setattr(db_supplier, key, value)
+        db.commit()
+        db.refresh(db_supplier)
+    return db_supplier
+
+
+def delete_supplier(db: Session, supplier_id: int):
+    db_supplier = db.query(models.Supplier).filter(models.Supplier.id == supplier_id).first()
+    if db_supplier:
+        db.delete(db_supplier)
+        db.commit()
+    return db_supplier
+
+
+def get_supplier_by_name(db: Session, name: str):
+    return db.query(models.Supplier).filter(models.Supplier.name == name).first()
+
+
+def get_supplier_by_medicine(db: Session, medicine_id: int):
+    return db.query(models.SupplierMedicine).filter(models.SupplierMedicine.medicine_id == medicine_id).all()
+
+
 # ... otras funciones CRUD ...
