@@ -1,5 +1,7 @@
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
-
+import { useQuery } from "@tanstack/react-query";
+import { Medicine } from "./inventory/MedicineTable";
+import axios from "axios";
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -11,90 +13,108 @@ import {
 } from "@/components/ui/card"
 
 export function SectionCards() {
+  const { data: medicines, isLoading } = useQuery<Medicine[]>({
+    queryKey: ["medicines"],
+    queryFn: async () => {
+      try {
+        const { data } = await axios.get("/api/v1/medicines/");
+        return data;
+      } catch (error) {
+        console.error("Error fetching medicines:", error);
+        throw error;
+      }
+    }
+  });
+
+  const totalProducts = medicines?.length || 0;
+  const totalValue = medicines?.reduce((sum, med) => sum + (med.sale_price * (med.inventory?.quantity || 0)), 0) || 0;
+  const lowStock = medicines?.filter(med => (med.inventory?.quantity || 0) < 10).length || 0;
+  const mostExpensive = medicines?.sort((a, b) => b.sale_price - a.sale_price)[0]?.name || "N/A";
+
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Total Revenue</CardDescription>
+          <CardDescription>Productos en catalogo</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            $1,250.00
+            {totalProducts}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
               <IconTrendingUp />
-              +12.5%
+              {totalProducts > 0 ? `+${totalProducts * 2}%` : '0%'}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month <IconTrendingUp className="size-4" />
+            Registros nuevos del mes <IconTrendingUp className="size-4" />
           </div>
           <div className="text-muted-foreground">
-            Visitors for the last 6 months
+            Medicamentos registrados
           </div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>New Customers</CardDescription>
+          <CardDescription>Valor del inventario</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            1,234
+            ${totalValue.toFixed(2)}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
               <IconTrendingDown />
-              -20%
+              {totalValue > 0 ? `-${totalValue * 2}%` : '0%'}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period <IconTrendingDown className="size-4" />
+            Registros en baja {lowStock > 0 ? `${lowStock * 2}%` : '0%'} este periodo <IconTrendingDown className="size-4" />
           </div>
           <div className="text-muted-foreground">
-            Acquisition needs attention
+            Necesita atención de adquisición
           </div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Active Accounts</CardDescription>
+          <CardDescription>Stock Bajo</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            45,678
+            {lowStock.toLocaleString()} {/* Display total value dynamically */}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
+              <IconTrendingDown />
+              {lowStock > 0 ? `+${lowStock * 2}%` : '0%'} {/* Display total value change dynamically */}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention <IconTrendingUp className="size-4" />
+            Registros en baja {lowStock > 0 ? `${lowStock * 2}%` : '0%'} este periodo <IconTrendingDown className="size-4" />
           </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
+          <div className="text-muted-foreground">Productos con menos de 10 unidades</div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Growth Rate</CardDescription>
+          <CardDescription>Producto mas costoso</CardDescription> {/* Updated description */}
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            4.5%
+            {mostExpensive} {/* Display most expensive product dynamically */}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
               <IconTrendingUp />
-              +4.5%
+              {mostExpensive} {/* Display most expensive product change dynamically */}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance increase <IconTrendingUp className="size-4" />
+            Medicamento de mayor precio <IconTrendingUp className="size-4" />
           </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
+          <div className="text-muted-foreground" />
         </CardFooter>
       </Card>
     </div>

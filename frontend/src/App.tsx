@@ -22,7 +22,7 @@ function App() {
     <ThemeProvider defaultTheme="light">
       <QueryClientProvider client={queryClient}>
         <Router>
-          <Layout />
+          <Layout children={undefined} />
         </Router>
       </QueryClientProvider>
     </ThemeProvider>
