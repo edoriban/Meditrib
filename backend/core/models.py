@@ -8,6 +8,8 @@ class Medicine(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
     description = Column(String)
+    type = Column(String, nullable=True)
+    purchase_price = Column(Float)
     sale_price = Column(Float)
     inventory = relationship("Inventory", uselist=False, back_populates="medicine")
     suppliers = relationship("SupplierMedicine", back_populates="medicine")
@@ -35,3 +37,51 @@ class Inventory(Base):
     medicine_id = Column(ForeignKey("medicines.id"), primary_key=True)
     quantity = Column(Integer)
     medicine = relationship("Medicine", back_populates="inventory")
+
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    email = Column(String, unique=True)
+    username = Column(String, unique=True)
+    password = Column(String)
+    role_id = Column(ForeignKey("roles.id"))
+    role = relationship("Role", back_populates="users")
+
+
+class Role(Base):
+    __tablename__ = "roles"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)
+    description = Column(String)
+    users = relationship("User", back_populates="role")
+
+
+class Sale(Base):
+    __tablename__ = "sales"
+    id = Column(Integer, primary_key=True, index=True)
+    medicine_id = Column(ForeignKey("medicines.id"))
+    quantity = Column(Integer)
+    total_price = Column(Float)
+    medicine = relationship("Medicine")
+    client_id = Column(ForeignKey("clients.id"))
+    client = relationship("Client", back_populates="sales")
+
+
+class Client(Base):
+    __tablename__ = "clients"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)
+    contact = Column(String)
+    sales = relationship("Sale", back_populates="client")
+
+
+class Report(Base):
+    __tablename__ = "reports"
+    id = Column(Integer, primary_key=True, index=True)
+    report_type = Column(String)  # e.g., "sales", "inventory"
+    date = Column(String)  # Date of the report
+    data = Column(String)  # JSON or CSV data of the report
+    generated_by = Column(ForeignKey("users.id"))
+    user = relationship("User")

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.core.database import engine, Base
 from backend.routers import medicines, suppliers
 
+
 # Crear tablas en la base de datos
 Base.metadata.create_all(bind=engine)
 
