@@ -1,13 +1,12 @@
-import { BrowserRouter as Router } from "react-router-dom";
-import Layout from "./app/Layout";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { MainLayout } from "@/layouts/MainLayout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./hooks/use-theme";
 import axios from "axios";
+import DashboardPage from "./pages/DashboardPage";
 
-// Configuración global de axios
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-// Cliente de React Query para gestionar las consultas a la API
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -22,7 +21,10 @@ function App() {
     <ThemeProvider defaultTheme="light">
       <QueryClientProvider client={queryClient}>
         <Router>
-          <Layout children={undefined} />
+          <Routes>
+            <Route path="/" element={<MainLayout children={<DashboardPage />} />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+          </Routes>
         </Router>
       </QueryClientProvider>
     </ThemeProvider>

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
-import { Button } from "../ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
-import { Skeleton } from "../ui/skeleton"
+import { Button } from "../../components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
+import { Skeleton } from "../../components/ui/skeleton"
 import axios from "axios"
 import { Edit, Plus, Trash2 } from "lucide-react"
 

@@ -1,6 +1,6 @@
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
 import { useQuery } from "@tanstack/react-query";
-import { Medicine } from "./inventory/MedicineTable";
+import { Medicine } from "../pages/inventory/MedicineTable";
 import axios from "axios";
 import { Badge } from "@/components/ui/badge"
 import {

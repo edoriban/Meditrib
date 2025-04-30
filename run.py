@@ -3,6 +3,7 @@ import signal
 import sys
 import time
 import threading
+import os
 
 backend_process = None
 frontend_process = None
@@ -36,7 +37,7 @@ if __name__ == "__main__":
 
     # Iniciar backend
     print("Iniciando backend con uvicorn...")
-    backend_process = subprocess.Popen(["uvicorn", "backend.main:app", "--reload"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True)
+    backend_process = subprocess.Popen([sys.executable, "-m", "uvicorn", "backend.main:app", "--reload"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True)
 
     # Iniciar hilos para mostrar la salida del backend
     backend_stdout_thread = threading.Thread(target=stream_output, args=(backend_process, "Backend"))
@@ -51,7 +52,12 @@ if __name__ == "__main__":
 
     # Iniciar frontend
     print("Iniciando frontend con pnpm dev...")
-    frontend_process = subprocess.Popen(["pnpm", "dev"], cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True)
+    # Get the user's home directory
+    home_dir = os.path.expanduser("~")
+    # Full path to pnpm executable
+    pnpm_path = os.path.join(home_dir, ".pnpm-global", "bin", "pnpm.cmd")
+    # Use the full path in the subprocess call
+    frontend_process = subprocess.Popen([pnpm_path, "dev"], cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True)
 
     # Iniciar hilos para mostrar la salida del frontend
     frontend_stdout_thread = threading.Thread(target=stream_output, args=(frontend_process, "Frontend"))
