@@ -9,25 +9,19 @@ export default function DashboardPage() {
     const { data, isLoading, error } = useQuery<Medicine[]>({
         queryKey: ["medicines"],
         queryFn: async () => {
-            // No es necesario el try/catch aquí si usas las propiedades isLoading/error de useQuery
             const { data } = await axios.get("/api/v1/medicines/");
             return data;
         },
-        // Opcional: Define un valor inicial para evitar el undefined temporalmente
-        // initialData: []
     });
 
-    // Manejo de estados de carga y error
     if (isLoading) {
-        return <div>Cargando...</div>; // O un componente Spinner
+        return <div>Cargando...</div>;
     }
 
     if (error) {
         return <div>Error al cargar los datos: {error.message}</div>;
     }
 
-    // Ahora puedes asegurar que 'data' no es undefined aquí
-    // O pasar un array vacío si prefieres manejarlo en DataTable
     const tableData = data ?? [];
     return (
         <div className="@container/main flex flex-1 flex-col gap-2">

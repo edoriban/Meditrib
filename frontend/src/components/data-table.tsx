@@ -169,8 +169,7 @@ const columns: ColumnDef<Medicine>[] = [
     cell: ({ row }) => (
       <div className="w-32">
         <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {/* {row.original.type} */}
-          Antibiotico
+          {row.original.type}
         </Badge>
       </div>
     ),
@@ -180,11 +179,6 @@ const columns: ColumnDef<Medicine>[] = [
     header: "Descripción",
     cell: ({ row }) => (
       <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.description === "Done" ? (
-          <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
-        ) : (
-          <IconLoader />
-        )}
         {row.original.description}
       </Badge>
     ),
@@ -265,32 +259,32 @@ const columns: ColumnDef<Medicine>[] = [
     ),
   },
   {
-    accessorKey: "provider",
-    header: "Provider",
+    accessorKey: "suppliers",
+    header: "Proveedor",
     cell: ({ row }) => {
-      const isAssigned = row.original.provider !== "Assign provider"
+      const isAssigned = row.original.suppliers?.name !== "Asignar Proveedor"
 
       if (isAssigned) {
-        return row.original.provider
+        return row.original.suppliers?.name
       }
 
       return (
         <>
-          <Label htmlFor={`${row.original.id}-provider`} className="sr-only">
+          <Label htmlFor={`${row.original.id}-suppliers`} className="sr-only">
             Proveedor
           </Label>
           <Select>
             <SelectTrigger
               className="w-38 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"
               size="sm"
-              id={`${row.original.id}-provider`}
+              id={`${row.original.id}-suppliers`}
             >
-              <SelectValue placeholder="Assign provider" />
+              <SelectValue placeholder="Asignar proveedor" />
             </SelectTrigger>
             <SelectContent align="end">
-              <SelectItem value="Equilibrio">Equilibrio</SelectItem>
+              <SelectItem value="equilibrio">Equilibrio</SelectItem>
               <SelectItem value="sevi">
-                sevi
+                SEVI
               </SelectItem>
             </SelectContent>
           </Select>
@@ -789,7 +783,7 @@ function TableCellViewer({ item }: TableCellViewerProps) {
             </div>
             <div className="flex flex-col gap-3">
               <Label htmlFor="reviewer">Reviewer</Label>
-              <Select defaultValue={item.provider}>
+              <Select defaultValue={item.suppliers?.name}>
                 <SelectTrigger id="reviewer" className="w-full">
                   <SelectValue placeholder="Select a reviewer" />
                 </SelectTrigger>
