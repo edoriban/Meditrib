@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./hooks/use-theme";
 import axios from "axios";
 import DashboardPage from "./pages/DashboardPage";
+import LoginPage from "./pages/login/LoginPage";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -24,6 +25,7 @@ function App() {
           <Routes>
             <Route path="/" element={<MainLayout children={<DashboardPage />} />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/login" element={<LoginPage />} />
           </Routes>
         </Router>
       </QueryClientProvider>
