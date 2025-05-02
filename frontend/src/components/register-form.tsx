@@ -16,17 +16,14 @@ import {
 } from "@/components/ui/card"
 import { FormInput } from "@/components/ui/form-input"
 import { toast } from "sonner"
+import { BASE_API_URL } from '@/config';
 
 const registerFormSchema = z.object({
-    username: z.string({
-        required_error: "El nombre de usuario es obligatorio",
-    }).min(3, { message: "El nombre de usuario debe tener al menos 3 caracteres." }),
-
     email: z.string({
         required_error: "El correo electrónico es obligatorio",
     }).email({ message: "Por favor, introduce un correo electrónico válido." }),
 
-    full_name: z.string().optional(),
+    name: z.string().optional(),
 
     password: z.string({
         required_error: "La contraseña es obligatoria",
@@ -44,9 +41,8 @@ type RegisterFormValues = z.infer<typeof registerFormSchema>
 
 // Valores por defecto para el formulario
 const defaultValues: Partial<RegisterFormValues> = {
-    username: "",
     email: "",
-    full_name: "",
+    name: "",
     password: "",
     confirmPassword: "",
 }
@@ -61,18 +57,48 @@ export function RegisterForm({
         mode: "onSubmit",
     })
 
-    // TODO: Implementar la lógica de envío (onSubmit) más adelante
-    // Esta función se llamará solo si la validación es exitosa
-    function onSubmit(data: RegisterFormValues) {
-        console.log("Datos del formulario válidos:", data)
-        // Aquí llamarías a tu API para registrar al usuario
-        // Ejemplo:
-        // fetch('/api/users/', { method: 'POST', body: JSON.stringify(data), ... })
-        //   .then(...)
-        //   .catch(...)
-        toast("Registro exitoso. Por favor, verifica tu correo electrónico para activar tu cuenta.")
-    }
+    async function onSubmit(data: RegisterFormValues) {
+        console.log("Datos del formulario válidos:", data);
 
+        try {
+            const userData = {
+                email: data.email,
+                password: data.password,
+                name: data.name || undefined
+            };
+
+            console.log("Datos del usuario:", JSON.stringify(userData));
+
+            const response = await fetch(`${BASE_API_URL}/users/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+
+                if (response.status === 400 && errorData.detail.includes("Email already registered")) {
+                    toast.error("Este correo electrónico ya está registrado. Por favor, usa otro o intenta iniciar sesión.");
+                    return;
+                }
+
+                throw new Error(errorData.detail || 'Error al registrar el usuario');
+            }
+            const result = await response.json();
+            console.log("Usuario creado:", result);
+
+            toast("Registro exitoso. Por favor, inicia sesión con tus credenciales.");
+
+            window.location.href = '/Login';
+
+        } catch (error) {
+            console.error("Error al registrar:", error);
+            toast(`Error: ${error instanceof Error ? error.message : 'Ha ocurrido un problema al registrar el usuario'}`);
+        }
+    }
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
             <Card>
@@ -85,22 +111,13 @@ export function RegisterForm({
                 <CardContent>
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div className="grid gap-4">
-
                             <FormInput
-                                name="username"
+                                name="name"
                                 control={control}
                                 errors={errors}
-                                label="Nombre de usuario"
-                                placeholder="tu_usuario"
+                                label="Nombre"
+                                placeholder="Tu nombre"
                                 required
-                            />
-
-                            <FormInput
-                                name="full_name"
-                                control={control}
-                                errors={errors}
-                                label="Nombre completo (Opcional)"
-                                placeholder="Tu Nombre Completo"
                             />
 
                             <FormInput
@@ -108,7 +125,7 @@ export function RegisterForm({
                                 control={control}
                                 errors={errors}
                                 label="Correo electrónico"
-                                placeholder="m@example.com"
+                                placeholder="correo@meditrib.com"
                                 type="email"
                                 required
                             />

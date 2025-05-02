@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.database import engine, Base
-from backend.routers import medicines, suppliers
-
+from backend.routers import medicines, suppliers, users, roles, sales,clients,reports
+from backend.init_db import init_db
 
 # Crear tablas en la base de datos
 Base.metadata.create_all(bind=engine)
 
+init_db()
 # Crear la aplicación FastAPI
 app = FastAPI(title="Meditrib API", description="API para gestión de medicamentos y proveedores", version="1.0.0")
 
@@ -22,6 +23,11 @@ app.add_middleware(
 # Incluir routers
 app.include_router(medicines.router, prefix="/api/v1", tags=["medicines"])
 app.include_router(suppliers.router, prefix="/api/v1", tags=["suppliers"])
+app.include_router(users.router, prefix="/api/v1", tags=["users"])
+app.include_router(roles.router, prefix="/api/v1", tags=["roles"])
+app.include_router(sales.router, prefix="/api/v1", tags=["sales"])
+app.include_router(clients.router, prefix="/api/v1", tags=["clients"])
+app.include_router(reports.router, prefix="/api/v1", tags=["reports"])
 
 
 @app.get("/")

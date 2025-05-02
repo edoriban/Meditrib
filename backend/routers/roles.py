@@ -4,7 +4,7 @@ from typing import List
 
 from backend.core.dependencies import get_db
 from backend.core import schemas
-from backend.crud import crud_role  # Asegúrate que la ruta de importación sea correcta
+from backend.core.crud import crud_role 
 
 router = APIRouter(
     prefix="/roles",

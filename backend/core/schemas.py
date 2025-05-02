@@ -109,25 +109,25 @@ class Role(RoleBase):
 class UserBase(BaseModel):
     name: str
     email: EmailStr
-    username: str
     role_id: int
 
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
     password: str
 
 
-class UserUpdate(BaseModel):  # Heredar de BaseModel para hacer todos opcionales
+class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
-    username: Optional[str] = None
     password: Optional[str] = None
     role_id: Optional[int] = None
 
 
 class User(UserBase):
     id: int
-    role: Role  # Incluir el rol asociado
+    role: Role
 
     class Config:
         from_attributes = True

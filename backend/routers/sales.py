@@ -6,7 +6,7 @@ from backend.core.dependencies import get_db
 from backend.core import schemas
 
 # Importar crud de sale, medicine, client, inventory si es necesario para validaciones
-from backend.crud import crud_sale, crud_medicine, crud_client, crud_inventory
+from backend.core.crud import crud_sale, crud_medicines, crud_client
 
 router = APIRouter(
     prefix="/sales",
@@ -18,7 +18,7 @@ router = APIRouter(
 @router.post("/", response_model=schemas.Sale)
 def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db)):
     # Validar existencia de medicina y cliente
-    db_medicine = crud_medicine.get_medicine(db, medicine_id=sale.medicine_id)
+    db_medicine = crud_medicines.get_medicine(db, medicine_id=sale.medicine_id)
     if not db_medicine:
         raise HTTPException(status_code=404, detail="Medicine not found")
     db_client = crud_client.get_client(db, client_id=sale.client_id)

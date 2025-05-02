@@ -44,7 +44,6 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     email = Column(String, unique=True)
-    username = Column(String, unique=True)
     password = Column(String)
     role_id = Column(ForeignKey("roles.id"))
     role = relationship("Role", back_populates="users")

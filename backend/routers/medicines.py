@@ -6,7 +6,7 @@ from typing import List
 # Importar get_db desde core.dependencies
 from backend.core.dependencies import get_db
 from backend.core import models  # Importar modelos desde core
-from backend.core.crud import crud_medicines  # Importar funciones CRUD específicas
+from backend.core.crud import crud_medicines 
 
 # Importar schemas desde core.schemas
 from backend.core import schemas

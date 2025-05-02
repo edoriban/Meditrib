@@ -4,7 +4,7 @@ from typing import List
 
 from backend.core.dependencies import get_db
 from backend.core import schemas
-from backend.crud import crud_user  # Asegúrate que la ruta de importación sea correcta
+from backend.core.crud import crud_user
 
 router = APIRouter(
     prefix="/users",
@@ -18,10 +18,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user_email = crud_user.get_user_by_email(db, email=user.email)
     if db_user_email:
         raise HTTPException(status_code=400, detail="Email already registered")
-    db_user_username = crud_user.get_user_by_username(db, username=user.username)
-    if db_user_username:
-        raise HTTPException(status_code=400, detail="Username already registered")
-    # Aquí deberías añadir la lógica para hashear la contraseña antes de llamar a crud_user.create_user
+    
     return crud_user.create_user(db=db, user=user)
 
 

@@ -4,7 +4,7 @@ from typing import List
 
 from backend.core.dependencies import get_db
 from backend.core import schemas
-from backend.crud import crud_report, crud_user  # Asegúrate que la ruta de importación sea correcta
+from backend.core.crud import crud_report, crud_user 
 
 router = APIRouter(
     prefix="/reports",
