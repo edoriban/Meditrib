@@ -210,6 +210,11 @@ class Report(ReportBase):
     class Config:
         from_attributes = True
 
+# Token Schemas
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
 # Actualizar referencias si es necesario después de definir todas las clases
 # Por ejemplo, si Client necesita mostrar Sales:

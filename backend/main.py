@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.database import engine, Base
-from backend.routers import medicines, suppliers, users, roles, sales,clients,reports
+from backend.routers import medicines, suppliers, users, roles, sales,clients,reports,auth
 from backend.init_db import init_db
 
 # Crear tablas en la base de datos
@@ -14,7 +14,7 @@ app = FastAPI(title="Meditrib API", description="API para gestión de medicament
 # Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todas las origenes en desarrollo
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,11 +28,14 @@ app.include_router(roles.router, prefix="/api/v1", tags=["roles"])
 app.include_router(sales.router, prefix="/api/v1", tags=["sales"])
 app.include_router(clients.router, prefix="/api/v1", tags=["clients"])
 app.include_router(reports.router, prefix="/api/v1", tags=["reports"])
+app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
 
 
 @app.get("/")
 def read_root():
     return {"message": "Bienvenido a la API de Meditrib"}
+
+
 
 
 if __name__ == "__main__":

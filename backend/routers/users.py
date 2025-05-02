@@ -5,6 +5,7 @@ from typing import List
 from backend.core.dependencies import get_db
 from backend.core import schemas
 from backend.core.crud import crud_user
+from backend.core.security import get_current_user
 
 router = APIRouter(
     prefix="/users",
@@ -26,6 +27,11 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = crud_user.get_users(db, skip=skip, limit=limit)
     return users
+
+
+@router.get("/me", response_model=schemas.User)
+async def read_users_me(current_user = Depends(get_current_user)):
+    return current_user
 
 
 @router.get("/{user_id}", response_model=schemas.User)
@@ -60,3 +66,4 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return crud_user.delete_user(db=db, user_id=user_id)
+
