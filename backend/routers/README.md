@@ -48,5 +48,7 @@ Todos los endpoints están prefijados con `/api/v1`.
     -   `GET /{report_id}`: Obtener detalles de un reporte.
     -   `PUT /{report_id}`: Actualizar un reporte.
     -   `DELETE /{report_id}`: Eliminar un reporte.
+-   **`/auth`**: Endpoints de autenticación (ej. login, refresh token).
+    -   *(Consultar `auth.py` o `/docs` para detalles específicos)*
 
-Para detalles específicos sobre los parámetros de solicitud y los formatos de respuesta, consulta la documentación interactiva de Swagger UI en `/docs`.
+Para detalles específicos sobre los parámetros de solicitud y los formatos de respuesta, consulta la documentación interactiva de Swagger UI en `/docs` o `/redoc`.
