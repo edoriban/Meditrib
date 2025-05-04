@@ -67,9 +67,6 @@ export function UsersTable({ users, onUpdate, onDelete, roles }: UsersTableProps
                                     user={user}
                                     onDelete={() => onDelete(user.id)}
                                     onEdit={() => {
-                                        // Usar console.log para depurar
-                                        console.log("Editando usuario:", user.id);
-                                        console.log("Referencia existe:", !!editRefs.current[user.id]);
                                         if (editRefs.current[user.id]) {
                                             editRefs.current[user.id]?.click();
                                         }
