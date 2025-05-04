@@ -40,9 +40,11 @@ export function UsersTable({ users, onUpdate, onDelete, roles }: UsersTableProps
                     {users.map((user) => (
                         <TableRow key={user.id}>
                             <TableCell>
+
                                 <UserCellViewer
                                     user={user}
                                     onUpdate={(data) => onUpdate(user.id, data)}
+                                    onDelete={() => onDelete(user.id)}
                                     ref={(el) => {
                                         editRefs.current[user.id] = el;
                                     }}

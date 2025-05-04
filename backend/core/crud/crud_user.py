@@ -39,8 +39,23 @@ def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
 
 
 def delete_user(db: Session, user_id: int):
-    db_user = get_user(db, user_id)
+    db_user = get_user(db, user_id=user_id)
     if db_user:
+        
+        role = db_user.role 
+        
+        user_data = {
+            "id": db_user.id,
+            "email": db_user.email,
+            "name": db_user.name,
+            "role": {
+                "id": role.id,
+                "name": role.name
+            }
+        }
+        
         db.delete(db_user)
         db.commit()
-    return db_user
+        
+        return user_data
+    return None

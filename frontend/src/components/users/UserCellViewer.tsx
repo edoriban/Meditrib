@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -21,17 +21,33 @@ import {
     DrawerTrigger,
     DrawerClose,
 } from "@/components/ui/drawer";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import DeleteUserDialog from "./DeleteUserDialog";
 
 interface UserCellViewerProps {
     user: User;
     onUpdate: (data: Partial<UserFormValues>) => void;
+    onDelete?: (userId: number) => void; // Ahora opcional
 }
 
 export const UserCellViewer = React.forwardRef<
     HTMLButtonElement,
     UserCellViewerProps
->(({ user, onUpdate }, ref) => {
+>(({ user, onUpdate, onDelete }, ref) => {
     const isMobile = useIsMobile();
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const { control, handleSubmit, formState: { errors }, setValue, watch } = useForm<UserFormValues>({
         resolver: zodResolver(userFormSchema),
         defaultValues: {
@@ -55,96 +71,135 @@ export const UserCellViewer = React.forwardRef<
         onUpdate(data);
     };
 
+    const handleDeleteUser = async () => {
+        if (!user.id || !onDelete) return;
+
+        setIsDeleting(true);
+        try {
+            await axios.delete(`${BASE_API_URL}/users/${user.id}`);
+            toast.success(`Usuario ${user.name} eliminado correctamente`);
+            onDelete(user.id);
+        } catch (error) {
+            console.error("Error al eliminar usuario:", error);
+            toast.error("No se pudo eliminar el usuario. Inténtalo de nuevo.");
+        } finally {
+            setIsDeleting(false);
+            setIsDeleteDialogOpen(false);
+        }
+    };
+
     return (
-        <Drawer direction={isMobile ? "bottom" : "right"}>
-            <DrawerTrigger asChild>
-                <Button
-                    variant="link"
-                    className="p-0 text-left"
-                    ref={ref}
-                >
-                    <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span>{user.name}</span>
-                    </div>
-                </Button>
-            </DrawerTrigger>
-            <DrawerContent className="max-w-md">
-                <DrawerHeader>
-                    <DrawerTitle>Editar Usuario</DrawerTitle>
-                    <DrawerDescription>
-                        Actualiza los datos del usuario {user.name}
-                    </DrawerDescription>
-                </DrawerHeader>
-                <div className="px-4">
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                        <FormInput
-                            name="name"
-                            control={control}
-                            label="Nombre"
-                            placeholder="Nombre completo"
-                            errors={errors}
-                        />
-
-                        <FormInput
-                            name="email"
-                            control={control}
-                            label="Email"
-                            placeholder="correo@ejemplo.com"
-                            type="email"
-                            errors={errors}
-                        />
-
-                        <div className="space-y-2">
-                            <label htmlFor="role" className="text-sm font-medium">
-                                Rol
-                            </label>
-                            <Select
-                                value={roleId?.toString()}
-                                onValueChange={(value) => {
-                                    setValue("role_id", parseInt(value), {
-                                        shouldValidate: true,
-                                        shouldDirty: true
-                                    });
-                                }}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar rol" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {roles?.map((role: any) => (
-                                        <SelectItem key={role.id} value={role.id.toString()}>
-                                            {role.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+        <>
+            <Drawer direction={isMobile ? "bottom" : "right"}>
+                <DrawerTrigger asChild>
+                    <Button
+                        variant="link"
+                        className="p-0 text-left"
+                        ref={ref}
+                    >
+                        <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span>{user.name}</span>
                         </div>
+                    </Button>
+                </DrawerTrigger>
+                <DrawerContent className="max-w-md">
+                    <DrawerHeader>
+                        <DrawerTitle>Editar Usuario</DrawerTitle>
+                        <DrawerDescription>
+                            Actualiza los datos del usuario {user.name}
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    <div className="px-4">
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                            <FormInput
+                                name="name"
+                                control={control}
+                                label="Nombre"
+                                placeholder="Nombre completo"
+                                errors={errors}
+                            />
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Actividad reciente</label>
-                            <div className="rounded-md border p-3">
-                                <div className="text-sm">
-                                    <p>Último acceso: <span className="font-medium">Hace 2 días</span></p>
-                                    <p>Creado el: <span className="font-medium">12/03/2025</span></p>
+                            <FormInput
+                                name="email"
+                                control={control}
+                                label="Email"
+                                placeholder="correo@ejemplo.com"
+                                type="email"
+                                errors={errors}
+                            />
+
+                            <div className="space-y-2">
+                                <label htmlFor="role" className="text-sm font-medium">
+                                    Rol
+                                </label>
+                                <Select
+                                    value={roleId?.toString()}
+                                    onValueChange={(value) => {
+                                        setValue("role_id", parseInt(value), {
+                                            shouldValidate: true,
+                                            shouldDirty: true
+                                        });
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar rol" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {roles?.map((role: any) => (
+                                            <SelectItem key={role.id} value={role.id.toString()}>
+                                                {role.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Actividad reciente</label>
+                                <div className="rounded-md border p-3">
+                                    <div className="text-sm">
+                                        <p>Último acceso: <span className="font-medium">Hace 2 días</span></p>
+                                        <p>Creado el: <span className="font-medium">12/03/2025</span></p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <DrawerFooter>
-                            <div className="flex gap-2">
-                                <Button type="submit">Guardar cambios</Button>
-                                <DrawerClose asChild>
-                                    <Button variant="outline">Cancelar</Button>
-                                </DrawerClose>
-                            </div>
-                        </DrawerFooter>
-                    </form>
-                </div>
-            </DrawerContent>
-        </Drawer>
+                            <DrawerFooter>
+                                <div className="flex gap-2">
+                                    <div className="flex flex-col gap-2 w-full">
+                                        <Button type="submit" className="w-full">Guardar cambios</Button>
+                                        {onDelete && (
+                                            <>
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    onClick={() => setIsDeleteDialogOpen(true)}
+                                                    className="w-full"
+                                                >
+                                                    Eliminar usuario
+                                                </Button>
+
+                                                <DeleteUserDialog
+                                                    user={user}
+                                                    open={isDeleteDialogOpen}
+                                                    onOpenChange={setIsDeleteDialogOpen}
+                                                    onConfirmDelete={handleDeleteUser}
+                                                />
+                                            </>
+                                        )}
+                                        <DrawerClose asChild>
+                                            <Button variant="outline" className="w-full">Cancelar</Button>
+                                        </DrawerClose>
+                                    </div>
+                                </div>
+                            </DrawerFooter>
+                        </form>
+                    </div>
+                </DrawerContent>
+            </Drawer>
+        </>
     );
-}
-);
+});

@@ -61,10 +61,9 @@ def update_user(user_id: int, user: schemas.UserUpdate, db: Session = Depends(ge
     return crud_user.update_user(db=db, user_id=user_id, user_update=user)
 
 
-@router.delete("/{user_id}", response_model=schemas.User)
+@router.delete("/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud_user.get_user(db, user_id=user_id)
-    if db_user is None:
+    result = crud_user.delete_user(db=db, user_id=user_id)
+    if result is None:
         raise HTTPException(status_code=404, detail="User not found")
-    return crud_user.delete_user(db=db, user_id=user_id)
-
+    return result
