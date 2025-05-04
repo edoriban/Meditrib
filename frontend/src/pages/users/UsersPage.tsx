@@ -5,20 +5,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UsersTable } from "@/components/users/UsersTable";
 import { UserFilters } from "@/components/users/UserFilters";
 import { CreateUserDialog } from "@/components/users/CreateUserDialog";
+import { CreateRoleDialog } from "@/components/roles/CreateRoleDialog";
 import { useUserMutations } from "@/hooks/useUserMutations";
 import { BASE_API_URL } from "@/config";
 import { Button } from "@/components/ui/button";
 import { IconDownload, IconUpload } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-// Importante: exportación por defecto
 export default function UsersPage() {
     const [searchTerm, setSearchTerm] = React.useState("");
     const [roleFilter, setRoleFilter] = React.useState<number | "all">("all");
     const [selectedTab, setSelectedTab] = React.useState("all");
     const { updateUser, deleteUser } = useUserMutations();
 
-    // Obtener usuarios
     const { data: users, isLoading, error } = useQuery({
         queryKey: ["users"],
         queryFn: async () => {
@@ -27,7 +26,6 @@ export default function UsersPage() {
         },
     });
 
-    // Obtener roles para el filtro
     const { data: roles } = useQuery({
         queryKey: ["roles"],
         queryFn: async () => {
@@ -36,7 +34,6 @@ export default function UsersPage() {
         },
     });
 
-    // Filtrar usuarios por tab (rol)
     const getFilteredByTab = React.useCallback((users: any[]) => {
         if (selectedTab === "all") return users;
 
@@ -44,7 +41,6 @@ export default function UsersPage() {
         return users.filter(user => user.role.id === roleId);
     }, [selectedTab]);
 
-    // Filtrar usuarios por búsqueda y filtro de rol
     const filteredUsers = React.useMemo(() => {
         if (!users) return [];
 
@@ -58,20 +54,15 @@ export default function UsersPage() {
             return matchesSearch && matchesRole;
         });
 
-        // Aplicar filtro por tab
         return getFilteredByTab(filteredBySearch);
     }, [users, searchTerm, roleFilter, getFilteredByTab]);
 
-    // Manejar exportación
     const handleExport = () => {
         toast.success("Exportando usuarios...");
-        // Implementar lógica real de exportación
     };
 
-    // Manejar importación
     const handleImport = () => {
         toast.success("Importando usuarios...");
-        // Implementar lógica real de importación
     };
 
     if (isLoading) return <div className="flex items-center justify-center h-full">Cargando usuarios...</div>;
@@ -108,6 +99,7 @@ export default function UsersPage() {
                             <IconUpload className="mr-1 h-4 w-4" />
                             Importar
                         </Button>
+                        <CreateRoleDialog />
                         <CreateUserDialog />
                     </div>
                 </div>
