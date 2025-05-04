@@ -12,12 +12,12 @@ def get_medicines(db: Session, skip: int = 0, limit: int = 100):
 
 
 def create_medicine(db: Session, medicine: schemas.MedicineCreate):
-    db_medicine = models.Medicine(name=medicine.name, description=medicine.description, sale_price=medicine.sale_price)
+    medicine_data = medicine.model_dump(exclude={"inventory"})
+    db_medicine = models.Medicine(**medicine_data)
     db.add(db_medicine)
     db.commit()
     db.refresh(db_medicine)
 
-    # Si hay información de inventario, crearla también
     if hasattr(medicine, "inventory") and medicine.inventory:
         db_inventory = models.Inventory(medicine_id=db_medicine.id, quantity=medicine.inventory.quantity)
         db.add(db_inventory)
@@ -31,11 +31,20 @@ def update_medicine(db: Session, medicine_id: int, medicine: schemas.MedicineUpd
     if db_medicine:
         update_data = medicine.model_dump(exclude_unset=True)
         
+        tags_data = update_data.pop('tags', None)
         inventory_data = update_data.pop('inventory', None)
         
         for key, value in update_data.items():
             if hasattr(db_medicine, key) and value is not None:
                 setattr(db_medicine, key, value)
+        
+        if tags_data is not None:
+            db_medicine.tags = []
+            
+            for tag_id in tags_data:
+                tag = db.query(models.MedicineTag).filter(models.MedicineTag.id == int(tag_id)).first()
+                if tag:
+                    db_medicine.tags.append(tag)
         
         if inventory_data:
             db_inventory = db.query(models.Inventory).filter(models.Inventory.medicine_id == medicine_id).first()

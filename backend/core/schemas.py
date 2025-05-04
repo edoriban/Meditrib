@@ -1,7 +1,8 @@
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr
+from datetime import datetime, date
 
-# Esquemas para medicamentos
+# Inventory Schemas
 
 class InventoryBase(BaseModel):
     quantity: int
@@ -17,6 +18,30 @@ class Inventory(InventoryBase):
     class Config:
         from_attributes = True
 
+# Tag Schemas
+
+class MedicineTagBase(BaseModel):
+    name: str
+    description: str | None = None
+    color: str | None = None
+
+
+class MedicineTagCreate(MedicineTagBase):
+    pass
+
+
+class MedicineTagUpdate(MedicineTagBase):
+    name: str | None = None
+
+
+class MedicineTag(MedicineTagBase):
+    id: int
+    
+    class Config:
+        from_attributes = True
+
+# Medicine Schemas
+
 class MedicineBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -24,6 +49,7 @@ class MedicineBase(BaseModel):
     purchase_price: Optional[float] = None
     type: Optional[str] = None
     supplier_id: Optional[int] = None
+    tags: list[MedicineTag] | None = []
 
 class MedicineCreate(MedicineBase):
     inventory: Optional[InventoryCreate] = None
@@ -108,21 +134,73 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
+# PurchaseOrder Schemas
+class PurchaseOrderItemBase(BaseModel):
+    medicine_id: int
+    quantity: int
+    unit_price: float
+
+class PurchaseOrderItemCreate(PurchaseOrderItemBase):
+    pass
+
+class PurchaseOrderItemUpdate(BaseModel):
+    quantity: Optional[int] = None
+    unit_price: Optional[float] = None
+
+class PurchaseOrderItem(PurchaseOrderItemBase):
+    purchase_order_id: int
+    medicine: Medicine
+
+    class Config:
+        from_attributes = True
+
+class PurchaseOrderBase(BaseModel):
+    supplier_id: int
+    order_date: date
+    expected_delivery_date: Optional[date] = None
+    status: str = "pending"
+    total_amount: Optional[float] = None
+    items: List[PurchaseOrderItemCreate] = []
+    created_by: int
+
+class PurchaseOrderCreate(PurchaseOrderBase):
+    pass
+
+class PurchaseOrderUpdate(BaseModel):
+    supplier_id: Optional[int] = None
+    order_date: Optional[date] = None
+    expected_delivery_date: Optional[date] = None
+    status: Optional[str] = None
+    total_amount: Optional[float] = None
+    items: Optional[List[PurchaseOrderItemCreate]] = None
+    created_by: Optional[int] = None
+
+class PurchaseOrder(PurchaseOrderBase):
+    id: int
+    supplier: Supplier
+    items: List[PurchaseOrderItem] = []
+
+    class Config:
+        from_attributes = True
+
 # Client Schemas
 class ClientBase(BaseModel):
     name: str
     contact: Optional[str] = None
+    address: Optional[str] = None
+    email: Optional[EmailStr] = None
 
 class ClientCreate(ClientBase):
     pass
 
-class ClientUpdate(ClientBase):
+class ClientUpdate(BaseModel):
     name: Optional[str] = None
     contact: Optional[str] = None
+    address: Optional[str] = None
+    email: Optional[EmailStr] = None
 
 class Client(ClientBase):
     id: int
-    # sales: List['Sale'] = [] # Evitar dependencia circular o definir Sale antes si se necesita
 
     class Config:
         from_attributes = True
@@ -133,20 +211,33 @@ class SaleBase(BaseModel):
     quantity: int
     total_price: float
     client_id: int
+    sale_date: datetime
+    user_id: int
+    shipping_date: Optional[date] = None
+    shipping_status: str = "pending"
+    payment_status: str = "pending"
+    payment_method: Optional[str] = None
 
 class SaleCreate(SaleBase):
     pass
 
-class SaleUpdate(SaleBase):
+class SaleUpdate(BaseModel):
     medicine_id: Optional[int] = None
     quantity: Optional[int] = None
     total_price: Optional[float] = None
     client_id: Optional[int] = None
+    sale_date: Optional[datetime] = None
+    user_id: Optional[int] = None
+    shipping_date: Optional[date] = None
+    shipping_status: Optional[str] = None
+    payment_status: Optional[str] = None
+    payment_method: Optional[str] = None
 
 class Sale(SaleBase):
     id: int
-    medicine: Medicine  # Incluir la medicina asociada
-    client: Client  # Incluir el cliente asociado
+    medicine: Medicine
+    client: Client
+    user: User
 
     class Config:
         from_attributes = True
@@ -154,7 +245,7 @@ class Sale(SaleBase):
 # Report Schemas
 class ReportBase(BaseModel):
     report_type: str
-    date: str  # Considerar usar date o datetime de Pydantic/Python
+    date: datetime  # Considerar usar date o datetime de Pydantic/Python
     data: str  # Considerar usar dict o list si el formato es JSON
     generated_by: int
 
@@ -163,7 +254,7 @@ class ReportCreate(ReportBase):
 
 class ReportUpdate(ReportBase):
     report_type: Optional[str] = None
-    date: Optional[str] = None
+    date: Optional[datetime] = None
     data: Optional[str] = None
     generated_by: Optional[int] = None
 
@@ -179,6 +270,8 @@ class Report(ReportBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
 
 # Actualizar referencias si es necesario después de definir todas las clases
 # Por ejemplo, si Client necesita mostrar Sales:
