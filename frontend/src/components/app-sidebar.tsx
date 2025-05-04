@@ -40,7 +40,7 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#/dashboard",
+      url: "/dashboard",
       icon: IconDashboard,
     },
     {
@@ -131,8 +131,8 @@ const data = {
   ],
   documents: [
     {
-      name: "Data Library",
-      url: "#",
+      name: "Medicamentos",
+      url: "/medicines",
       icon: IconDatabase,
     },
     {

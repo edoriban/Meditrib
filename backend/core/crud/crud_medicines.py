@@ -30,9 +30,23 @@ def update_medicine(db: Session, medicine_id: int, medicine: schemas.MedicineUpd
     db_medicine = db.query(models.Medicine).filter(models.Medicine.id == medicine_id).first()
     if db_medicine:
         update_data = medicine.model_dump(exclude_unset=True)
+        
+        inventory_data = update_data.pop('inventory', None)
+        
         for key, value in update_data.items():
             if hasattr(db_medicine, key) and value is not None:
                 setattr(db_medicine, key, value)
+        
+        if inventory_data:
+            db_inventory = db.query(models.Inventory).filter(models.Inventory.medicine_id == medicine_id).first()
+            if db_inventory:
+                for key, value in inventory_data.items():
+                    if hasattr(db_inventory, key) and value is not None:
+                        setattr(db_inventory, key, value)
+            else:
+                db_inventory = models.Inventory(medicine_id=medicine_id, **inventory_data)
+                db.add(db_inventory)
+        
         db.commit()
         db.refresh(db_medicine)
     return db_medicine

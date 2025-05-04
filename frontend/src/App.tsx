@@ -3,11 +3,12 @@ import { MainLayout } from "@/layouts/MainLayout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./hooks/use-theme";
 import axios from "axios";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/login/LoginPage";
 import RegisterPage from "./pages/login/RegisterPage";
 import UsersPage from "./pages/users/UsersPage";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import MedicinesPage from "./pages/inventory/MedicinesPage";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -45,8 +46,13 @@ function App() {
                 </MainLayout>
               </ProtectedRoute>
             } />
-
-            {/* Más rutas protegidas aquí */}
+            <Route path="/medicines" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <MedicinesPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
           </Routes>
         </Router>
       </QueryClientProvider>
