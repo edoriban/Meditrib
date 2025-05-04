@@ -27,6 +27,7 @@ export const medicineFormSchema = z.object({
     sale_price: z.number().positive({ message: "El precio de venta debe ser mayor a 0" }),
     purchase_price: z.number().positive({ message: "El precio de compra debe ser mayor a 0" }).optional(),
     type: z.string().optional(),
+    tags: z.array(z.string()).optional(),
     inventory: z
         .object({
             quantity: z.number().int().min(0, { message: "La cantidad no puede ser negativa" }),
@@ -43,3 +44,21 @@ export type MedicineFormValues = z.infer<typeof medicineFormSchema>;
 export type MedicineCreateValues = z.infer<typeof medicineCreateSchema>;
 export type MedicineUpdateValues = z.infer<typeof medicineUpdateSchema>;
 
+export const medicineTagSchema = z.object({
+    name: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
+    description: z.string().optional(),
+    color: z.string().optional(),
+});
+
+export interface MedicineTag {
+    id: number;
+    name: string;
+    description?: string;
+    color?: string;
+}
+
+export interface MedicineTagWithUIState extends MedicineTag {
+    pendingDelete?: boolean;
+}
+
+export type MedicineTagFormValues = z.infer<typeof medicineTagSchema>;

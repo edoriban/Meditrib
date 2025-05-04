@@ -3,10 +3,20 @@ import { FormInput } from "@/components/ui/form-input";
 import { MedicineEditFormProps } from "@/types/medicine";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { BASE_API_URL } from "@/config";
 
 export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
     const { control, formState: { errors }, setValue, watch } = form;
-
+    const { data: medicineTags = [] } = useQuery({
+        queryKey: ["medicineTags"],
+        queryFn: async () => {
+            const { data } = await axios.get(`${BASE_API_URL}/medicine-tags/`);
+            return data;
+        }
+    });
     return (
         <>
             <FormInput
@@ -74,12 +84,27 @@ export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
                 />
             </div>
 
-            <FormInput
-                name="type"
+            <FormField
                 control={control}
-                label="Tipo de medicamento"
-                placeholder="Analgésico"
-                errors={errors}
+                name="tags"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Tipos de medicamento</FormLabel>
+                        <FormControl>
+                            <MultiSelect
+                                placeholder="Seleccionar tipos"
+                                options={medicineTags.map((tag: any) => ({
+                                    label: tag.name,
+                                    value: tag.id.toString(),
+                                    color: tag.color
+                                }))}
+                                selected={field.value || []}
+                                onChange={(selected) => field.onChange(selected)}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
             />
 
             <FormField
