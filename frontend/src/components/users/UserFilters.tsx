@@ -29,13 +29,10 @@ export function UserFilters({
     roles,
     resultsCount
 }: UserFiltersProps) {
-    // Para controlar el estado abierto/cerrado del popover
     const [open, setOpen] = React.useState(false);
 
-    // Determinar si hay filtros activos
     const hasActiveFilters = roleFilter !== "all";
 
-    // Limpiar todos los filtros
     const clearFilters = () => {
         setSearchTerm("");
         setRoleFilter("all");
@@ -55,6 +52,7 @@ export function UserFilters({
                     />
                     {searchTerm && (
                         <button
+                            type="button"
                             onClick={() => setSearchTerm("")}
                             className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
                         >
@@ -68,6 +66,7 @@ export function UserFilters({
                 <Popover open={open} onOpenChange={setOpen}>
                     <PopoverTrigger asChild>
                         <Button
+                            type="button"
                             variant={hasActiveFilters ? "default" : "outline"}
                             size="sm"
                             className={cn(
@@ -112,6 +111,7 @@ export function UserFilters({
                             <Separator />
                             <div className="flex justify-between">
                                 <Button
+                                    type="button"
                                     variant="outline"
                                     size="sm"
                                     onClick={() => {
@@ -122,6 +122,7 @@ export function UserFilters({
                                     Limpiar filtros
                                 </Button>
                                 <Button
+                                    type="button"
                                     size="sm"
                                     onClick={() => setOpen(false)}
                                 >
@@ -135,11 +136,15 @@ export function UserFilters({
                 {/* Mostrar filtros activos */}
                 {hasActiveFilters && (
                     <div className="flex gap-1">
-                        {/* The hasActiveFilters check already ensures roleFilter is a number here */}
                         <Badge variant="secondary" className="gap-1">
                             Rol: {roles?.find(r => r.id === roleFilter)?.name}
-                            <button onClick={() => setRoleFilter("all")}>
+                            <button
+                                type="button"
+                                onClick={() => setRoleFilter("all")}
+                                className="ml-1"
+                            >
                                 <IconX className="h-3 w-3" />
+                                <span className="sr-only">Quitar filtro de rol</span>
                             </button>
                         </Badge>
                     </div>

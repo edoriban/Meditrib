@@ -21,7 +21,6 @@ interface UsersTableProps {
 }
 
 export function UsersTable({ users, onUpdate, onDelete, roles }: UsersTableProps) {
-    // Referencias a los botones de editar para poder activarlos
     const editRefs = React.useRef<Record<number, HTMLButtonElement | null>>({});
 
     return (
