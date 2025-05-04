@@ -3,11 +3,11 @@ import { User } from "@/types/user";
 
 export const auth = {
     isAuthenticated: (): boolean => {
-        return localStorage.getItem('token') !== null;
+        return localStorage.getItem('token') !== null || sessionStorage.getItem('token') !== null;
     },
 
     getToken: (): string | null => {
-        return localStorage.getItem('token');
+        return localStorage.getItem('token') || sessionStorage.getItem('token');
     },
 
     logout: (): void => {

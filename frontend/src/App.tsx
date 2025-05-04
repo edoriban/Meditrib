@@ -7,6 +7,7 @@ import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/login/LoginPage";
 import RegisterPage from "./pages/login/RegisterPage";
 import UsersPage from "./pages/users/UsersPage";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -25,11 +26,27 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <Router>
           <Routes>
-            <Route path="/" element={<MainLayout children={<DashboardPage />} />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
+            {/* Rutas públicas */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/users" element={<MainLayout children={<UsersPage />} />} />
+
+            {/* Rutas protegidas */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <DashboardPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/users" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <UsersPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Más rutas protegidas aquí */}
           </Routes>
         </Router>
       </QueryClientProvider>

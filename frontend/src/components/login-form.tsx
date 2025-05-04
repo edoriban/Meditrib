@@ -11,12 +11,13 @@ import {
 } from "@/components/ui/card"
 import { useState } from "react"
 import { toast } from "sonner"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { BASE_API_URL } from "@/config"
 import { FormInput } from "@/components/ui/form-input" // Importar FormInput
 import { auth } from "@/utils/auth" // Importar el helper de autenticación
+import { Checkbox } from "./ui/checkbox"
 
 const loginFormSchema = z.object({
   email: z.string({
@@ -25,6 +26,7 @@ const loginFormSchema = z.object({
   password: z.string({
     required_error: "La contraseña es obligatoria",
   }),
+  remember: z.boolean().default(false)
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>
@@ -41,6 +43,7 @@ export function LoginForm({
     defaultValues: {
       email: "",
       password: "",
+      remember: false,
     },
   });
 
@@ -68,7 +71,11 @@ export function LoginForm({
 
       const tokenData = await response.json();
 
-      localStorage.setItem('token', tokenData.access_token);
+      if (data.remember) {
+        localStorage.setItem('token', tokenData.access_token);
+      } else {
+        sessionStorage.setItem('token', tokenData.access_token);
+      }
 
       toast.success('Inicio de sesión exitoso');
 
@@ -79,7 +86,7 @@ export function LoginForm({
         console.error("Error al obtener datos del usuario:", userError);
       }
 
-      window.location.href = '/dashboard';
+      window.location.href = '/';
 
     } catch (error) {
       toast.error(`Error: ${error instanceof Error ? error.message : 'Ha ocurrido un problema al iniciar sesión'}`);
@@ -137,6 +144,25 @@ export function LoginForm({
                   type="password"
                   required
                 />
+
+                <div className="flex items-center space-x-2">
+                  <Controller
+                    name="remember"
+                    control={control}
+                    render={({ field }) => (
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="remember"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <label htmlFor="remember" className="text-sm">
+                          Recordar mi sesión
+                        </label>
+                      </div>
+                    )}
+                  />
+                </div>
 
                 <div className="text-right">
                   <a href="#" className="text-sm underline-offset-4 hover:underline">
