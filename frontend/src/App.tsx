@@ -6,6 +6,7 @@ import axios from "axios";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/login/LoginPage";
 import RegisterPage from "./pages/login/RegisterPage";
+import UsersPage from "./pages/users/UsersPage";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -28,6 +29,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/users" element={<MainLayout children={<UsersPage />} />} />
           </Routes>
         </Router>
       </QueryClientProvider>
