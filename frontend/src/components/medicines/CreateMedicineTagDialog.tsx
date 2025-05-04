@@ -28,13 +28,16 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { MedicineTag, MedicineTagFormValues, medicineTagSchema, MedicineTagWithUIState } from "@/types/medicine";
+import { MedicineTag, MedicineTagFormValues, medicineTagSchema, MedicineTagWithUIState, CreateMedicineTagDialogProps } from "@/types/medicine";
 
-export function CreateMedicineTagDialog() {
+
+
+export function CreateMedicineTagDialog({ onClose }: CreateMedicineTagDialogProps = {}) {
     const [open, setOpen] = React.useState(false);
     const [activeTab, setActiveTab] = React.useState("create");
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [editingTag, setEditingTag] = React.useState<MedicineTag | null>(null);
+    const [color, setColor] = React.useState("#6366f1");
 
     const queryClient = useQueryClient();
 
@@ -55,6 +58,8 @@ export function CreateMedicineTagDialog() {
             color: "#6366f1", // Valor predeterminado para el color (indigo)
         }
     });
+
+
 
     React.useEffect(() => {
         if (editingTag) {
@@ -110,6 +115,7 @@ export function CreateMedicineTagDialog() {
     const handleOpenChange = (newOpen: boolean) => {
         if (!newOpen) {
             handleResetForm();
+            if (onClose) onClose();
         }
         setOpen(newOpen);
     };
@@ -199,6 +205,12 @@ export function CreateMedicineTagDialog() {
                                             type="color"
                                             {...control.register("color")}
                                             className="w-16 h-8 p-1"
+                                            value={color}
+                                            onChange={(e) => {
+                                                setColor(e.target.value);
+                                                setValue("color", e.target.value);
+                                            }
+                                            }
                                         />
                                         <div className="flex-1">
                                             <p className="text-xs text-muted-foreground">

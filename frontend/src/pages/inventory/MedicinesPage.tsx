@@ -2,6 +2,7 @@ import { MedicineTable } from "@/components/medicines/MedicineTable";
 import { Button } from "@/components/ui/button";
 import { IconDownload, IconUpload } from "@tabler/icons-react";
 import { toast } from "sonner";
+import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog"
 
 export default function MedicinesPage() {
     const handleExport = () => {
@@ -26,6 +27,7 @@ export default function MedicinesPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <CreateMedicineTagDialog />
                         <Button variant="outline" size="sm" onClick={handleExport}>
                             <IconDownload className="mr-1 h-4 w-4" />
                             Exportar

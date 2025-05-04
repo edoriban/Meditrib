@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { FormInput } from "@/components/ui/form-input";
 import { MedicineEditFormProps } from "@/types/medicine";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -7,16 +7,36 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { BASE_API_URL } from "@/config";
+import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog";
+import { Button } from "@/components/ui/button";
 
 export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
     const { control, formState: { errors }, setValue, watch } = form;
-    const { data: medicineTags = [] } = useQuery({
+    const [createTagDialogOpen, setCreateTagDialogOpen] = useState(false);
+
+    const { data: medicineTags = [], isLoading: isLoadingTags } = useQuery({
         queryKey: ["medicineTags"],
         queryFn: async () => {
             const { data } = await axios.get(`${BASE_API_URL}/medicine-tags/`);
             return data;
         }
     });
+
+    // Componente personalizado para renderizar cuando no hay tags
+    const EmptyTagsContent = () => (
+        <div className="flex flex-col items-center justify-center py-4 space-y-2">
+            <p className="text-sm text-muted-foreground">No hay tipos de medicamentos registrados</p>
+            <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => setCreateTagDialogOpen(true)}
+            >
+                Crear nuevo tipo
+            </Button>
+        </div>
+    );
+
     return (
         <>
             <FormInput
@@ -89,18 +109,36 @@ export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
                 name="tags"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Tipos de medicamento</FormLabel>
+                        <div className="flex items-center justify-between">
+                            <FormLabel>Tipos de medicamento</FormLabel>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs"
+                                onClick={() => setCreateTagDialogOpen(true)}
+                                type="button"
+                            >
+                                Gestionar tipos
+                            </Button>
+                        </div>
                         <FormControl>
-                            <MultiSelect
-                                placeholder="Seleccionar tipos"
-                                options={medicineTags.map((tag: any) => ({
-                                    label: tag.name,
-                                    value: tag.id.toString(),
-                                    color: tag.color
-                                }))}
-                                selected={field.value || []}
-                                onChange={(selected) => field.onChange(selected)}
-                            />
+                            {isLoadingTags ? (
+                                <div className="border rounded-md p-3 text-sm text-muted-foreground">Cargando tipos...</div>
+                            ) : medicineTags.length === 0 ? (
+                                <EmptyTagsContent />
+                            ) : (
+                                <MultiSelect
+                                    placeholder="Seleccionar tipos"
+                                    options={medicineTags.map((tag: any) => ({
+                                        label: tag.name,
+                                        value: tag.id.toString(),
+                                        color: tag.color
+                                    }))}
+                                    selected={field.value || []}
+                                    onChange={(selected) => field.onChange(selected)}
+                                    onCreateClick={() => setCreateTagDialogOpen(true)}
+                                />
+                            )}
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -131,6 +169,32 @@ export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
                     </FormItem>
                 )}
             />
+
+            {/* Dialog para crear tipos */}
+            {createTagDialogOpen && (
+                <div
+                    className="fixed inset-0 z-50"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setCreateTagDialogOpen(false);
+                    }}
+                >
+                    <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+                    <div
+                        className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 px-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div
+                            className="bg-white rounded-lg shadow-lg"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <CreateMedicineTagDialog
+                                onClose={() => setCreateTagDialogOpen(false)}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

@@ -5,7 +5,7 @@ export interface Medicine {
     id: number;
     name: string;
     description?: string;
-    type?: string;
+    tags?: string[];
     sale_price: number;
     purchase_price: number;
     inventory?: {
@@ -26,8 +26,7 @@ export const medicineFormSchema = z.object({
     description: z.string().optional(),
     sale_price: z.number().positive({ message: "El precio de venta debe ser mayor a 0" }),
     purchase_price: z.number().positive({ message: "El precio de compra debe ser mayor a 0" }).optional(),
-    type: z.string().optional(),
-    tags: z.array(z.string()).optional(),
+    tags: z.array(z.string()).optional().default([]),
     inventory: z
         .object({
             quantity: z.number().int().min(0, { message: "La cantidad no puede ser negativa" }),
@@ -59,6 +58,10 @@ export interface MedicineTag {
 
 export interface MedicineTagWithUIState extends MedicineTag {
     pendingDelete?: boolean;
+}
+
+export interface CreateMedicineTagDialogProps {
+    onClose?: () => void;
 }
 
 export type MedicineTagFormValues = z.infer<typeof medicineTagSchema>;
