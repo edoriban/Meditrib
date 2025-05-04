@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { User } from "@/types/user";
-import { UserFormValues, userFormSchema } from "@/types/forms";
+import { UserFormValues, userFormSchema } from "@/types/user";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BASE_API_URL } from "@/config";
 import { Button } from "@/components/ui/button";

@@ -9,7 +9,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserFormValues } from "@/types/forms";
+import { UserFormValues } from "@/types/user";
 import { UserCellViewer } from "./UserCellViewer";
 import { UserActionsMenu } from "./UserActionsMenu";
 
