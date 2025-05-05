@@ -1,16 +1,10 @@
-import * as React from "react";
+import { useEffect, useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IconSearch, IconFilter, IconX } from "@tabler/icons-react";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
 
 interface MedicineFiltersProps {
@@ -34,10 +28,12 @@ export function MedicineFilters({
     maxPrice,
     resultsCount
 }: MedicineFiltersProps) {
-    const [open, setOpen] = React.useState(false);
-    const [localPriceRange, setLocalPriceRange] = React.useState<[number, number]>(priceRange);
-
+    const [showFilters, setShowFilters] = useState(false);
+    const [localPriceRange, setLocalPriceRange] = useState<[number, number]>(priceRange);
     const hasActiveFilters = stockFilter !== "all" || priceRange[0] > 0 || priceRange[1] < maxPrice;
+
+    const filterButtonRef = useRef<HTMLButtonElement>(null);
+    const filterContentRef = useRef<HTMLDivElement>(null);
 
     const clearFilters = () => {
         setSearchTerm("");
@@ -46,9 +42,33 @@ export function MedicineFilters({
         setLocalPriceRange([0, maxPrice]);
     };
 
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (!showFilters) return;
+
+            const target = event.target;
+            if (!(target instanceof Element)) return;
+
+            const isSelectClick = target.closest('[role="combobox"]') ||
+                target.closest('[role="listbox"]') ||
+                target.closest('[data-radix-select-viewport]');
+
+            const isFilterContentClick = filterContentRef.current?.contains(target);
+            const isFilterButtonClick = filterButtonRef.current?.contains(target);
+
+            if (!isSelectClick && !isFilterContentClick && !isFilterButtonClick) {
+                console.log('Cerrando filtros por clic externo');
+                setShowFilters(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showFilters]);
+
     return (
         <div className="flex flex-wrap items-center justify-between gap-2 my-4">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 relative">
                 {/* Barra de búsqueda */}
                 <div className="relative">
                     <IconSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -71,30 +91,21 @@ export function MedicineFilters({
                 </div>
 
                 {/* Botón de filtro con indicador */}
-                <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            type="button"
-                            variant={hasActiveFilters ? "default" : "outline"}
-                            size="sm"
-                            className={cn(
-                                hasActiveFilters && "bg-primary text-primary-foreground"
-                            )}
-                        >
-                            <IconFilter className="mr-1 h-4 w-4" />
-                            Filtros
-                            {hasActiveFilters && (
-                                <Badge
-                                    variant="outline"
-                                    className="ml-2 bg-background text-foreground"
-                                >
-                                    {(stockFilter !== "all" ? 1 : 0) +
-                                        ((priceRange[0] > 0 || priceRange[1] < maxPrice) ? 1 : 0)}
-                                </Badge>
-                            )}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[280px] p-3" align="start">
+                <Button
+                    ref={filterButtonRef}
+                    onClick={() => setShowFilters(!showFilters)}
+                    variant={hasActiveFilters ? "default" : "outline"}
+                    size="sm"
+                >
+                    <IconFilter className="mr-1 h-4 w-4" />
+                    Filtros
+                </Button>
+
+                {showFilters && (
+                    <div
+                        ref={filterContentRef}
+                        className="absolute top-[calc(100%+8px)] left-0 z-50 bg-white rounded-md border shadow-lg p-3 w-[280px]"
+                    >
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <h4 className="font-medium text-sm">Filtrar por stock</h4>
@@ -152,15 +163,14 @@ export function MedicineFilters({
                                     size="sm"
                                     onClick={() => {
                                         setPriceRange(localPriceRange);
-                                        setOpen(false);
                                     }}
                                 >
                                     Aplicar
                                 </Button>
                             </div>
                         </div>
-                    </PopoverContent>
-                </Popover>
+                    </div>
+                )}
 
                 {/* Mostrar filtros activos */}
                 {stockFilter !== "all" && (
