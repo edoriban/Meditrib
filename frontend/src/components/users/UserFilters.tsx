@@ -51,7 +51,6 @@ export function UserFilters({
             const isFilterButtonClick = filterButtonRef.current?.contains(target);
 
             if (!isSelectClick && !isFilterContentClick && !isFilterButtonClick) {
-                console.log('Cerrando filtros por clic externo');
                 setShowFilters(false);
             }
         }
