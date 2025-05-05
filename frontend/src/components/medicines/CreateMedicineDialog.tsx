@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -21,8 +21,9 @@ import { MedicineCreateValues, medicineCreateSchema } from "@/types/medicine";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { BASE_API_URL } from "@/config";
-import { MultiSelect } from "@/components/ui/multi-select";
 import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog";
+import { TagToggleGroup } from "@/components/medicines/TagToggleGroup";
+
 
 export function CreateMedicineDialog() {
     const { createMedicine, isCreating } = useMedicineMutations();
@@ -68,9 +69,14 @@ export function CreateMedicineDialog() {
         </div>
     );
 
-    const onSubmit = async (data: MedicineCreateValues) => {
+    const onSubmit: SubmitHandler<MedicineCreateValues> = async (data) => {
         try {
-            await createMedicine(data);
+            const formData = {
+                ...data,
+                tags: data.tags?.map(tagId => Number(tagId)) || []
+            };
+
+            await createMedicine(formData);
             setOpen(false);
             form.reset();
         } catch (error) {
@@ -212,16 +218,13 @@ export function CreateMedicineDialog() {
                                             ) : medicineTags.length === 0 ? (
                                                 <EmptyTagsContent />
                                             ) : (
-                                                <MultiSelect
-                                                    placeholder="Seleccionar tipos"
-                                                    options={medicineTags.map((tag: any) => ({
-                                                        label: tag.name,
-                                                        value: tag.id.toString(),
-                                                        color: tag.color
-                                                    }))}
-                                                    selected={field.value || []}
-                                                    onChange={(selected) => field.onChange(selected)}
-                                                    onCreateClick={() => setCreateTagDialogOpen(true)}
+                                                <TagToggleGroup
+                                                    tags={medicineTags}
+                                                    selectedTags={field.value?.map(tagId => tagId.toString()) || []}
+                                                    onChange={(selected) => {
+                                                        const numericTags = selected.map(tagId => Number(tagId));
+                                                        field.onChange(numericTags);
+                                                    }}
                                                 />
                                             )}
                                         </FormControl>

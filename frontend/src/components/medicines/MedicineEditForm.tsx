@@ -3,12 +3,12 @@ import { FormInput } from "@/components/ui/form-input";
 import { MedicineEditFormProps } from "@/types/medicine";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { MultiSelect } from "@/components/ui/multi-select";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { BASE_API_URL } from "@/config";
 import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog";
 import { Button } from "@/components/ui/button";
+import { TagToggleGroup } from "@/components/medicines/TagToggleGroup";
 
 export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
     const { control, formState: { errors }, setValue, watch } = form;
@@ -58,6 +58,31 @@ export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
             <div className="grid grid-cols-2 gap-4">
                 <FormField
                     control={control}
+                    name="purchase_price"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Precio de compra</FormLabel>
+                            <FormControl>
+                                <Input
+                                    type="number"
+                                    placeholder="0.00"
+                                    min="0"
+                                    step="0.01"
+
+                                    {...field}
+                                    onChange={(e) => {
+                                        const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
+                                        field.onChange(value);
+                                    }}
+                                    value={field.value ?? ""}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={control}
                     name="sale_price"
                     render={({ field }) => (
                         <FormItem>
@@ -70,31 +95,6 @@ export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
                                     step="0.01"
                                     {...field}
                                     onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                    value={field.value ?? ""}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={control}
-                    name="purchase_price"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Precio de compra</FormLabel>
-                            <FormControl>
-                                <Input
-                                    type="number"
-                                    placeholder="0.00"
-                                    min="0"
-                                    step="0.01"
-                                    {...field}
-                                    onChange={(e) => {
-                                        const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
-                                        field.onChange(value);
-                                    }}
                                     value={field.value ?? ""}
                                 />
                             </FormControl>
@@ -127,16 +127,13 @@ export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
                             ) : medicineTags.length === 0 ? (
                                 <EmptyTagsContent />
                             ) : (
-                                <MultiSelect
-                                    placeholder="Seleccionar tipos"
-                                    options={medicineTags.map((tag: any) => ({
-                                        label: tag.name,
-                                        value: tag.id.toString(),
-                                        color: tag.color
-                                    }))}
-                                    selected={field.value || []}
-                                    onChange={(selected) => field.onChange(selected)}
-                                    onCreateClick={() => setCreateTagDialogOpen(true)}
+                                <TagToggleGroup
+                                    tags={medicineTags}
+                                    selectedTags={field.value?.map(tagId => tagId.toString())}
+                                    onChange={(selected) => {
+                                        const numericTags = selected.map(tagId => Number(tagId));
+                                        field.onChange(numericTags);
+                                    }}
                                 />
                             )}
                         </FormControl>

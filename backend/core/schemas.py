@@ -6,10 +6,11 @@ from datetime import datetime, date
 
 class InventoryBase(BaseModel):
     quantity: int
-    batch: Optional[str] = None
-    expiry_date: Optional[str] = None
 
 class InventoryCreate(InventoryBase):
+    pass
+
+class InventoryUpdate(InventoryBase):
     pass
 
 class Inventory(InventoryBase):
@@ -22,8 +23,8 @@ class Inventory(InventoryBase):
 
 class MedicineTagBase(BaseModel):
     name: str
-    description: str | None = None
-    color: str | None = None
+    description: Optional[str] = None
+    color: Optional[str] = None
 
 
 class MedicineTagCreate(MedicineTagBase):
@@ -42,31 +43,29 @@ class MedicineTag(MedicineTagBase):
 
 # Medicine Schemas
 
+
 class MedicineBase(BaseModel):
     name: str
     description: Optional[str] = None
     sale_price: float
     purchase_price: Optional[float] = None
-    type: Optional[str] = None
-    supplier_id: Optional[int] = None
-    tags: list[MedicineTag] | None = []
+
 
 class MedicineCreate(MedicineBase):
+    tags: Optional[List[int]] = []
     inventory: Optional[InventoryCreate] = None
 
-class MedicineUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    sale_price: Optional[float] = None
-    purchase_price: Optional[float] = None
-    type: Optional[str] = None
-    supplier_id: Optional[int] = None
-    inventory: Optional[InventoryCreate] = None
+
+class MedicineUpdate(MedicineBase):
+    tags: Optional[List[int]] = []
+    inventory: Optional[InventoryUpdate] = None
+
 
 class Medicine(MedicineBase):
     id: int
+    tags: List[MedicineTag] = []
     inventory: Optional[Inventory] = None
-    
+
     class Config:
         from_attributes = True
 

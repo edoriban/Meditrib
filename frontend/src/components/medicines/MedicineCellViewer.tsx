@@ -5,6 +5,7 @@ import { Medicine } from "@/types/medicine";
 import { MedicineFormValues, medicineFormSchema } from "@/types/medicine";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
+import { SubmitHandler } from "react-hook-form";
 import {
     Drawer,
     DrawerContent,
@@ -38,18 +39,24 @@ export const MedicineCellViewer = forwardRef<HTMLButtonElement, MedicineCellView
                 description: medicine.description,
                 sale_price: medicine.sale_price,
                 purchase_price: medicine.purchase_price,
-                type: medicine.type,
+                tags: medicine.tags ? medicine.tags.map(tag => Number(tag.id)) : [],
                 inventory: {
                     quantity: medicine.inventory?.quantity || 0
                 }
             }
         });
 
-        const handleSubmit = (data: MedicineFormValues) => {
+
+        const handleSubmit: SubmitHandler<MedicineFormValues> = (data) => {
+            const updateData = {
+                ...data,
+                tags: data.tags ? data.tags.map(tagId => Number(tagId)) : []
+            };
+
             if (onUpdate) {
-                onUpdate(medicine.id, data);
+                onUpdate(medicine.id, updateData);
             } else {
-                updateMedicine(medicine.id, data);
+                updateMedicine(medicine.id, updateData);
             }
             toast.success(`Medicamento ${medicine.name} actualizado correctamente`);
         };

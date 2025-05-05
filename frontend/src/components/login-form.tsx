@@ -125,7 +125,6 @@ export function LoginForm({
                 </span>
               </div>
               <div className="grid gap-6">
-                {/* Reemplazar Input con FormInput */}
                 <FormInput
                   name="email"
                   control={control}

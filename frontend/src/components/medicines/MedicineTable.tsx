@@ -11,25 +11,7 @@ import { useMedicineMutations } from "@/hooks/useMedicineMutations";
 import { MedicineActionsMenu } from "@/components/medicines/MedicineActionsMenu";
 import { MedicineCellViewer } from "@/components/medicines/MedicineCellViewer";
 import { Badge } from "@/components/ui/badge";
-
-// Definición de tipos basada en los esquemas del backend
-export interface Inventory {
-    medicine_id: number;
-    quantity: number;
-    batch?: string;
-    expiry_date?: string;
-}
-
-export interface Medicine {
-    id: number;
-    name: string;
-    description?: string;
-    sale_price: number;
-    purchase_price: number;
-    type?: string;
-    supplier_id?: number;
-    inventory?: Inventory;
-}
+import { Medicine, MedicineTag } from "@/types/medicine";
 
 export function MedicineTable() {
     // Estados para filtros
@@ -45,6 +27,7 @@ export function MedicineTable() {
         queryFn: async () => {
             try {
                 const { data } = await axios.get(`${BASE_API_URL}/medicines/`)
+                console.log("Medicamentos obtenidos:", data)
                 return data
             } catch (error) {
                 console.error("Error fetching medicines:", error)
@@ -106,10 +89,12 @@ export function MedicineTable() {
                         <TableRow className="bg-muted/50">
                             <TableHead>Nombre</TableHead>
                             <TableHead>Descripción</TableHead>
-                            <TableHead>Precio de venta</TableHead>
                             <TableHead>Precio de compra</TableHead>
+                            <TableHead>Precio de venta</TableHead>
+                            <TableHead>Ganancia</TableHead>
+                            <TableHead>Proveedor</TableHead>
                             <TableHead>Stock</TableHead>
-                            <TableHead>Tipo</TableHead>
+                            <TableHead>Tags</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -145,11 +130,25 @@ export function MedicineTable() {
                                     />
                                 </TableCell>
                                 <TableCell className="max-w-xs truncate">{medicine.description || "—"}</TableCell>
-                                <TableCell>${medicine.sale_price.toFixed(2)}</TableCell>
                                 <TableCell>
                                     {typeof medicine.purchase_price === 'number'
                                         ? `$${medicine.purchase_price.toFixed(2)}`
                                         : "N/A"}
+                                </TableCell>
+                                <TableCell>${medicine.sale_price.toFixed(2)}</TableCell>
+                                <TableCell>
+                                    {typeof medicine.sale_price === 'number' && typeof medicine.purchase_price === 'number'
+                                        ? `$${(medicine.sale_price - medicine.purchase_price).toFixed(2)}`
+                                        : "N/A"}
+                                </TableCell>
+                                <TableCell>
+                                    {medicine.suppliers ?
+                                        (
+                                            <Badge key={medicine.suppliers.id} className="text-white bg-blue-500">
+                                                {medicine.suppliers.name}
+                                            </Badge>
+                                        )
+                                        : "—"}
                                 </TableCell>
                                 <TableCell className="font-mono">
                                     {medicine.inventory?.quantity || 0}
@@ -160,11 +159,19 @@ export function MedicineTable() {
                                     )}
                                 </TableCell>
                                 <TableCell>
-                                    {medicine.type ? (
-                                        <Badge variant="outline">
-                                            {medicine.type}
-                                        </Badge>
-                                    ) : "—"}
+                                    <div className="flex flex-wrap gap-1">
+                                        {medicine.tags && medicine.tags.length > 0 ? (
+                                            medicine.tags.map((tag: any) => (
+                                                <Badge
+                                                    key={tag.id}
+                                                    style={{ backgroundColor: tag.color || "#6366f1" }}
+                                                    className="text-white"
+                                                >
+                                                    {tag.name}
+                                                </Badge>
+                                            ))
+                                        ) : "—"}
+                                    </div>
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <MedicineActionsMenu

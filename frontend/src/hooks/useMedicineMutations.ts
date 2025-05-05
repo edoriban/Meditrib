@@ -10,7 +10,13 @@ export function useMedicineMutations() {
     // Crear medicamento
     const createMedicine = useMutation({
         mutationFn: async (medicineData: MedicineCreateValues) => {
-            const response = await axios.post(`${BASE_API_URL}/medicines/`, medicineData);
+            const payload = {
+                ...medicineData,
+                tags: medicineData.tags?.map(tag => typeof tag === 'string' ? parseInt(tag, 10) : tag) || []
+            };
+
+            console.log("Payload para crear medicamento:", payload);
+            const response = await axios.post(`${BASE_API_URL}/medicines/`, payload);
             return response.data;
         },
         onSuccess: () => {
@@ -25,7 +31,16 @@ export function useMedicineMutations() {
     // Actualizar medicamento
     const updateMedicine = useMutation({
         mutationFn: async ({ medicineId, medicineData }: { medicineId: number, medicineData: MedicineUpdateValues }) => {
-            const response = await axios.put(`${BASE_API_URL}/medicines/${medicineId}`, medicineData);
+            // Asegurarnos de que tags sean números y no intentes convertir lo que ya es número
+            const payload = {
+                ...medicineData,
+                tags: medicineData.tags?.map(tag =>
+                    typeof tag === 'string' ? parseInt(tag, 10) : tag
+                ) || []
+            };
+
+            console.log("Payload para actualizar medicamento:", payload);
+            const response = await axios.put(`${BASE_API_URL}/medicines/${medicineId}`, payload);
             return response.data;
         },
         onSuccess: () => {
@@ -34,6 +49,7 @@ export function useMedicineMutations() {
         },
         onError: (error) => {
             toast.error(`Error al actualizar medicamento: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            console.error("Error completo:", error);
         }
     });
 

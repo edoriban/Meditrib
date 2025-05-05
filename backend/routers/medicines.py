@@ -41,6 +41,7 @@ def read_medicine(medicine_id: int, db: Session = Depends(get_db)):
 
 @router.put("/{medicine_id}", response_model=schemas.Medicine)
 def update_medicine(medicine_id: int, medicine: schemas.MedicineUpdate, db: Session = Depends(get_db)):
+    print(medicine_id, medicine)
     db_medicine = crud_medicines.get_medicine(db, medicine_id=medicine_id)
     if db_medicine is None:
         raise HTTPException(status_code=404, detail="Medicamento no encontrado")

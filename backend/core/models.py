@@ -16,12 +16,11 @@ class Medicine(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
     description = Column(String)
-    type = Column(String, nullable=True)
     purchase_price = Column(Float)
     sale_price = Column(Float)
-    inventory = relationship("Inventory", uselist=False, back_populates="medicine")
-    suppliers = relationship("SupplierMedicine", back_populates="medicine")
-    purchase_order_items = relationship("PurchaseOrderItem", back_populates="medicine")
+    inventory = relationship("Inventory", uselist=False, back_populates="medicine", cascade="all, delete")
+    suppliers = relationship("SupplierMedicine", back_populates="medicine", cascade="all, delete")
+    purchase_order_items = relationship("PurchaseOrderItem", back_populates="medicine", cascade="all, delete")
     tags = relationship("MedicineTag", secondary=medicine_tag_association, backref="medicines")
 
 class MedicineTag(Base):

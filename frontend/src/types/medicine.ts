@@ -5,7 +5,7 @@ export interface Medicine {
     id: number;
     name: string;
     description?: string;
-    tags?: string[];
+    tags?: MedicineTag[];
     sale_price: number;
     purchase_price: number;
     inventory?: {
@@ -26,7 +26,7 @@ export const medicineFormSchema = z.object({
     description: z.string().optional(),
     sale_price: z.number().positive({ message: "El precio de venta debe ser mayor a 0" }),
     purchase_price: z.number().positive({ message: "El precio de compra debe ser mayor a 0" }).optional(),
-    tags: z.array(z.string()).optional().default([]),
+    tags: z.array(z.number()).default([]),
     inventory: z
         .object({
             quantity: z.number().int().min(0, { message: "La cantidad no puede ser negativa" }),
