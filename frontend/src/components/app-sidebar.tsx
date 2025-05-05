@@ -1,4 +1,4 @@
-import * as React from "react"
+import { useEffect, useState } from "react";
 import {
   IconCamera,
   IconChartBar,
@@ -15,6 +15,7 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconUser
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -30,7 +31,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-
+import { auth } from "@/utils/auth";
+import { User } from "@/types/user";
 const data = {
   user: {
     name: "shadcn",
@@ -44,24 +46,24 @@ const data = {
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
-    },
-    {
-      title: "Analytics",
+      title: "Ventas",
       url: "#",
       icon: IconChartBar,
     },
     {
-      title: "Projects",
+      title: "Clientes",
       url: "#",
       icon: IconFolder,
     },
     {
-      title: "Team",
-      url: "#",
+      title: "Usuarios",
+      url: "/users",
       icon: IconUsers,
+    },
+    {
+      title: "Proveedores",
+      url: "#",
+      icon: IconListDetails,
     },
   ],
   navClouds: [
@@ -149,6 +151,35 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await auth.getCurrentUser();
+        setCurrentUser(userData);
+      } catch (error) {
+        console.error("Error al obtener usuario:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+  const userData = currentUser ? {
+    name: currentUser.name,
+    email: currentUser.email,
+    // Usar un div con la inicial del nombre como avatar
+    avatar: "", // No usamos imagen
+    initials: currentUser.name.charAt(0).toUpperCase(),
+  } : {
+    name: "Cargando...",
+    email: "",
+    avatar: "",
+    initials: "?"
+  };
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -172,7 +203,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
     </Sidebar>
   )
