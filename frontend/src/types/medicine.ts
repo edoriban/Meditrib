@@ -39,8 +39,30 @@ export const medicineCreateSchema = medicineFormSchema;
 
 export const medicineUpdateSchema = medicineFormSchema.partial();
 
-export type MedicineFormValues = z.infer<typeof medicineFormSchema>;
-export type MedicineCreateValues = z.infer<typeof medicineCreateSchema>;
+export interface MedicineFormValues {
+    name: string;
+    sale_price: number;
+    description?: string;
+    purchase_price?: number;
+    tags?: number[];
+    inventory?: {
+        quantity: number;
+    };
+    supplier_id?: number;
+}
+
+export type MedicineCreateValues = {
+    name: string;
+    sale_price: number;
+    description?: string;
+    purchase_price?: number;
+    tags?: number[];
+    inventory?: {
+        quantity: number;
+    };
+    supplier_id?: number;
+};
+
 export type MedicineUpdateValues = z.infer<typeof medicineUpdateSchema>;
 
 export const medicineTagSchema = z.object({

@@ -11,18 +11,16 @@ import { useMedicineMutations } from "@/hooks/useMedicineMutations";
 import { MedicineActionsMenu } from "@/components/medicines/MedicineActionsMenu";
 import { MedicineCellViewer } from "@/components/medicines/MedicineCellViewer";
 import { Badge } from "@/components/ui/badge";
-import { Medicine, MedicineTag } from "@/types/medicine";
+import { Medicine } from "@/types/medicine";
 
 export function MedicineTable() {
-    // Estados para filtros
     const [searchTerm, setSearchTerm] = useState("");
     const [stockFilter, setStockFilter] = useState<"all" | "in-stock" | "out-of-stock">("all");
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); // Valor predeterminado
     const { updateMedicine, deleteMedicine } = useMedicineMutations();
     const editRefs = React.useRef<Record<number, HTMLButtonElement | null>>({});
 
-    // Consulta para obtener los medicamentos
-    const { data, isLoading, error, refetch } = useQuery<Medicine[]>({
+    const { data, isLoading, error } = useQuery<Medicine[]>({
         queryKey: ["medicines"],
         queryFn: async () => {
             try {
@@ -36,24 +34,19 @@ export function MedicineTable() {
         }
     })
 
-    // Calculamos el precio máximo de los medicamentos para los filtros
     const maxPrice = data ? Math.max(...data.map(medicine => medicine.sale_price), 1000) : 1000;
 
-    // Aplicamos filtros a los datos
     const filteredData = data?.filter(medicine => {
-        // Filtro por término de búsqueda
         const matchesSearchTerm =
             searchTerm === "" ||
             medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             medicine.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-        // Filtro por stock
         const matchesStockFilter =
             stockFilter === "all" ||
             (stockFilter === "in-stock" && (medicine.inventory?.quantity || 0) > 0) ||
             (stockFilter === "out-of-stock" && (medicine.inventory?.quantity || 0) === 0);
 
-        // Filtro por rango de precio
         const matchesPriceRange =
             medicine.sale_price >= priceRange[0] &&
             medicine.sale_price <= priceRange[1];

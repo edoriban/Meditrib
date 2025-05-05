@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { TagToggleGroup } from "@/components/medicines/TagToggleGroup";
 
 export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
-    const { control, formState: { errors }, setValue, watch } = form;
+    const { control, formState: { errors } } = form;
     const [createTagDialogOpen, setCreateTagDialogOpen] = useState(false);
 
     const { data: medicineTags = [], isLoading: isLoadingTags } = useQuery({
