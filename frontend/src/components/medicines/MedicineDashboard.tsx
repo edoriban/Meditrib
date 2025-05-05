@@ -37,7 +37,7 @@ const MedicineDashboard: React.FC<MedicineDashboardProps> = ({ medicines, isLoad
     const totalMedicines = medicines?.length ?? 0;
 
     return (
-        <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-0 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+        <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-0 @xl/main:grid-cols-2 @5xl/main:grid-cols-6">
             {/* Tarjeta 1: Valor total del inventario */}
             <Card className="overflow-hidden">
                 <CardContent className="p-6">
@@ -81,30 +81,7 @@ const MedicineDashboard: React.FC<MedicineDashboardProps> = ({ medicines, isLoad
                     </div>
                 </CardContent>
             </Card>
-            {/* Tarjeta 2: Medicamentos sin stock
-            <Card className="overflow-hidden">
-                <CardContent className="p-6">
-                    <div className="flex items-center justify-between space-y-0 pb-2">
-                        <h3 className="tracking-tight text-sm font-medium text-muted-foreground">Medicamentos sin stock</h3>
-                        <div className="p-2 bg-red-100 text-red-700 rounded-full">
-                            <IconCoinOff className="h-4 w-4" />
-                        </div>
-                    </div>
-                    <div className="flex items-baseline">
-                        <div className="text-2xl font-bold">{outOfStockCount}</div>
-                        <div className="text-sm ml-2">
-                            <span className="text-red-600 font-medium">
-                                {((outOfStockCount / totalMedicines) * 100).toFixed(1)}%
-                            </span> del total
-                        </div>
-                    </div>
-                    <div className="flex items-center pt-4">
-                        <div className="text-xs text-muted-foreground pt-1">
-                            De {totalMedicines} medicamentos
-                        </div>
-                    </div>
-                </CardContent>
-            </Card> */}
+
 
             {/* Tarjeta 3: Ganancia potencial */}
             <Card className="overflow-hidden">
@@ -128,31 +105,7 @@ const MedicineDashboard: React.FC<MedicineDashboardProps> = ({ medicines, isLoad
                     </div>
                 </CardContent>
             </Card>
-            {/* Tarjeta 4: Medicamentos con Stock Bajo
-            <Card className="overflow-hidden">
-                <CardContent className="p-6">
-                    <div className="flex items-center justify-between space-y-0 pb-2">
-                        <h3 className="tracking-tight text-sm font-medium text-muted-foreground">Stock Crítico</h3>
-                        <div className="p-2 bg-amber-100 text-amber-700 rounded-full">
-                            <IconAlertTriangle className="h-4 w-4" />
-                        </div>
-                    </div>
-                    <div className="flex items-baseline">
-                        <div className="text-2xl font-bold">
-                            {medicines?.filter(med => {
-                                const quantity = med.inventory?.quantity ?? 0;
-                                return quantity > 0 && quantity <= 5;
-                            }).length}
-                        </div>
-                        <div className="text-sm ml-2">medicamentos</div>
-                    </div>
-                    <div className="flex items-center pt-4">
-                        <div className="text-xs text-muted-foreground">
-                            Requieren reabastecimiento pronto
-                        </div>
-                    </div>
-                </CardContent>
-            </Card> */}
+
             {/* Tarjeta 5: Medicamentos de Alta Rentabilidad */}
             <Card className="overflow-hidden">
                 <CardContent className="p-6">
@@ -190,7 +143,55 @@ const MedicineDashboard: React.FC<MedicineDashboardProps> = ({ medicines, isLoad
                     </div>
                 </CardContent>
             </Card>
-
+            {/* Tarjeta 4: Medicamentos con Stock Bajo */}
+            <Card className="overflow-hidden">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between space-y-0 pb-2">
+                        <h3 className="tracking-tight text-sm font-medium text-muted-foreground">Stock Crítico</h3>
+                        <div className="p-2 bg-amber-100 text-amber-700 rounded-full">
+                            <IconAlertTriangle className="h-4 w-4" />
+                        </div>
+                    </div>
+                    <div className="flex items-baseline">
+                        <div className="text-2xl font-bold">
+                            {medicines?.filter(med => {
+                                const quantity = med.inventory?.quantity ?? 0;
+                                return quantity > 0 && quantity <= 5;
+                            }).length}
+                        </div>
+                        <div className="text-sm ml-2">medicamentos</div>
+                    </div>
+                    <div className="flex items-center pt-4">
+                        <div className="text-xs text-muted-foreground">
+                            Requieren reabastecimiento pronto
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+            {/* Tarjeta 2: Medicamentos sin stock */}
+            <Card className="overflow-hidden">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between space-y-0 pb-2">
+                        <h3 className="tracking-tight text-sm font-medium text-muted-foreground">Medicamentos sin stock</h3>
+                        <div className="p-2 bg-red-100 text-red-700 rounded-full">
+                            <IconCoinOff className="h-4 w-4" />
+                        </div>
+                    </div>
+                    <div className="flex items-baseline">
+                        <div className="text-2xl font-bold">{outOfStockCount}</div>
+                        <div className="text-sm ml-2">
+                            <span className="text-red-600 font-medium">
+                                {((outOfStockCount / totalMedicines) * 100).toFixed(1)}%
+                            </span> del total
+                        </div>
+                    </div>
+                    <div className="flex items-center pt-4">
+                        <div className="text-xs text-muted-foreground pt-1">
+                            De {totalMedicines} medicamentos
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
             {/* <Card className="overflow-hidden">
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between pb-2">

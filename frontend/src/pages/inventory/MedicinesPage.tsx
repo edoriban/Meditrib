@@ -38,7 +38,6 @@ export default function MedicinesPage() {
         <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:p-6">
             <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                    <MedicineDashboard medicines={data} isLoading={isLoading} error={error} />
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Inventario de Medicamentos</h1>
                         <p className="text-muted-foreground mt-2">
@@ -58,6 +57,7 @@ export default function MedicinesPage() {
                         </Button>
                     </div>
                 </div>
+                <MedicineDashboard medicines={data} isLoading={isLoading} error={error} />
             </div>
 
             <MedicineTable medicines={data} isLoading={isLoading} error={error} />

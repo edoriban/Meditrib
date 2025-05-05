@@ -13,31 +13,73 @@ import {
     DialogTrigger,
     DialogClose,
 } from "@/components/ui/dialog";
+import { X } from "lucide-react";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useMedicineMutations } from "@/hooks/useMedicineMutations";
-import { MedicineCreateValues, medicineCreateSchema } from "@/types/medicine";
+import { MedicineCreateValues, MedicineTag, medicineCreateSchema } from "@/types/medicine";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { BASE_API_URL } from "@/config";
 import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog";
-import { TagToggleGroup } from "@/components/medicines/TagToggleGroup";
+import { Badge } from "../ui/badge";
 
+const getRandomColor = () => {
+    const colors = [
+        "#f87171", // rojo
+        "#fb923c", // naranja
+        "#facc15", // amarillo
+        "#4ade80", // verde
+        "#22d3ee", // cyan
+        "#60a5fa", // azul
+        "#a78bfa", // violeta
+        "#f472b6", // rosa
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+};
 
 export function CreateMedicineDialog() {
     const { createMedicine, isCreating } = useMedicineMutations();
     const [open, setOpen] = React.useState(false);
     const [createTagDialogOpen, setCreateTagDialogOpen] = React.useState(false);
+    const [newTagName, setNewTagName] = React.useState("");
+    const [localTags, setLocalTags] = React.useState<Array<{ id: number, name: string, color: string }>>([]);
 
-    // Query para obtener las etiquetas existentes
+    const handleCreateTag = () => {
+        if (!newTagName.trim()) return;
+
+        const tempId = -(Date.now());
+        const newTag = {
+            id: tempId,
+            name: newTagName.trim(),
+            color: getRandomColor()
+        };
+
+        setLocalTags([...localTags, newTag]);
+
+        const currentTags = form.getValues("tags") || [];
+        form.setValue("tags", [...currentTags, tempId]);
+
+        setNewTagName("");
+    };
+
+    const handleRemoveTag = (tagId: number) => {
+        const currentTags = form.getValues("tags") || [];
+        form.setValue("tags", currentTags.filter(id => id !== tagId));
+
+        if (tagId < 0) {
+            setLocalTags(localTags.filter(tag => tag.id !== tagId));
+        }
+    };
+
     const { data: medicineTags = [], isLoading: isLoadingTags } = useQuery({
         queryKey: ["medicineTags"],
         queryFn: async () => {
             const { data } = await axios.get(`${BASE_API_URL}/medicine-tags/`);
             return data;
         },
-        enabled: open // Solo carga cuando el diálogo está abierto
+        enabled: open
     });
 
     const form = useForm<MedicineCreateValues>({
@@ -54,31 +96,33 @@ export function CreateMedicineDialog() {
         }
     });
 
-    // Componente para mostrar cuando no hay etiquetas
-    const EmptyTagsContent = () => (
-        <div className="flex flex-col items-center justify-center py-4 space-y-2">
-            <p className="text-sm text-muted-foreground">No hay tipos de medicamentos registrados</p>
-            <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => setCreateTagDialogOpen(true)}
-            >
-                Crear nuevo tipo
-            </Button>
-        </div>
-    );
 
     const onSubmit: SubmitHandler<MedicineCreateValues> = async (data) => {
         try {
+            const newTagsPromises = localTags.map(async tag => {
+                const { data: createdTag } = await axios.post(`${BASE_API_URL}/medicine-tags/`, {
+                    name: tag.name,
+                    color: tag.color
+                });
+                return { oldId: tag.id, newId: createdTag.id };
+            });
+
+            const tagMappings = await Promise.all(newTagsPromises);
+
+            const finalTags = data.tags?.map(tagId => {
+                const mapping = tagMappings.find(m => m.oldId === tagId);
+                return mapping ? mapping.newId : Number(tagId);
+            }) || [];
+
             const formData = {
                 ...data,
-                tags: data.tags?.map(tagId => Number(tagId)) || []
+                tags: finalTags
             };
 
             await createMedicine(formData);
             setOpen(false);
             form.reset();
+            setLocalTags([]);
         } catch (error) {
             console.error("Error al crear medicamento:", error);
         }
@@ -118,7 +162,7 @@ export function CreateMedicineDialog() {
                                         <FormLabel>Nombre del medicamento</FormLabel>
                                         <FormControl>
                                             <Input
-                                                placeholder="Ej: Paracetamol 500mg"
+                                                placeholder="Ej: Clamoxin 500/125mg tabletas 10"
                                                 {...field}
                                             />
                                         </FormControl>
@@ -135,7 +179,7 @@ export function CreateMedicineDialog() {
                                         <FormLabel>Descripción</FormLabel>
                                         <FormControl>
                                             <Textarea
-                                                placeholder="Descripción del medicamento"
+                                                placeholder="Ej: Amoxicilina 500mg + Acido Clavulanico 125mg"
                                                 {...field}
                                                 rows={3}
                                                 value={field.value || ""}
@@ -146,28 +190,7 @@ export function CreateMedicineDialog() {
                                 )}
                             />
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="sale_price"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Precio de venta</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    placeholder="0.00"
-                                                    min="0"
-                                                    step="0.01"
-                                                    {...field}
-                                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
+                            <div className="grid grid-cols-3 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="purchase_price"
@@ -192,6 +215,47 @@ export function CreateMedicineDialog() {
                                         </FormItem>
                                     )}
                                 />
+                                <FormField
+                                    control={form.control}
+                                    name="sale_price"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Precio de venta</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="0.00"
+                                                    min="0"
+                                                    step="0.01"
+                                                    {...field}
+                                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="inventory.quantity"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Cantidad</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    min="0"
+                                                    step="1"
+                                                    {...field}
+                                                    onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
 
                             {/* Reemplazar el campo tipo con el selector de etiquetas */}
@@ -202,57 +266,110 @@ export function CreateMedicineDialog() {
                                     <FormItem>
                                         <div className="flex items-center justify-between">
                                             <FormLabel>Tipos de medicamento</FormLabel>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-6 px-2 text-xs"
-                                                onClick={() => setCreateTagDialogOpen(true)}
-                                                type="button"
-                                            >
-                                                Gestionar tipos
-                                            </Button>
+
                                         </div>
                                         <FormControl>
-                                            {isLoadingTags ? (
-                                                <div className="border rounded-md p-3 text-sm text-muted-foreground">Cargando tipos...</div>
-                                            ) : medicineTags.length === 0 ? (
-                                                <EmptyTagsContent />
-                                            ) : (
-                                                <TagToggleGroup
-                                                    tags={medicineTags}
-                                                    selectedTags={field.value?.map(tagId => tagId.toString()) || []}
-                                                    onChange={(selected) => {
-                                                        const numericTags = selected.map(tagId => Number(tagId));
-                                                        field.onChange(numericTags);
-                                                    }}
-                                                />
-                                            )}
+                                            <div className="space-y-2">
+                                                {/* Aquí va el componente de tags */}
+                                                <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-6">
+                                                    {/* Tags seleccionados existentes */}
+                                                    {medicineTags.filter((tag: MedicineTag) =>
+                                                        field.value?.includes(tag.id)
+                                                    ).map((tag: MedicineTag) => (
+                                                        <Badge
+                                                            key={tag.id}
+                                                            style={{ backgroundColor: tag.color || "#888888" }}
+                                                            className="text-white flex items-center gap-1 pr-1" // Reducir el padding derecho
+                                                        >
+                                                            {tag.name}
+                                                            <button
+                                                                type="button"
+                                                                className="ml-1 bg-white/20 hover:bg-white/40 rounded-full p-0.5 flex items-center justify-center"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation(); // Detener propagación del evento
+                                                                    handleRemoveTag(tag.id);
+                                                                }}
+                                                                aria-label={`Eliminar etiqueta ${tag.name}`}
+                                                            >
+                                                                <X size={12} className="text-white" />
+                                                            </button>
+                                                        </Badge>
+                                                    ))}
+
+                                                    {/* Tags locales nuevos */}
+                                                    {localTags.map(tag => (
+                                                        <Badge
+                                                            key={tag.id}
+                                                            style={{ backgroundColor: tag.color }}
+                                                            className="text-white flex items-center gap-1 pr-1"
+                                                        >
+                                                            {tag.name}
+                                                            <button
+                                                                type="button"
+                                                                className="ml-1 bg-white/20 hover:bg-white/40 rounded-full p-0.5 flex items-center justify-center"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleRemoveTag(tag.id);
+                                                                }}
+                                                                aria-label={`Eliminar etiqueta ${tag.name}`}
+                                                            >
+                                                                <X size={12} className="text-white" />
+                                                            </button>
+                                                        </Badge>
+                                                    ))}
+
+                                                    {/* Input para nuevos tags */}
+                                                    <div className="inline-flex items-center px-3 py-1 bg-gray-100 rounded-full h-6">
+                                                        <input
+                                                            type="text"
+                                                            value={newTagName}
+                                                            onChange={e => setNewTagName(e.target.value)}
+                                                            onKeyDown={e => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    handleCreateTag();
+                                                                }
+                                                            }}
+                                                            onBlur={() => {
+                                                                if (newTagName.trim()) {
+                                                                    handleCreateTag();
+                                                                }
+                                                            }}
+                                                            className="bg-transparent border-none focus:outline-none text-sm w-20"
+                                                            placeholder="+ Nuevo"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Selector de tags existentes */}
+                                                <div className="pt-1">
+                                                    <p className="text-xs text-muted-foreground mb-2">Tags disponibles:</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {medicineTags.filter((tag: MedicineTag) =>
+                                                            !field.value?.includes(tag.id)
+                                                        ).map((tag: MedicineTag) => (
+                                                            <Badge
+                                                                key={tag.id}
+                                                                style={{ backgroundColor: tag.color || "#888888" }}
+                                                                className="text-white cursor-pointer opacity-70 hover:opacity-100"
+                                                                onClick={() => {
+                                                                    const currentTags = field.value || [];
+                                                                    field.onChange([...currentTags, tag.id]);
+                                                                }}
+                                                            >
+                                                                {tag.name}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="inventory.quantity"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Cantidad en inventario</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="number"
-                                                placeholder="0"
-                                                min="0"
-                                                step="1"
-                                                {...field}
-                                                onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+
 
                             <DialogFooter>
                                 <DialogClose asChild>
