@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
     children: ReactNode;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+function ProtectedRoute({ children }: ProtectedRouteProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const location = useLocation();
@@ -50,3 +50,5 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
     return <>{children}</>;
 }
+
+export default ProtectedRoute;

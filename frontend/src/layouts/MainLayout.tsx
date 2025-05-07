@@ -1,22 +1,30 @@
 import * as React from "react";
-import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+const AppSidebar = React.lazy(() => import("@/components/app-sidebar"));
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Suspense } from "react";
 
 interface MainLayoutProps {
     children: React.ReactNode;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+function MainLayout({ children }: MainLayoutProps) {
     return (
-        <SidebarProvider>
-            <AppSidebar variant="inset" />
-            <SidebarInset>
-                <SiteHeader />
-                <div className="flex flex-1 flex-col">
-                    {children}
-                </div>
-            </SidebarInset>
-        </SidebarProvider>
+        <ErrorBoundary>
+            <Suspense fallback={<div>Cargando...</div>}>
+                <SidebarProvider>
+                    <AppSidebar />
+                    <SidebarInset>
+                        <SiteHeader />
+                        <div className="flex flex-1 flex-col">
+                            {children}
+                        </div>
+                    </SidebarInset>
+                </SidebarProvider>
+            </Suspense>
+        </ErrorBoundary>
     );
 }
+
+export default MainLayout;
