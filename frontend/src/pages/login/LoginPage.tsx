@@ -9,7 +9,7 @@ export default function LoginPage() {
                 <img src={logoSrc} alt="Logo" className="mb-8 h-24 w-auto" />
                 <LoginForm className="w-full max-w-md" />
             </div>
-            <BackgroundBeams />
+            {/* <BackgroundBeams /> */}
         </div>
     );
 }

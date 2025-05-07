@@ -4,6 +4,7 @@ import sys
 import time
 import threading
 import os
+import shutil
 
 backend_process = None
 frontend_process = None
@@ -53,12 +54,25 @@ if __name__ == "__main__":
     # Iniciar frontend
     print("Iniciando frontend con pnpm dev...")
     # Get the user's home directory
-    home_dir = os.path.expanduser("~")
-    # Full path to pnpm executable
-    pnpm_path = os.path.join(home_dir, ".pnpm-global", "bin", "pnpm.cmd")
-    # Use the full path in the subprocess call
-    frontend_process = subprocess.Popen([pnpm_path, "dev"], cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True)
+    pnpm_path = shutil.which("pnpm")
 
+    # Si no se encuentra, intentar con ubicaciones comunes
+    if not pnpm_path:
+        home_dir = os.path.expanduser("~")
+        if sys.platform == "win32":
+            possible_path = os.path.join(home_dir, ".pnpm-global", "bin", "pnpm.cmd")
+        else:
+            possible_path = os.path.join(home_dir, ".pnpm-global", "bin", "pnpm")
+        
+        if os.path.exists(possible_path):
+            pnpm_path = possible_path
+        else:
+            print("ERROR: No se pudo encontrar pnpm. Asegúrate de que esté instalado y en el PATH.")
+            backend_process.terminate()
+            sys.exit(1)
+
+    print(f"Usando pnpm en: {pnpm_path}")
+    frontend_process = subprocess.Popen([pnpm_path, "dev"], cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True)
     # Iniciar hilos para mostrar la salida del frontend
     frontend_stdout_thread = threading.Thread(target=stream_output, args=(frontend_process, "Frontend"))
     frontend_stderr_thread = threading.Thread(target=stream_error, args=(frontend_process, "Frontend"))
