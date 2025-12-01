@@ -4,9 +4,12 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { IconFileTypePdf } from "@tabler/icons-react";
+import { generateSalePDF } from "@/utils/salePdfGenerator";
 
 interface SaleActionsMenuProps {
     sale: Sale;
@@ -14,7 +17,7 @@ interface SaleActionsMenuProps {
     onDelete: () => void;
 }
 
-export function SaleActionsMenu({ onEdit, onDelete }: SaleActionsMenuProps) {
+export function SaleActionsMenu({ sale, onEdit, onDelete }: SaleActionsMenuProps) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -24,6 +27,11 @@ export function SaleActionsMenu({ onEdit, onDelete }: SaleActionsMenuProps) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => generateSalePDF(sale)}>
+                    <IconFileTypePdf className="mr-2 h-4 w-4" />
+                    Exportar PDF
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onEdit}>
                     <Edit className="mr-2 h-4 w-4" />
                     Editar

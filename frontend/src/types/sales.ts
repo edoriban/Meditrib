@@ -51,17 +51,17 @@ export const saleItemSchema = z.object({
     medicine_id: z.number().int().positive("Selecciona un medicamento"),
     quantity: z.number().int().positive("La cantidad debe ser mayor a 0"),
     unit_price: z.number().positive("El precio debe ser mayor a 0"),
-    discount: z.number().min(0).default(0),
+    discount: z.number().min(0),
 });
 
 // Schema para crear una venta
 export const saleFormSchema = z.object({
     client_id: z.number().int().positive("Selecciona un cliente"),
     user_id: z.number().int().positive(),
-    document_type: z.enum(["invoice", "remission"]).default("invoice"),
-    iva_rate: z.number().min(0).max(1).default(0.16),
-    shipping_status: z.string().default("pending"),
-    payment_status: z.string().default("pending"),
+    document_type: z.enum(["invoice", "remission"]),
+    iva_rate: z.number().min(0).max(1),
+    shipping_status: z.string(),
+    payment_status: z.string(),
     payment_method: z.string().optional(),
     notes: z.string().optional(),
     items: z.array(saleItemSchema).min(1, "Agrega al menos un medicamento"),

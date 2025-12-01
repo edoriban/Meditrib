@@ -1,4 +1,3 @@
-import { forwardRef } from "react";
 import { Sale } from "@/types/sales";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,11 +14,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { IconFileTypePdf } from "@tabler/icons-react";
+import { generateSalePDF } from "@/utils/salePdfGenerator";
 
 interface SaleCellViewerProps {
     sale: Sale;
-    onUpdate?: (saleId: number, data: unknown) => void;
-    onDelete?: (saleId: number) => void;
 }
 
 const formatCurrency = (amount: number) => {
@@ -29,9 +28,8 @@ const formatCurrency = (amount: number) => {
     }).format(amount);
 };
 
-export const SaleCellViewer = forwardRef<HTMLButtonElement, SaleCellViewerProps>(
-    ({ sale }, ref) => {
-        const isMobile = useIsMobile();
+export function SaleCellViewer({ sale }: SaleCellViewerProps) {
+    const isMobile = useIsMobile();
 
         const getPaymentStatusLabel = (status: string) => {
             const labels: { [key: string]: string } = {
@@ -59,7 +57,6 @@ export const SaleCellViewer = forwardRef<HTMLButtonElement, SaleCellViewerProps>
                     <Button
                         variant="link"
                         className="p-0 text-left font-medium"
-                        ref={ref}
                     >
                         #{sale.id.toString().padStart(4, '0')}
                     </Button>
@@ -166,15 +163,20 @@ export const SaleCellViewer = forwardRef<HTMLButtonElement, SaleCellViewerProps>
                         )}
                     </div>
 
-                    <DrawerFooter>
+                    <DrawerFooter className="flex-row gap-2">
+                        <Button 
+                            variant="default" 
+                            onClick={() => generateSalePDF(sale)}
+                            className="flex-1"
+                        >
+                            <IconFileTypePdf className="mr-2 h-4 w-4" />
+                            Exportar PDF
+                        </Button>
                         <DrawerClose asChild>
-                            <Button variant="outline">Cerrar</Button>
+                            <Button variant="outline" className="flex-1">Cerrar</Button>
                         </DrawerClose>
                     </DrawerFooter>
                 </DrawerContent>
             </Drawer>
         );
-    }
-);
-
-SaleCellViewer.displayName = "SaleCellViewer";
+}

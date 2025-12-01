@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { IconSettings, IconBuilding, IconBell, IconPrinter, IconDatabase, IconAlertTriangle } from "@tabler/icons-react";
-import { useState } from "react";
+import { IconSettings, IconBuilding, IconBell, IconPrinter, IconDatabase, IconAlertTriangle, IconPhoto, IconTrash } from "@tabler/icons-react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    
     const [settings, setSettings] = useState({
         // Empresa
         companyName: "Mi Farmacia",
@@ -16,6 +18,7 @@ export default function SettingsPage() {
         companyAddress: "",
         companyPhone: "",
         companyEmail: "",
+        companyLogo: "", // Base64 de la imagen
         // Alertas
         lowStockThreshold: 10,
         criticalStockThreshold: 5,
@@ -28,6 +31,52 @@ export default function SettingsPage() {
         autoBackup: true,
         backupFrequency: "daily",
     });
+
+    // Cargar configuración guardada al iniciar
+    useEffect(() => {
+        const savedSettings = localStorage.getItem('meditrib_settings');
+        if (savedSettings) {
+            try {
+                const parsed = JSON.parse(savedSettings);
+                setSettings(prev => ({ ...prev, ...parsed }));
+            } catch (e) {
+                console.error("Error al cargar configuración:", e);
+            }
+        }
+    }, []);
+
+    const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validar que sea una imagen
+        if (!file.type.startsWith('image/')) {
+            toast.error("Por favor selecciona una imagen válida");
+            return;
+        }
+
+        // Validar tamaño (máximo 1MB)
+        if (file.size > 1024 * 1024) {
+            toast.error("La imagen debe ser menor a 1MB");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64 = e.target?.result as string;
+            setSettings({ ...settings, companyLogo: base64 });
+            toast.success("Logo cargado correctamente");
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveLogo = () => {
+        setSettings({ ...settings, companyLogo: "" });
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+        toast.success("Logo eliminado");
+    };
 
     const handleSave = () => {
         // Aquí iría la lógica para guardar en el backend
@@ -65,6 +114,48 @@ export default function SettingsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        {/* Logo de la empresa */}
+                        <div className="space-y-2">
+                            <Label>Logo de la Empresa</Label>
+                            <div className="flex items-center gap-4">
+                                {settings.companyLogo ? (
+                                    <div className="relative">
+                                        <img 
+                                            src={settings.companyLogo} 
+                                            alt="Logo de la empresa" 
+                                            className="h-16 w-auto object-contain border rounded-md p-1"
+                                        />
+                                        <Button
+                                            variant="destructive"
+                                            size="icon"
+                                            className="absolute -top-2 -right-2 h-6 w-6"
+                                            onClick={handleRemoveLogo}
+                                        >
+                                            <IconTrash className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="h-16 w-16 border-2 border-dashed rounded-md flex items-center justify-center bg-muted">
+                                        <IconPhoto className="h-6 w-6 text-muted-foreground" />
+                                    </div>
+                                )}
+                                <div className="flex-1">
+                                    <Input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleLogoUpload}
+                                        className="cursor-pointer"
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        PNG o JPG, máximo 1MB. Se usará en PDFs y documentos.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Separator />
+
                         <div className="space-y-2">
                             <Label htmlFor="companyName">Razón Social</Label>
                             <Input 

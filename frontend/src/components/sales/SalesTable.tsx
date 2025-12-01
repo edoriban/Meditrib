@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Sale } from "@/types/sales";
 import { useSaleMutations } from "@/hooks/useSaleMutations";
 import { SaleFilters } from "./SaleFilters";
 import { SaleCellViewer } from "./SaleCellViewer";
 import { SaleActionsMenu } from "./SaleActionsMenu";
 import { DeleteSaleDialog } from "./DeleteSaleDialog";
+import { EditSaleDialog } from "./EditSaleDialog";
 import {
     Table,
     TableBody,
@@ -33,7 +34,8 @@ const formatCurrency = (amount: number) => {
 export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [saleToDelete, setSaleToDelete] = useState<Sale | null>(null);
-    const editRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [saleToEdit, setSaleToEdit] = useState<Sale | null>(null);
 
     const { deleteSale } = useSaleMutations();
 
@@ -53,6 +55,11 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
     const handleDelete = (sale: Sale) => {
         setSaleToDelete(sale);
         setDeleteDialogOpen(true);
+    };
+
+    const handleEdit = (sale: Sale) => {
+        setSaleToEdit(sale);
+        setEditDialogOpen(true);
     };
 
     const confirmDelete = async () => {
@@ -138,12 +145,7 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
                             filteredData.map((sale) => (
                                 <TableRow key={sale.id}>
                                     <TableCell>
-                                        <SaleCellViewer
-                                            sale={sale}
-                                            ref={(el: HTMLButtonElement | null) => {
-                                                editRefs.current[sale.id] = el;
-                                            }}
-                                        />
+                                        <SaleCellViewer sale={sale} />
                                     </TableCell>
                                     <TableCell className="font-medium">{sale.client?.name || '-'}</TableCell>
                                     <TableCell>
@@ -176,9 +178,7 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
                                     <TableCell>
                                         <SaleActionsMenu
                                             sale={sale}
-                                            onEdit={() => {
-                                                editRefs.current[sale.id]?.click();
-                                            }}
+                                            onEdit={() => handleEdit(sale)}
                                             onDelete={() => handleDelete(sale)}
                                         />
                                     </TableCell>
@@ -195,6 +195,14 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
                 onConfirm={confirmDelete}
                 saleId={saleToDelete?.id || 0}
             />
+
+            {saleToEdit && (
+                <EditSaleDialog
+                    open={editDialogOpen}
+                    onOpenChange={setEditDialogOpen}
+                    sale={saleToEdit}
+                />
+            )}
         </div>
     );
 }

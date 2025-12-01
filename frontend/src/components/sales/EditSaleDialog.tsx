@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { SaleCreateValues, SaleItemValues, saleFormSchema } from "@/types/sales";
+import { Sale, SaleItemValues, saleFormSchema, SaleFormValues } from "@/types/sales";
 import { useSaleMutations } from "@/hooks/useSaleMutations";
 import { Medicine } from "@/types/medicine";
 import { Client } from "@/types/clients";
@@ -29,12 +29,15 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconPlus, IconTrash, IconAlertTriangle, IconLock } from "@tabler/icons-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
-interface CreateSaleDialogProps {
+interface EditSaleDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    sale: Sale;
 }
 
 const formatCurrency = (amount: number) => {
@@ -44,11 +47,39 @@ const formatCurrency = (amount: number) => {
     }).format(amount);
 };
 
-export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) {
-    const { createSale } = useSaleMutations();
+// Verificar si la venta puede ser editada
+const canEditSale = (sale: Sale): { canEdit: boolean; reason: string } => {
+    if (sale.shipping_status === "delivered") {
+        return { canEdit: false, reason: "No se puede editar una venta ya entregada" };
+    }
+    if (sale.shipping_status === "canceled") {
+        return { canEdit: false, reason: "No se puede editar una venta cancelada" };
+    }
+    if (sale.payment_status === "refunded") {
+        return { canEdit: false, reason: "No se puede editar una venta reembolsada" };
+    }
+    return { canEdit: true, reason: "" };
+};
+
+// Verificar si se pueden modificar los productos (más restrictivo)
+const canEditProducts = (sale: Sale): { canEdit: boolean; reason: string } => {
+    if (sale.shipping_status === "shipped") {
+        return { canEdit: false, reason: "No se pueden modificar productos de un pedido ya enviado" };
+    }
+    if (sale.payment_status === "paid") {
+        return { canEdit: false, reason: "No se pueden modificar productos de una venta ya pagada. Considera hacer un reembolso parcial." };
+    }
+    return canEditSale(sale);
+};
+
+export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps) {
+    const { updateSale } = useSaleMutations();
     const [items, setItems] = useState<SaleItemValues[]>([]);
     const [selectedMedicine, setSelectedMedicine] = useState<number>(0);
     const [itemQuantity, setItemQuantity] = useState<number>(1);
+
+    const editability = canEditSale(sale);
+    const productEditability = canEditProducts(sale);
 
     // Cargar medicamentos desde la API
     const { data: medicines } = useQuery<Medicine[]>({
@@ -70,38 +101,61 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         enabled: open,
     });
 
-    const form = useForm<SaleCreateValues>({
+    const form = useForm<SaleFormValues>({
         resolver: zodResolver(saleFormSchema),
         defaultValues: {
-            client_id: 0,
-            user_id: 1,
-            document_type: "invoice",
-            iva_rate: 0.16,
-            shipping_status: "pending",
-            payment_status: "pending",
-            payment_method: "transfer",
-            notes: "",
+            client_id: sale.client_id,
+            user_id: sale.user_id,
+            document_type: sale.document_type as "invoice" | "remission",
+            iva_rate: sale.iva_rate,
+            shipping_status: sale.shipping_status,
+            payment_status: sale.payment_status,
+            payment_method: sale.payment_method || "",
+            notes: sale.notes || "",
             items: [],
         },
     });
 
+    // Cargar items de la venta cuando se abre el diálogo
+    useEffect(() => {
+        if (open && sale.items) {
+            const saleItems: SaleItemValues[] = sale.items.map(item => ({
+                medicine_id: item.medicine_id,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                discount: item.discount,
+            }));
+            setItems(saleItems);
+            
+            // Resetear el form con los valores de la venta
+            form.reset({
+                client_id: sale.client_id,
+                user_id: sale.user_id,
+                document_type: sale.document_type as "invoice" | "remission",
+                iva_rate: sale.iva_rate,
+                shipping_status: sale.shipping_status,
+                payment_status: sale.payment_status,
+                payment_method: sale.payment_method || "",
+                notes: sale.notes || "",
+                items: [],
+            });
+        }
+    }, [open, sale, form]);
+
     // Agregar un item a la lista
     const addItem = () => {
-        if (!selectedMedicine || itemQuantity <= 0) return;
+        if (!selectedMedicine || itemQuantity <= 0 || !productEditability.canEdit) return;
         
         const medicine = medicines?.find(m => m.id === selectedMedicine);
         if (!medicine) return;
 
-        // Verificar si ya existe el medicamento
         const existingIndex = items.findIndex(item => item.medicine_id === selectedMedicine);
         
         if (existingIndex >= 0) {
-            // Actualizar cantidad si ya existe
             const updatedItems = [...items];
             updatedItems[existingIndex].quantity += itemQuantity;
             setItems(updatedItems);
         } else {
-            // Agregar nuevo item
             const newItem: SaleItemValues = {
                 medicine_id: selectedMedicine,
                 quantity: itemQuantity,
@@ -111,14 +165,22 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
             setItems([...items, newItem]);
         }
 
-        // Resetear selección
         setSelectedMedicine(0);
         setItemQuantity(1);
     };
 
     // Eliminar un item
     const removeItem = (index: number) => {
+        if (!productEditability.canEdit) return;
         setItems(items.filter((_, i) => i !== index));
+    };
+
+    // Actualizar cantidad de un item
+    const updateItemQuantity = (index: number, newQuantity: number) => {
+        if (!productEditability.canEdit || newQuantity < 1) return;
+        const updatedItems = [...items];
+        updatedItems[index].quantity = newQuantity;
+        setItems(updatedItems);
     };
 
     // Calcular totales con IVA por producto
@@ -126,7 +188,6 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         return sum + (item.quantity * item.unit_price) - item.discount;
     }, 0);
 
-    // Calcular IVA basado en cada producto
     const documentType = form.watch("document_type");
     const ivaAmount = documentType === "invoice" 
         ? items.reduce((sum, item) => {
@@ -138,21 +199,21 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         : 0;
     const total = subtotal + ivaAmount;
 
-    const onSubmit = async (data: SaleCreateValues) => {
+    const onSubmit = async (data: SaleFormValues) => {
+        if (!editability.canEdit) return;
+        
         if (items.length === 0) {
             form.setError("items", { message: "Agrega al menos un medicamento" });
             return;
         }
 
-        const saleData: SaleCreateValues = {
+        const updateData = {
             ...data,
-            items: items,
+            items: productEditability.canEdit ? items : undefined, // Solo enviar items si se pueden editar
         };
 
-        await createSale(saleData);
+        await updateSale(sale.id, updateData);
         onOpenChange(false);
-        form.reset();
-        setItems([]);
     };
 
     const getMedicineName = (medicineId: number) => {
@@ -160,20 +221,37 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
     };
 
     return (
-        <Dialog open={open} onOpenChange={(isOpen) => {
-            if (!isOpen) {
-                form.reset();
-                setItems([]);
-            }
-            onOpenChange(isOpen);
-        }}>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Nueva Venta / Pedido</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2">
+                        Editar Pedido #{sale.id.toString().padStart(4, '0')}
+                        {!editability.canEdit && <IconLock className="h-4 w-4 text-muted-foreground" />}
+                    </DialogTitle>
                     <DialogDescription>
-                        Registra un nuevo pedido. Puedes agregar múltiples medicamentos.
+                        Modifica los datos del pedido. Los cambios en productos afectarán el inventario.
                     </DialogDescription>
                 </DialogHeader>
+
+                {/* Alerta si no se puede editar */}
+                {!editability.canEdit && (
+                    <Alert variant="destructive">
+                        <IconAlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Venta bloqueada</AlertTitle>
+                        <AlertDescription>{editability.reason}</AlertDescription>
+                    </Alert>
+                )}
+
+                {/* Alerta si no se pueden editar productos pero sí estados */}
+                {editability.canEdit && !productEditability.canEdit && (
+                    <Alert>
+                        <IconAlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Edición limitada</AlertTitle>
+                        <AlertDescription>
+                            {productEditability.reason}. Solo puedes modificar estados y notas.
+                        </AlertDescription>
+                    </Alert>
+                )}
                 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -188,6 +266,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                         <Select 
                                             onValueChange={(value) => field.onChange(parseInt(value))}
                                             value={field.value ? field.value.toString() : undefined}
+                                            disabled={!editability.canEdit}
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
@@ -213,7 +292,11 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Tipo de Documento *</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <Select 
+                                            onValueChange={field.onChange} 
+                                            value={field.value}
+                                            disabled={!productEditability.canEdit}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue />
@@ -230,14 +313,19 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        {/* Estados */}
+                        <div className="grid grid-cols-3 gap-4">
                             <FormField
                                 control={form.control}
                                 name="payment_status"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Estado de Pago</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <Select 
+                                            onValueChange={field.onChange} 
+                                            value={field.value}
+                                            disabled={!editability.canEdit}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue />
@@ -247,6 +335,35 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                 <SelectItem value="pending">Pendiente</SelectItem>
                                                 <SelectItem value="partial">Parcial</SelectItem>
                                                 <SelectItem value="paid">Pagado</SelectItem>
+                                                <SelectItem value="refunded">Reembolsado</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="shipping_status"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Estado de Envío</FormLabel>
+                                        <Select 
+                                            onValueChange={field.onChange} 
+                                            value={field.value}
+                                            disabled={!editability.canEdit}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="pending">Pendiente</SelectItem>
+                                                <SelectItem value="shipped">Enviado</SelectItem>
+                                                <SelectItem value="delivered">Entregado</SelectItem>
+                                                <SelectItem value="canceled">Cancelado</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -260,7 +377,11 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Método de Pago</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                                        <Select 
+                                            onValueChange={field.onChange} 
+                                            value={field.value || ""}
+                                            disabled={!editability.canEdit}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Seleccionar" />
@@ -279,57 +400,67 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                             />
                         </div>
 
-                        {/* Agregar productos */}
-                        <Card>
+                        {/* Productos - Solo si se pueden editar */}
+                        <Card className={!productEditability.canEdit ? "opacity-60" : ""}>
                             <CardHeader className="py-3">
-                                <CardTitle className="text-base">Agregar Medicamentos</CardTitle>
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-base">Productos del Pedido</CardTitle>
+                                    {!productEditability.canEdit && (
+                                        <Badge variant="secondary" className="flex items-center gap-1">
+                                            <IconLock className="h-3 w-3" />
+                                            Bloqueado
+                                        </Badge>
+                                    )}
+                                </div>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                <div className="flex gap-2 items-end">
-                                    <div className="flex-1">
-                                        <label className="text-sm font-medium">Medicamento</label>
-                                        <Select 
-                                            value={selectedMedicine.toString()} 
-                                            onValueChange={(v) => setSelectedMedicine(parseInt(v))}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccionar medicamento" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {medicines?.map((medicine) => (
-                                                    <SelectItem key={medicine.id} value={medicine.id.toString()}>
-                                                        {medicine.name} - {formatCurrency(medicine.sale_price)} 
-                                                        {medicine.inventory && ` (Stock: ${medicine.inventory.quantity})`}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                {productEditability.canEdit && (
+                                    <div className="flex gap-2 items-end">
+                                        <div className="flex-1">
+                                            <label className="text-sm font-medium">Agregar Medicamento</label>
+                                            <Select 
+                                                value={selectedMedicine.toString()} 
+                                                onValueChange={(v) => setSelectedMedicine(parseInt(v))}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar medicamento" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {medicines?.map((medicine) => (
+                                                        <SelectItem key={medicine.id} value={medicine.id.toString()}>
+                                                            {medicine.name} - {formatCurrency(medicine.sale_price)} 
+                                                            {medicine.inventory && ` (Stock: ${medicine.inventory.quantity})`}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="w-24">
+                                            <label className="text-sm font-medium">Cantidad</label>
+                                            <Input 
+                                                type="number" 
+                                                min="1"
+                                                value={itemQuantity}
+                                                onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
+                                            />
+                                        </div>
+                                        <Button type="button" onClick={addItem} disabled={!selectedMedicine}>
+                                            <IconPlus className="h-4 w-4" />
+                                        </Button>
                                     </div>
-                                    <div className="w-24">
-                                        <label className="text-sm font-medium">Cantidad</label>
-                                        <Input 
-                                            type="number" 
-                                            min="1"
-                                            value={itemQuantity}
-                                            onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
-                                        />
-                                    </div>
-                                    <Button type="button" onClick={addItem} disabled={!selectedMedicine}>
-                                        <IconPlus className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                )}
 
-                                {/* Lista de items agregados */}
+                                {/* Lista de items */}
                                 {items.length > 0 && (
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Medicamento</TableHead>
-                                                <TableHead className="text-right">Cant.</TableHead>
+                                                <TableHead className="text-right w-24">Cant.</TableHead>
                                                 <TableHead className="text-right">Precio</TableHead>
                                                 <TableHead className="text-right">IVA</TableHead>
                                                 <TableHead className="text-right">Subtotal</TableHead>
-                                                <TableHead className="w-10" />
+                                                {productEditability.canEdit && <TableHead className="w-10"></TableHead>}
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -339,7 +470,19 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                 return (
                                                     <TableRow key={index}>
                                                         <TableCell>{getMedicineName(item.medicine_id)}</TableCell>
-                                                        <TableCell className="text-right">{item.quantity}</TableCell>
+                                                        <TableCell className="text-right">
+                                                            {productEditability.canEdit ? (
+                                                                <Input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    value={item.quantity}
+                                                                    onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 1)}
+                                                                    className="w-20 text-right h-8"
+                                                                />
+                                                            ) : (
+                                                                item.quantity
+                                                            )}
+                                                        </TableCell>
                                                         <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
                                                         <TableCell className="text-right">
                                                             <span className={productIvaRate > 0 ? "text-amber-600" : "text-green-600"}>
@@ -347,17 +490,19 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                             </span>
                                                         </TableCell>
                                                         <TableCell className="text-right">{formatCurrency(item.quantity * item.unit_price)}</TableCell>
-                                                        <TableCell>
-                                                            <Button 
-                                                                type="button" 
-                                                                variant="ghost" 
-                                                                size="icon"
-                                                                onClick={() => removeItem(index)}
-                                                                className="h-8 w-8 text-red-600"
-                                                            >
-                                                                <IconTrash className="h-4 w-4" />
-                                                            </Button>
-                                                        </TableCell>
+                                                        {productEditability.canEdit && (
+                                                            <TableCell>
+                                                                <Button 
+                                                                    type="button" 
+                                                                    variant="ghost" 
+                                                                    size="icon"
+                                                                    onClick={() => removeItem(index)}
+                                                                    className="h-8 w-8 text-red-600"
+                                                                >
+                                                                    <IconTrash className="h-4 w-4" />
+                                                                </Button>
+                                                            </TableCell>
+                                                        )}
                                                     </TableRow>
                                                 );
                                             })}
@@ -367,7 +512,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
 
                                 {items.length === 0 && (
                                     <p className="text-sm text-muted-foreground text-center py-4">
-                                        No hay medicamentos agregados
+                                        No hay medicamentos en este pedido
                                     </p>
                                 )}
                             </CardContent>
@@ -411,6 +556,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                         <Textarea 
                                             placeholder="Notas adicionales del pedido..."
                                             {...field}
+                                            disabled={!editability.canEdit}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -420,11 +566,13 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                                Cancelar
+                                {editability.canEdit ? "Cancelar" : "Cerrar"}
                             </Button>
-                            <Button type="submit" disabled={form.formState.isSubmitting || items.length === 0}>
-                                {form.formState.isSubmitting ? "Creando..." : "Crear Venta"}
-                            </Button>
+                            {editability.canEdit && (
+                                <Button type="submit" disabled={form.formState.isSubmitting || items.length === 0}>
+                                    {form.formState.isSubmitting ? "Guardando..." : "Guardar Cambios"}
+                                </Button>
+                            )}
                         </DialogFooter>
                     </form>
                 </Form>
@@ -433,4 +581,4 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
     );
 }
 
-export default CreateSaleDialog;
+export default EditSaleDialog;
