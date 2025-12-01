@@ -100,8 +100,6 @@ class Sale(Base):
     medicine = relationship("Medicine")
     client_id = Column(ForeignKey("clients.id"))
     client = relationship("Client", back_populates="sales")
-    invoice_id = Column(ForeignKey("invoices.id"), nullable=True)  # Factura generada
-    invoice = relationship("Invoice")
 
 
 class Client(Base):
@@ -262,7 +260,7 @@ class Invoice(Base):
     # Relationships
     company = relationship("Company", back_populates="invoices")
     client = relationship("Client", back_populates="invoices")
-    sale = relationship("Sale")
+    sale = relationship("Sale", foreign_keys=[sale_id], backref="invoice", uselist=False)
     concepts = relationship("InvoiceConcept", back_populates="invoice", cascade="all, delete")
     taxes = relationship("InvoiceTax", back_populates="invoice", cascade="all, delete")
 

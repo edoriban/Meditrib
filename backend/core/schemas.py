@@ -250,8 +250,7 @@ class Sale(SaleBase):
     medicine: Medicine
     client: Client
     user: User
-    invoice_id: Optional[int] = None
-    invoice: Optional[Invoice] = None
+    invoice: Optional["Invoice"] = None
 
     class Config:
         from_attributes = True
@@ -541,6 +540,6 @@ class Token(BaseModel):
 
 
 
-# Actualizar referencias si es necesario después de definir todas las clases
-# Por ejemplo, si Client necesita mostrar Sales:
-# Client.model_rebuild() # O usar forward references con strings 'Sale'
+# Actualizar referencias después de definir todas las clases
+Sale.model_rebuild()
+Invoice.model_rebuild()
