@@ -114,12 +114,13 @@ class SystemHealthMiddleware(BaseHTTPMiddleware):
     def _perform_health_check(self):
         """Realizar chequeo básico de salud del sistema"""
         from backend.core.logging_config import log_system_health
+        from sqlalchemy import text
 
         try:
             # Verificar conectividad a base de datos
             from backend.core.database import engine
             with engine.connect() as conn:
-                conn.execute("SELECT 1")
+                conn.execute(text("SELECT 1"))
             db_status = "OK"
         except Exception as e:
             db_status = "ERROR"

@@ -144,16 +144,17 @@ def get_expense_summary(db: Session, start_date: Optional[date] = None, end_date
     # Agrupar por categoría
     categories_summary = {}
     for expense in expenses:
-        cat_name = expense.category.name
-        if cat_name not in categories_summary:
-            categories_summary[cat_name] = {
-                'total': 0,
-                'count': 0,
-                'type': expense.category.type,
-                'color': expense.category.color
-            }
-        categories_summary[cat_name]['total'] += expense.amount
-        categories_summary[cat_name]['count'] += 1
+        if expense.category:
+            cat_name = expense.category.name
+            if cat_name not in categories_summary:
+                categories_summary[cat_name] = {
+                    'total': 0,
+                    'count': 0,
+                    'type': expense.category.type,
+                    'color': expense.category.color
+                }
+            categories_summary[cat_name]['total'] += expense.amount
+            categories_summary[cat_name]['count'] += 1
 
     return {
         'total_expenses': total_expenses,

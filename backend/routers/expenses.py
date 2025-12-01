@@ -25,6 +25,12 @@ def read_expenses(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     return expenses
 
 
+@router.get("/summary")
+def get_expenses_summary(db: Session = Depends(get_db)):
+    """Get expense summary with totals by category"""
+    return get_expense_summary(db)
+
+
 @router.get("/{expense_id}", response_model=Expense)
 def read_expense(expense_id: int, db: Session = Depends(get_db)):
     db_expense = get_expense(db, expense_id=expense_id)
@@ -89,9 +95,3 @@ def initialize_categories(db: Session = Depends(get_db)):
     """Initialize default expense categories for pharmaceutical distribution"""
     initialize_default_categories(db)
     return {"message": "Default categories initialized successfully"}
-
-
-@router.get("/summary")
-def get_expenses_summary(db: Session = Depends(get_db)):
-    """Get expense summary with totals by category"""
-    return get_expense_summary(db)
