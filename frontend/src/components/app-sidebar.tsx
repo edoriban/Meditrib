@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import {
-  IconCamera,
+  IconAlertTriangle,
+  IconBox,
   IconChartBar,
+  IconCoin,
   IconDashboard,
   IconDatabase,
-  IconFileAi,
   IconFileDescription,
-  IconFileWord,
+  IconFileInvoice,
   IconFolder,
   IconHelp,
   IconInnerShadowTop,
@@ -14,6 +15,8 @@ import {
   IconReport,
   IconSearch,
   IconSettings,
+  IconShield,
+  IconShoppingCart,
   IconUsers,
 } from "@tabler/icons-react"
 
@@ -32,12 +35,9 @@ import {
 } from "@/components/ui/sidebar"
 import { auth } from "@/utils/auth";
 import { User } from "@/types/user";
+import { Link } from "react-router-dom";
+
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
@@ -55,79 +55,14 @@ const data = {
       icon: IconFolder,
     },
     {
-      title: "Usuarios",
-      url: "/users",
-      icon: IconUsers,
-    },
-    {
       title: "Proveedores",
       url: "/suppliers",
       icon: IconListDetails,
     },
-  ],
-  navClouds: [
     {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
+      title: "Órdenes de Compra",
+      url: "/purchase-orders",
+      icon: IconShoppingCart,
     },
   ],
   documents: [
@@ -137,19 +72,55 @@ const data = {
       icon: IconDatabase,
     },
     {
-      name: "Órdenes de Compra",
-      url: "/purchase-orders",
-      icon: IconFileDescription,
+      name: "Lotes",
+      url: "/batches",
+      icon: IconBox,
     },
     {
-      name: "Reports",
+      name: "Alertas",
+      url: "/alerts",
+      icon: IconAlertTriangle,
+    },
+  ],
+  navFinance: [
+    {
+      name: "Facturas",
+      url: "/invoices",
+      icon: IconFileInvoice,
+    },
+    {
+      name: "Gastos",
+      url: "/expenses",
+      icon: IconCoin,
+    },
+    {
+      name: "Reportes",
       url: "/reports",
       icon: IconReport,
     },
+  ],
+  navAdmin: [
     {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
+      name: "Usuarios",
+      url: "/users",
+      icon: IconUsers,
+    },
+    {
+      name: "Roles",
+      url: "/roles",
+      icon: IconShield,
+    },
+  ],
+  navSecondary: [
+    {
+      title: "Configuración",
+      url: "/settings",
+      icon: IconSettings,
+    },
+    {
+      title: "Ayuda",
+      url: "/help",
+      icon: IconHelp,
     },
   ],
 }
@@ -169,11 +140,11 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     fetchUser();
   }, []);
+
   const userData = currentUser ? {
     name: currentUser.name,
     email: currentUser.email,
-    // Usar un div con la inicial del nombre como avatar
-    avatar: "", // No usamos imagen
+    avatar: "",
     initials: currentUser.name.charAt(0).toUpperCase(),
   } : {
     name: "Cargando...",
@@ -181,6 +152,7 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     avatar: "",
     initials: "?"
   };
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -190,17 +162,19 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <Link to="/dashboard">
                 <IconInnerShadowTop className="!size-5" />
                 <span className="text-base font-semibold">Meditrib</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
+        <NavDocuments items={data.documents} label="Inventario" />
+        <NavDocuments items={data.navFinance} label="Finanzas" />
+        <NavDocuments items={data.navAdmin} label="Administración" />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

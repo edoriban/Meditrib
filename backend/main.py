@@ -50,7 +50,7 @@ app.include_router(batches.router, prefix="/api/v1/batches", tags=["batches"])
 app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
 app.include_router(medicine_tags.router, prefix="/api/v1", tags=["medicine-tags"])
 app.include_router(purchase_order.router, prefix="/api/v1", tags=["purchase-orders"])
-app.include_router(alerts.router, prefix="/api/v1", tags=["alerts"])
+app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
 app.include_router(invoices.router, prefix="/api/v1/invoices", tags=["invoices"])
 app.include_router(expenses.router, prefix="/api/v1/expenses", tags=["expenses"])
 
