@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.database import engine, Base
-from backend.routers import medicines, suppliers, users, roles, sales,clients,reports,auth, medicine_tags, purchase_order, alerts, invoices
+from backend.routers import medicines, suppliers, users, roles, sales,clients,reports,auth, medicine_tags, purchase_order, alerts, invoices, expenses
 from backend.init_db import init_db
 import logging
 
@@ -38,6 +38,7 @@ app.include_router(medicine_tags.router, prefix="/api/v1", tags=["medicine-tags"
 app.include_router(purchase_order.router, prefix="/api/v1", tags=["purchase-orders"])
 app.include_router(alerts.router, prefix="/api/v1", tags=["alerts"])
 app.include_router(invoices.router, prefix="/api/v1/invoices", tags=["invoices"])
+app.include_router(expenses.router, prefix="/api/v1/expenses", tags=["expenses"])
 
 
 @app.get("/")

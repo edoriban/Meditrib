@@ -375,6 +375,61 @@ class InvoiceTax(InvoiceTaxBase):
     class Config:
         from_attributes = True
 
+# Expense Schemas
+class ExpenseCategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    type: str = "variable"
+    color: Optional[str] = None
+
+class ExpenseCategoryCreate(ExpenseCategoryBase):
+    pass
+
+class ExpenseCategoryUpdate(ExpenseCategoryBase):
+    name: Optional[str] = None
+
+class ExpenseCategory(ExpenseCategoryBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class ExpenseBase(BaseModel):
+    description: str
+    amount: float
+    expense_date: datetime
+    category_id: int
+    payment_method: Optional[str] = None
+    supplier: Optional[str] = None
+    invoice_number: Optional[str] = None
+    is_tax_deductible: bool = True
+    tax_amount: float = 0.0
+    notes: Optional[str] = None
+    created_by: int
+
+class ExpenseCreate(ExpenseBase):
+    pass
+
+class ExpenseUpdate(BaseModel):
+    description: Optional[str] = None
+    amount: Optional[float] = None
+    expense_date: Optional[datetime] = None
+    category_id: Optional[int] = None
+    payment_method: Optional[str] = None
+    supplier: Optional[str] = None
+    invoice_number: Optional[str] = None
+    is_tax_deductible: Optional[bool] = None
+    tax_amount: Optional[float] = None
+    notes: Optional[str] = None
+
+class Expense(ExpenseBase):
+    id: int
+    category: ExpenseCategory
+    user: User
+
+    class Config:
+        from_attributes = True
+
 class InvoiceBase(BaseModel):
     serie: str = "A"
     folio: Optional[str] = None

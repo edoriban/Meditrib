@@ -257,3 +257,36 @@ class InvoiceTax(Base):
     tax_base = Column(Float)  # Base gravable
 
     invoice = relationship("Invoice", back_populates="taxes")
+
+
+class ExpenseCategory(Base):
+    """Categorías de gastos"""
+    __tablename__ = "expense_categories"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)
+    description = Column(String, nullable=True)
+    type = Column(String, default="variable")  # "fixed" o "variable"
+    color = Column(String, nullable=True)  # Para UI
+
+    expenses = relationship("Expense", back_populates="category")
+
+
+class Expense(Base):
+    """Registro de gastos"""
+    __tablename__ = "expenses"
+    id = Column(Integer, primary_key=True, index=True)
+    description = Column(String)
+    amount = Column(Float)
+    expense_date = Column(DateTime, default=datetime.now)
+    category_id = Column(ForeignKey("expense_categories.id"))
+    payment_method = Column(String, nullable=True)  # "cash", "card", "transfer", "check"
+    supplier = Column(String, nullable=True)  # Proveedor del gasto
+    invoice_number = Column(String, nullable=True)  # Número de factura/comprobante
+    is_tax_deductible = Column(Boolean, default=True)  # Deducible para impuestos
+    tax_amount = Column(Float, default=0.0)  # IVA del gasto
+    notes = Column(String, nullable=True)
+    created_by = Column(ForeignKey("users.id"))
+
+    # Relationships
+    category = relationship("ExpenseCategory", back_populates="expenses")
+    user = relationship("User")
