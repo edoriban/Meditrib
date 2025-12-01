@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from backend.core import models
 from backend.core import schemas
+from backend.core.crud.crud_alert import check_and_create_alerts
 
 
 def get_medicine(db: Session, medicine_id: int):
@@ -34,7 +35,10 @@ def create_medicine(db: Session, medicine: schemas.MedicineCreate):
         db_inventory = models.Inventory(medicine_id=db_medicine.id, quantity=medicine.inventory.quantity)
         db.add(db_inventory)
         db.commit()
-    
+
+    # Check for alerts after creating medicine
+    check_and_create_alerts(db)
+
     db.refresh(db_medicine)
     return db_medicine
 
@@ -70,8 +74,12 @@ def update_medicine(db: Session, medicine_id: int, medicine: schemas.MedicineUpd
                 db.add(db_inventory)
         
         db.commit()
+
+        # Check for alerts after updating medicine
+        check_and_create_alerts(db)
+
         db.refresh(db_medicine)
-    
+
     return db_medicine
 
 

@@ -1,5 +1,27 @@
 from sqlalchemy.orm import Session
 from backend.core import models, schemas
+from typing import List, Optional
+from datetime import datetime
+
+
+def calculate_sale_totals(subtotal: float, iva_rate: float, document_type: str) -> dict:
+    """Calcula los totales de una venta basado en el tipo de documento"""
+    if document_type == "remission":
+        # Nota de remisión: sin IVA
+        iva_amount = 0.0
+        total_with_iva = subtotal
+        total_price = subtotal  # Para compatibilidad
+    else:
+        # Factura con IVA
+        iva_amount = subtotal * iva_rate
+        total_with_iva = subtotal + iva_amount
+        total_price = total_with_iva  # Para compatibilidad
+
+    return {
+        "iva_amount": iva_amount,
+        "total_with_iva": total_with_iva,
+        "total_price": total_price
+    }
 
 
 def get_sale(db: Session, sale_id: int):
@@ -11,13 +33,16 @@ def get_sales(db: Session, skip: int = 0, limit: int = 100):
 
 
 def create_sale(db: Session, sale: schemas.SaleCreate):
-    # Aquí podrías añadir lógica adicional, como verificar el inventario
-    # antes de crear la venta.
-    db_sale = models.Sale(**sale.model_dump())
+    # Calcular totales basado en el tipo de documento
+    totals = calculate_sale_totals(sale.subtotal, sale.iva_rate, sale.document_type)
+
+    db_sale = models.Sale(
+        **sale.model_dump(),
+        **totals
+    )
     db.add(db_sale)
     db.commit()
     db.refresh(db_sale)
-    # Considera actualizar el inventario aquí después de la venta.
     return db_sale
 
 
@@ -25,8 +50,22 @@ def update_sale(db: Session, sale_id: int, sale_update: schemas.SaleUpdate):
     db_sale = get_sale(db, sale_id)
     if db_sale:
         update_data = sale_update.model_dump(exclude_unset=True)
+
+        # Si se actualiza subtotal, iva_rate o document_type, recalcular totales
+        needs_recalc = any(key in update_data for key in ['subtotal', 'iva_rate', 'document_type'])
+
         for key, value in update_data.items():
             setattr(db_sale, key, value)
+
+        if needs_recalc:
+            totals = calculate_sale_totals(
+                db_sale.subtotal,
+                db_sale.iva_rate,
+                db_sale.document_type
+            )
+            for key, value in totals.items():
+                setattr(db_sale, key, value)
+
         db.commit()
         db.refresh(db_sale)
     return db_sale

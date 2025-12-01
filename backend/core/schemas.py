@@ -49,6 +49,12 @@ class MedicineBase(BaseModel):
     description: Optional[str] = None
     sale_price: float
     purchase_price: Optional[float] = None
+    expiration_date: Optional[date] = None
+    batch_number: Optional[str] = None
+    barcode: Optional[str] = None
+    laboratory: Optional[str] = None
+    concentration: Optional[str] = None
+    prescription_required: bool = False
 
 
 class MedicineCreate(MedicineBase):
@@ -208,10 +214,12 @@ class Client(ClientBase):
 class SaleBase(BaseModel):
     medicine_id: int
     quantity: int
-    total_price: float
+    subtotal: float
     client_id: int
     sale_date: datetime
     user_id: int
+    document_type: str = "invoice"  # "invoice" or "remission"
+    iva_rate: float = 0.16
     shipping_date: Optional[date] = None
     shipping_status: str = "pending"
     payment_status: str = "pending"
@@ -223,10 +231,12 @@ class SaleCreate(SaleBase):
 class SaleUpdate(BaseModel):
     medicine_id: Optional[int] = None
     quantity: Optional[int] = None
-    total_price: Optional[float] = None
+    subtotal: Optional[float] = None
     client_id: Optional[int] = None
     sale_date: Optional[datetime] = None
     user_id: Optional[int] = None
+    document_type: Optional[str] = None
+    iva_rate: Optional[float] = None
     shipping_date: Optional[date] = None
     shipping_status: Optional[str] = None
     payment_status: Optional[str] = None
@@ -234,9 +244,14 @@ class SaleUpdate(BaseModel):
 
 class Sale(SaleBase):
     id: int
+    iva_amount: float
+    total_with_iva: float
+    total_price: float  # Para compatibilidad
     medicine: Medicine
     client: Client
     user: User
+    invoice_id: Optional[int] = None
+    invoice: Optional[Invoice] = None
 
     class Config:
         from_attributes = True
@@ -260,6 +275,143 @@ class ReportUpdate(ReportBase):
 class Report(ReportBase):
     id: int
     user: User  # Incluir el usuario que generó el reporte
+
+    class Config:
+        from_attributes = True
+
+# Alert Schemas
+class AlertBase(BaseModel):
+    type: str
+    message: str
+    medicine_id: int
+    severity: str = "medium"
+    is_active: bool = True
+
+class AlertCreate(AlertBase):
+    pass
+
+class AlertUpdate(BaseModel):
+    type: Optional[str] = None
+    message: Optional[str] = None
+    severity: Optional[str] = None
+    is_active: Optional[bool] = None
+    resolved_at: Optional[datetime] = None
+
+class Alert(AlertBase):
+    id: int
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+    medicine: Medicine
+
+    class Config:
+        from_attributes = True
+
+# Company Schemas
+class CompanyBase(BaseModel):
+    rfc: str
+    name: str
+    tax_regime: str
+    street: str
+    exterior_number: str
+    interior_number: Optional[str] = None
+    neighborhood: str
+    city: str
+    state: str
+    country: str = "México"
+    postal_code: str
+    email: str
+    phone: Optional[str] = None
+
+class CompanyCreate(CompanyBase):
+    pass
+
+class CompanyUpdate(CompanyBase):
+    rfc: Optional[str] = None
+    name: Optional[str] = None
+    tax_regime: Optional[str] = None
+    street: Optional[str] = None
+    exterior_number: Optional[str] = None
+
+class Company(CompanyBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+# Invoice Schemas
+class InvoiceConceptBase(BaseModel):
+    quantity: float
+    unit: str
+    description: str
+    unit_price: float
+    amount: float
+    discount: float = 0.0
+    medicine_id: Optional[int] = None
+
+class InvoiceConceptCreate(InvoiceConceptBase):
+    pass
+
+class InvoiceConcept(InvoiceConceptBase):
+    id: int
+    invoice_id: int
+    medicine: Optional[Medicine] = None
+
+    class Config:
+        from_attributes = True
+
+class InvoiceTaxBase(BaseModel):
+    tax_type: str
+    tax_rate: float
+    tax_amount: float
+    tax_base: float
+
+class InvoiceTaxCreate(InvoiceTaxBase):
+    pass
+
+class InvoiceTax(InvoiceTaxBase):
+    id: int
+    invoice_id: int
+
+    class Config:
+        from_attributes = True
+
+class InvoiceBase(BaseModel):
+    serie: str = "A"
+    folio: Optional[str] = None
+    invoice_type: str = "I"
+    payment_form: str
+    payment_method: str
+    currency: str = "MXN"
+    exchange_rate: float = 1.0
+    subtotal: float
+    discount: float = 0.0
+    total: float
+    total_taxes: float = 0.0
+    company_id: int
+    client_id: int
+    sale_id: Optional[int] = None
+    concepts: List[InvoiceConceptCreate] = []
+    taxes: List[InvoiceTaxCreate] = []
+
+class InvoiceCreate(InvoiceBase):
+    pass
+
+class InvoiceUpdate(BaseModel):
+    status: Optional[str] = None
+    cfdi_xml: Optional[str] = None
+    cancellation_reason: Optional[str] = None
+
+class Invoice(InvoiceBase):
+    id: int
+    uuid: Optional[str] = None
+    issue_date: datetime
+    certification_date: Optional[datetime] = None
+    status: str
+    company: Company
+    client: Client
+    sale: Optional[Sale] = None
+    concepts: List[InvoiceConcept] = []
+    taxes: List[InvoiceTax] = []
 
     class Config:
         from_attributes = True

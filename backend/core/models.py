@@ -1,5 +1,5 @@
 from backend.core.database import Base
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Table, DateTime, Date
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Table, DateTime, Date, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, date
 
@@ -18,6 +18,12 @@ class Medicine(Base):
     description = Column(String)
     purchase_price = Column(Float)
     sale_price = Column(Float)
+    expiration_date = Column(Date, nullable=True)
+    batch_number = Column(String, nullable=True)
+    barcode = Column(String, nullable=True, unique=True)
+    laboratory = Column(String, nullable=True)
+    concentration = Column(String, nullable=True)
+    prescription_required = Column(Boolean, default=False)
     inventory = relationship("Inventory", uselist=False, back_populates="medicine", cascade="all, delete")
     suppliers = relationship("SupplierMedicine", back_populates="medicine", cascade="all, delete")
     purchase_order_items = relationship("PurchaseOrderItem", back_populates="medicine", cascade="all, delete")
@@ -84,11 +90,18 @@ class Sale(Base):
     shipping_status = Column(String, default="pending")  # e.g., "pending", "completed", "canceled"
     payment_status = Column(String, default="pending")  # e.g., "pending", "paid", "refunded"
     payment_method = Column(String, nullable=True)  # e.g., "credit_card", "cash", "insurance"
+    document_type = Column(String, default="invoice")  # "invoice" (IVA) or "remission" (nota de remisión)
+    iva_rate = Column(Float, default=0.16)  # Tasa de IVA (0.16 = 16%, 0.0 = exento)
+    iva_amount = Column(Float, default=0.0)  # Monto de IVA calculado
+    subtotal = Column(Float)  # Subtotal sin IVA
+    total_with_iva = Column(Float)  # Total con IVA incluido
     user_id = Column(ForeignKey("users.id"))
     user = relationship("User")
     medicine = relationship("Medicine")
     client_id = Column(ForeignKey("clients.id"))
     client = relationship("Client", back_populates="sales")
+    invoice_id = Column(ForeignKey("invoices.id"), nullable=True)  # Factura generada
+    invoice = relationship("Invoice")
 
 
 class Client(Base):
@@ -98,7 +111,11 @@ class Client(Base):
     contact = Column(String)
     address = Column(String, nullable=True)
     email = Column(String, nullable=True)
+    rfc = Column(String, nullable=True)  # RFC del cliente para facturación
+    tax_regime = Column(String, nullable=True)  # Régimen fiscal del cliente
+    cfdi_use = Column(String, nullable=True)  # Uso del CFDI
     sales = relationship("Sale", back_populates="client")
+    invoices = relationship("Invoice", back_populates="client")
 
 
 class Report(Base):
@@ -133,3 +150,110 @@ class PurchaseOrderItem(Base):
 
     purchase_order = relationship("PurchaseOrder", back_populates="items")
     medicine = relationship("Medicine")
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+    id = Column(Integer, primary_key=True, index=True)
+    type = Column(String)  # 'low_stock', 'expiring', 'expired', 'critical_stock'
+    message = Column(String)
+    medicine_id = Column(ForeignKey("medicines.id"))
+    severity = Column(String, default="medium")  # 'low', 'medium', 'high', 'critical'
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+    resolved_at = Column(DateTime, nullable=True)
+
+    medicine = relationship("Medicine")
+
+
+class Company(Base):
+    """Empresa emisora de facturas"""
+    __tablename__ = "companies"
+    id = Column(Integer, primary_key=True, index=True)
+    rfc = Column(String, unique=True, index=True)
+    name = Column(String)
+    tax_regime = Column(String)  # Régimen fiscal
+    street = Column(String)
+    exterior_number = Column(String)
+    interior_number = Column(String, nullable=True)
+    neighborhood = Column(String)
+    city = Column(String)
+    state = Column(String)
+    country = Column(String, default="México")
+    postal_code = Column(String)
+    email = Column(String)
+    phone = Column(String, nullable=True)
+
+    invoices = relationship("Invoice", back_populates="company")
+
+
+class Invoice(Base):
+    """Factura CFDI"""
+    __tablename__ = "invoices"
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String, unique=True, nullable=True)  # Folio fiscal
+    serie = Column(String, default="A")  # Serie de facturación
+    folio = Column(String, nullable=True)  # Número de folio
+    invoice_type = Column(String, default="I")  # I=Ingreso, E=Egreso, etc.
+    payment_form = Column(String)  # Forma de pago
+    payment_method = Column(String)  # Método de pago
+    currency = Column(String, default="MXN")
+    exchange_rate = Column(Float, default=1.0)
+    subtotal = Column(Float)
+    discount = Column(Float, default=0.0)
+    total = Column(Float)
+    total_taxes = Column(Float, default=0.0)
+
+    # Fechas
+    issue_date = Column(DateTime, default=datetime.now)
+    certification_date = Column(DateTime, nullable=True)
+
+    # Relaciones
+    company_id = Column(ForeignKey("companies.id"))
+    client_id = Column(ForeignKey("clients.id"))
+    sale_id = Column(ForeignKey("sales.id"), nullable=True)  # Factura generada desde venta
+
+    # Estado CFDI
+    status = Column(String, default="draft")  # draft, issued, cancelled
+    cfdi_xml = Column(String, nullable=True)  # XML del CFDI
+    cancellation_reason = Column(String, nullable=True)
+
+    # Relationships
+    company = relationship("Company", back_populates="invoices")
+    client = relationship("Client", back_populates="invoices")
+    sale = relationship("Sale")
+    concepts = relationship("InvoiceConcept", back_populates="invoice", cascade="all, delete")
+    taxes = relationship("InvoiceTax", back_populates="invoice", cascade="all, delete")
+
+
+class InvoiceConcept(Base):
+    """Conceptos de la factura (productos/servicios)"""
+    __tablename__ = "invoice_concepts"
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(ForeignKey("invoices.id"))
+    quantity = Column(Float)
+    unit = Column(String)  # Unidad de medida
+    description = Column(String)
+    unit_price = Column(Float)
+    amount = Column(Float)  # quantity * unit_price
+    discount = Column(Float, default=0.0)
+
+    # Producto relacionado (opcional)
+    medicine_id = Column(ForeignKey("medicines.id"), nullable=True)
+
+    # Relationships
+    invoice = relationship("Invoice", back_populates="concepts")
+    medicine = relationship("Medicine")
+
+
+class InvoiceTax(Base):
+    """Impuestos de la factura"""
+    __tablename__ = "invoice_taxes"
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(ForeignKey("invoices.id"))
+    tax_type = Column(String)  # IVA, ISR, IEPS
+    tax_rate = Column(Float)  # Tasa del impuesto
+    tax_amount = Column(Float)  # Monto del impuesto
+    tax_base = Column(Float)  # Base gravable
+
+    invoice = relationship("Invoice", back_populates="taxes")

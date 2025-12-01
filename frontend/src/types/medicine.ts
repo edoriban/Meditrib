@@ -8,6 +8,12 @@ export interface Medicine {
     tags?: MedicineTag[];
     sale_price: number;
     purchase_price: number;
+    expiration_date?: string;
+    batch_number?: string;
+    barcode?: string;
+    laboratory?: string;
+    concentration?: string;
+    prescription_required: boolean;
     inventory?: {
         quantity: number;
     };
@@ -26,6 +32,12 @@ export const medicineFormSchema = z.object({
     description: z.string().optional(),
     sale_price: z.number().positive({ message: "El precio de venta debe ser mayor a 0" }),
     purchase_price: z.number().positive({ message: "El precio de compra debe ser mayor a 0" }).optional(),
+    expiration_date: z.string().optional(),
+    batch_number: z.string().optional(),
+    barcode: z.string().optional(),
+    laboratory: z.string().optional(),
+    concentration: z.string().optional(),
+    prescription_required: z.boolean(),
     tags: z.array(z.number()).default([]),
     inventory: z
         .object({
@@ -44,6 +56,12 @@ export interface MedicineFormValues {
     sale_price: number;
     description?: string;
     purchase_price?: number;
+    expiration_date?: string;
+    batch_number?: string;
+    barcode?: string;
+    laboratory?: string;
+    concentration?: string;
+    prescription_required: boolean;
     tags?: number[];
     inventory?: {
         quantity: number;
@@ -56,6 +74,12 @@ export type MedicineCreateValues = {
     sale_price: number;
     description?: string;
     purchase_price?: number;
+    expiration_date?: string;
+    batch_number?: string;
+    barcode?: string;
+    laboratory?: string;
+    concentration?: string;
+    prescription_required: boolean;
     tags?: number[];
     inventory?: {
         quantity: number;

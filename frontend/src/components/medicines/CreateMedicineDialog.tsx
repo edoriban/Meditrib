@@ -17,6 +17,7 @@ import { X } from "lucide-react";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useMedicineMutations } from "@/hooks/useMedicineMutations";
 import { MedicineCreateValues, MedicineTag, medicineCreateSchema } from "@/types/medicine";
 import { useQuery } from "@tanstack/react-query";
@@ -89,6 +90,12 @@ export function CreateMedicineDialog() {
             description: "",
             sale_price: 0,
             purchase_price: 0,
+            expiration_date: "",
+            batch_number: "",
+            barcode: "",
+            laboratory: "",
+            concentration: "",
+            prescription_required: false,
             tags: [],
             inventory: {
                 quantity: 0,
@@ -252,6 +259,120 @@ export function CreateMedicineDialog() {
                                                     onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
                                                 />
                                             </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="expiration_date"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Fecha de caducidad</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="date"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="batch_number"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Número de lote</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Ej: LOT-2024-001"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="barcode"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Código de barras</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Ej: 7501234567890"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="laboratory"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Laboratorio</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Ej: Pfizer"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="concentration"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Concentración</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Ej: 500mg"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="prescription_required"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>
+                                                    Requiere receta médica
+                                                </FormLabel>
+                                            </div>
                                             <FormMessage />
                                         </FormItem>
                                     )}
