@@ -26,7 +26,7 @@ const loginFormSchema = z.object({
   password: z.string({
     required_error: "La contraseña es obligatoria",
   }),
-  remember: z.boolean().default(false)
+  remember: z.boolean().optional().default(false)
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>
@@ -38,7 +38,7 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
 
   // Añadir control para FormInput
-  const { handleSubmit, control, formState: { errors } } = useForm<LoginFormValues>({
+  const { handleSubmit, control, formState: { errors } } = useForm({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
       email: "",

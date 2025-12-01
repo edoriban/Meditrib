@@ -25,12 +25,10 @@ interface MedicineTableProps {
 };
 
 
-const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading, error }) => {
+const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading }) => {
     const data = medicines;
     const [searchTerm, setSearchTerm] = useState("");
     const [stockFilter, setStockFilter] = useState<"all" | "in-stock" | "out-of-stock">("all");
-    const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-    const [tooltipData, setTooltipData] = useState<any>(null);
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); // Valor predeterminado
     const { updateMedicine, deleteMedicine } = useMedicineMutations();
     const editRefs = React.useRef<Record<number, HTMLButtonElement | null>>({});
@@ -314,12 +312,6 @@ const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading, err
     const priceEfficiencyData = React.useMemo(() => {
         if (!filteredData) return [];
 
-        // Calcular el umbral de precio (para la línea de referencia)
-        const prices = filteredData
-            .filter(med => med.purchase_price && med.purchase_price > 0)
-            .map(med => med.sale_price);
-        const priceThreshold = prices.length ? Math.max(...prices) * 0.5 : 50;
-
         return filteredData
             .filter(med => med.purchase_price && med.purchase_price > 0)
             .map(med => {
@@ -536,9 +528,8 @@ const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading, err
                                                 label={{ value: 'Unidades en inventario', position: 'bottom', dy: 20 }}
                                                 domain={[0, (dataMax: number) => Math.max(100, dataMax * 1.1)]}
                                                 allowDataOverflow={true}
-                                                tickCount={6}
-                                                scale={filteredData.some(med => med.inventory?.quantity > 200) ? "log" : "linear"}
-
+                                            tickCount={6}
+                                            scale={filteredData.some(med => (med.inventory?.quantity ?? 0) > 200) ? "log" : "linear"}
                                             />
                                             <YAxis
                                                 type="number"
@@ -632,8 +623,8 @@ const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading, err
                                                             if (name === "totalValue") return [`$${Number(value).toFixed(2)}`, " Valor en inventario"];
                                                             return [value, name];
                                                         }}
-                                                        labelFormatter={(label, props) => {
-                                                            return props[0]?.payload?.name || "";
+                                                        labelFormatter={(_label, props) => {
+                                                            return props[0]?.payload?.name || "";;
                                                         }}
                                                     />
                                                 }
@@ -718,7 +709,7 @@ const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading, err
                                                         />
                                                     ))}
                                                     <Tooltip
-                                                        formatter={(value, name, props) => {
+                                                        formatter={(_value, _name, props) => {
                                                             const item = props.payload;
                                                             return [
                                                                 <div className="p-2">
@@ -865,9 +856,8 @@ const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading, err
                                             <Scatter
                                                 data={priceEfficiencyData}
                                                 fill="var(--color-price)"
-                                                shape={(props) => {
+                                                shape={(props: any) => {
                                                     const { cx, cy, fill, payload } = props;
-                                                    const RADIAN = Math.PI / 180;
                                                     let size = 8;
                                                     if (payload.sales > 10) size = 12;
                                                     return (

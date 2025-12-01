@@ -1,13 +1,13 @@
-import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { FinancialSummary, IncomeStatement, ProductProfitability, MonthlyTrend } from "@/types/financial-reports";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FinancialSummary, ProductProfitability, MonthlyTrend } from "@/types/financial-reports";
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, DollarSign, BarChart3, PieChart, Calendar } from "lucide-react";
+import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
+import { DollarSign, PieChart, BarChart3 } from "lucide-react";
 import { BASE_API_URL } from "@/config";
-import { Bar, BarChart as RechartsBarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -63,90 +63,147 @@ export function FinancialReports() {
 
     return (
         <div className="space-y-6">
-            {/* Financial Summary Cards */}
+            {/* Financial Summary Cards - Same style as SectionCards */}
             {summary && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+                    <Card className="@container/card">
+                        <CardHeader>
+                            <CardDescription>Ingresos Totales</CardDescription>
+                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                                {formatCurrency(summary.summary.total_revenue)}
+                            </CardTitle>
+                            <CardAction>
+                                <Badge variant="outline">
+                                    {summary.changes.sales_percentage >= 0 ? <IconTrendingUp /> : <IconTrendingDown />}
+                                    {summary.changes.sales_percentage >= 0 ? '+' : ''}{formatPercentage(summary.changes.sales_percentage)}
+                                </Badge>
+                            </CardAction>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(summary.summary.total_revenue)}</div>
-                            <p className="text-xs text-muted-foreground">
-                                {summary.changes.sales_percentage >= 0 ? '+' : ''}{formatPercentage(summary.changes.sales_percentage)} vs mes anterior
-                            </p>
-                        </CardContent>
+                        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                            <div className="line-clamp-1 flex gap-2 font-medium">
+                                vs mes anterior {summary.changes.sales_percentage >= 0 ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
+                            </div>
+                            <div className="text-muted-foreground">
+                                Ventas del mes actual
+                            </div>
+                        </CardFooter>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Gastos Totales</CardTitle>
-                            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                    <Card className="@container/card">
+                        <CardHeader>
+                            <CardDescription>Gastos Totales</CardDescription>
+                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                                {formatCurrency(summary.summary.total_expenses)}
+                            </CardTitle>
+                            <CardAction>
+                                <Badge variant="outline">
+                                    {summary.changes.expenses_percentage <= 0 ? <IconTrendingDown /> : <IconTrendingUp />}
+                                    {summary.changes.expenses_percentage >= 0 ? '+' : ''}{formatPercentage(summary.changes.expenses_percentage)}
+                                </Badge>
+                            </CardAction>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(summary.summary.total_expenses)}</div>
-                            <p className="text-xs text-muted-foreground">
-                                {summary.changes.expenses_percentage >= 0 ? '+' : ''}{formatPercentage(summary.changes.expenses_percentage)} vs mes anterior
-                            </p>
-                        </CardContent>
+                        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                            <div className="line-clamp-1 flex gap-2 font-medium">
+                                vs mes anterior {summary.changes.expenses_percentage <= 0 ? <IconTrendingDown className="size-4" /> : <IconTrendingUp className="size-4" />}
+                            </div>
+                            <div className="text-muted-foreground">
+                                Gastos operativos
+                            </div>
+                        </CardFooter>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Utilidad Neta</CardTitle>
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className={`text-2xl font-bold ${summary.summary.net_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <Card className="@container/card">
+                        <CardHeader>
+                            <CardDescription>Utilidad Neta</CardDescription>
+                            <CardTitle className={`text-2xl font-semibold tabular-nums @[250px]/card:text-3xl ${summary.summary.net_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {formatCurrency(summary.summary.net_profit)}
+                            </CardTitle>
+                            <CardAction>
+                                <Badge variant="outline">
+                                    {summary.summary.net_profit >= 0 ? <IconTrendingUp /> : <IconTrendingDown />}
+                                    {formatPercentage(summary.summary.profit_margin)}
+                                </Badge>
+                            </CardAction>
+                        </CardHeader>
+                        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                            <div className="line-clamp-1 flex gap-2 font-medium">
+                                Margen de utilidad {summary.summary.net_profit >= 0 ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                                Margen: {formatPercentage(summary.summary.profit_margin)}
-                            </p>
-                        </CardContent>
+                            <div className="text-muted-foreground">
+                                Ingresos - Gastos
+                            </div>
+                        </CardFooter>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Balance IVA</CardTitle>
-                            <PieChart className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className={`text-2xl font-bold ${summary.summary.iva_balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <Card className="@container/card">
+                        <CardHeader>
+                            <CardDescription>Balance IVA</CardDescription>
+                            <CardTitle className={`text-2xl font-semibold tabular-nums @[250px]/card:text-3xl ${summary.summary.iva_balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {formatCurrency(summary.summary.iva_balance)}
+                            </CardTitle>
+                            <CardAction>
+                                <Badge variant="outline">
+                                    <PieChart className="size-4" />
+                                    {summary.summary.iva_balance >= 0 ? 'A favor' : 'A cargo'}
+                                </Badge>
+                            </CardAction>
+                        </CardHeader>
+                        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                            <div className="line-clamp-1 flex gap-2 font-medium">
+                                IVA {summary.summary.iva_balance >= 0 ? 'recuperable' : 'por pagar'} <PieChart className="size-4" />
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                                {summary.summary.iva_balance >= 0 ? 'A favor' : 'A cargo'}
-                            </p>
-                        </CardContent>
+                            <div className="text-muted-foreground">
+                                Cobrado vs Pagado
+                            </div>
+                        </CardFooter>
                     </Card>
                 </div>
             )}
 
             {/* Monthly Trend Chart */}
             {monthlyTrend && monthlyTrend.length > 0 && (
-                <Card>
+                <Card className="@container/card">
                     <CardHeader>
-                        <CardTitle>Tendencia Mensual - Últimos 6 Meses</CardTitle>
+                        <CardTitle className="text-xl font-semibold">Tendencia Mensual</CardTitle>
+                        <CardDescription>Comparativa de ventas, gastos y utilidad de los últimos 6 meses</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={monthlyTrend}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="month" />
-                                    <YAxis />
+                                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                    <XAxis 
+                                        dataKey="month" 
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickMargin={8}
+                                        className="text-xs"
+                                    />
+                                    <YAxis 
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickMargin={8}
+                                        tickFormatter={(value) => formatCurrency(value).replace('MX$', '$')}
+                                        className="text-xs"
+                                    />
                                     <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: 'hsl(var(--card))',
+                                            border: '1px solid hsl(var(--border))',
+                                            borderRadius: '8px',
+                                        }}
                                         formatter={(value: number, name: string) => [
                                             formatCurrency(value),
                                             name === 'sales' ? 'Ventas' : name === 'expenses' ? 'Gastos' : 'Utilidad'
                                         ]}
                                     />
-                                    <Legend />
-                                    <Line type="monotone" dataKey="sales" stroke="#22c55e" name="Ventas" />
-                                    <Line type="monotone" dataKey="expenses" stroke="#ef4444" name="Gastos" />
-                                    <Line type="monotone" dataKey="profit" stroke="#3b82f6" name="Utilidad" />
+                                    <Legend 
+                                        iconType="circle"
+                                        wrapperStyle={{ paddingTop: '20px' }}
+                                    />
+                                    <Line type="monotone" dataKey="sales" stroke="#22c55e" strokeWidth={2} dot={{ r: 4 }} name="Ventas" />
+                                    <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} name="Gastos" />
+                                    <Line type="monotone" dataKey="profit" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} name="Utilidad" />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
@@ -156,58 +213,84 @@ export function FinancialReports() {
 
             {/* Income Statement Detail */}
             {summary && (
-                <Card>
+                <Card className="@container/card">
                     <CardHeader>
-                        <CardTitle>Estado de Resultados - Mes Actual</CardTitle>
+                        <CardTitle className="text-xl font-semibold">Estado de Resultados - Mes Actual</CardTitle>
+                        <CardDescription>Resumen de ingresos y gastos del período</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <h4 className="font-semibold text-green-600 mb-2">INGRESOS</h4>
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between">
-                                            <span>Ventas con IVA:</span>
-                                            <span className="font-medium">{formatCurrency(summary.current_month.income.sales_with_iva)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Ventas sin IVA:</span>
-                                            <span className="font-medium">{formatCurrency(summary.current_month.income.sales_without_iva)}</span>
-                                        </div>
-                                        <div className="flex justify-between border-t pt-2">
-                                            <span className="font-semibold">Total Ingresos:</span>
-                                            <span className="font-semibold">{formatCurrency(summary.current_month.income.total_sales)}</span>
-                                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Ingresos */}
+                            <div className="space-y-3 p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="p-2 bg-green-100 text-green-700 rounded-full">
+                                        <IconTrendingUp className="size-4" />
                                     </div>
+                                    <h4 className="font-semibold text-green-700 dark:text-green-400">INGRESOS</h4>
                                 </div>
-
-                                <div>
-                                    <h4 className="font-semibold text-red-600 mb-2">GASTOS</h4>
-                                    <div className="space-y-2">
-                                        {Object.entries(summary.current_month.expenses.by_category).map(([category, data]) => (
-                                            <div key={category} className="flex justify-between">
-                                                <span>{category}:</span>
-                                                <span className="font-medium">{formatCurrency(data.total)}</span>
-                                            </div>
-                                        ))}
-                                        <div className="flex justify-between border-t pt-2">
-                                            <span className="font-semibold">Total Gastos:</span>
-                                            <span className="font-semibold">{formatCurrency(summary.current_month.expenses.total_expenses)}</span>
-                                        </div>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground">Ventas con IVA:</span>
+                                        <span className="font-medium tabular-nums">{formatCurrency(summary.current_month.income.sales_with_iva)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground">Ventas sin IVA:</span>
+                                        <span className="font-medium tabular-nums">{formatCurrency(summary.current_month.income.sales_without_iva)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center border-t border-green-200 dark:border-green-800 pt-2 mt-2">
+                                        <span className="font-semibold">Total Ingresos:</span>
+                                        <span className="font-bold text-green-600 tabular-nums">{formatCurrency(summary.current_month.income.total_sales)}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="border-t pt-4">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-lg font-semibold">UTILIDAD NETA:</span>
-                                    <span className={`text-lg font-bold ${summary.current_month.profit.net_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {/* Gastos */}
+                            <div className="space-y-3 p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="p-2 bg-red-100 text-red-700 rounded-full">
+                                        <IconTrendingDown className="size-4" />
+                                    </div>
+                                    <h4 className="font-semibold text-red-700 dark:text-red-400">GASTOS</h4>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                    {Object.entries(summary.current_month.expenses.by_category).length > 0 ? (
+                                        Object.entries(summary.current_month.expenses.by_category).map(([category, data]) => (
+                                            <div key={category} className="flex justify-between items-center">
+                                                <span className="text-muted-foreground">{category}:</span>
+                                                <span className="font-medium tabular-nums">{formatCurrency(data.total)}</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-muted-foreground text-center py-2">Sin gastos registrados</div>
+                                    )}
+                                    <div className="flex justify-between items-center border-t border-red-200 dark:border-red-800 pt-2 mt-2">
+                                        <span className="font-semibold">Total Gastos:</span>
+                                        <span className="font-bold text-red-600 tabular-nums">{formatCurrency(summary.current_month.expenses.total_expenses)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Utilidad Neta */}
+                        <div className={`mt-6 p-4 rounded-lg border ${summary.current_month.profit.net_profit >= 0 
+                            ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900' 
+                            : 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900'}`}>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <div className={`p-2 rounded-full ${summary.current_month.profit.net_profit >= 0 
+                                        ? 'bg-blue-100 text-blue-700' 
+                                        : 'bg-orange-100 text-orange-700'}`}>
+                                        <DollarSign className="size-4" />
+                                    </div>
+                                    <span className="text-lg font-semibold">UTILIDAD NETA</span>
+                                </div>
+                                <div className="text-right">
+                                    <span className={`text-2xl font-bold tabular-nums ${summary.current_month.profit.net_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                         {formatCurrency(summary.current_month.profit.net_profit)}
                                     </span>
-                                </div>
-                                <div className="flex justify-between text-sm text-muted-foreground mt-1">
-                                    <span>Margen de Utilidad:</span>
-                                    <span>{formatPercentage(summary.current_month.profit.net_margin_percentage)}</span>
+                                    <div className="text-sm text-muted-foreground">
+                                        Margen: {formatPercentage(summary.current_month.profit.net_margin_percentage)}
+                                    </div>
                                 </div>
                             </div>
                         </div>

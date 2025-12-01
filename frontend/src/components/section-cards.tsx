@@ -1,6 +1,6 @@
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
 import { useQuery } from "@tanstack/react-query";
-import { Medicine } from "./medicines/MedicineTable";
+import { Medicine } from "@/types/medicine";
 import axios from "axios";
 import { Badge } from "@/components/ui/badge"
 import {
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card"
 
 export function SectionCards() {
-  const { data: medicines, isLoading } = useQuery<Medicine[]>({
+  const { data: medicines } = useQuery<Medicine[]>({
     queryKey: ["medicines"],
     queryFn: async () => {
       try {

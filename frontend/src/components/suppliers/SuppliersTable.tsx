@@ -15,10 +15,10 @@ interface SuppliersTableProps {
     error: any;
 };
 
-const SuppliersTable: React.FC<SuppliersTableProps> = ({ suppliers, isLoading, error }) => {
+const SuppliersTable: React.FC<SuppliersTableProps> = ({ suppliers, isLoading }) => {
     const data = suppliers;
     const [searchTerm, setSearchTerm] = useState("");
-    const { updateSupplier, deleteSupplier } = useSupplierMutations();
+    const { deleteSupplier } = useSupplierMutations();
     const editRefs = React.useRef<Record<number, HTMLButtonElement | null>>({});
 
     const filteredData = data?.filter(supplier => {

@@ -157,3 +157,5 @@ export function CreateSupplierDialog() {
         </Dialog>
     );
 }
+
+export default CreateSupplierDialog;

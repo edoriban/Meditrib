@@ -1,11 +1,10 @@
-import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Upload, Trash2, HardDrive, Database, Clock, AlertTriangle } from "lucide-react";
+import { Download, Trash2, HardDrive, Database, Clock, AlertTriangle } from "lucide-react";
 import { BASE_API_URL } from "@/config";
 
 interface BackupInfo {
@@ -92,6 +91,14 @@ export function BackupManager() {
         if (filename.includes('_monthly_')) return 'Mensual';
         return 'Desconocido';
     };
+
+    if (infoLoading || filesLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="text-center py-8">Cargando información de backups...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

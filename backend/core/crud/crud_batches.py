@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import List, Optional
 from backend.core.models import MedicineBatch, BatchStockMovement, Medicine
 from backend.core.schemas import MedicineBatchCreate, MedicineBatchUpdate, BatchStockMovementCreate, BatchStockMovementUpdate

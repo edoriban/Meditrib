@@ -25,7 +25,7 @@ export function ClientsTable({ data, searchTerm, onSearchChange }: ClientsTableP
     const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
     const editRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
 
-    const { updateClient, deleteClient } = useClientMutations();
+    const { deleteClient } = useClientMutations();
 
     const filteredData = data.filter((client) =>
         client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

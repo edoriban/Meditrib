@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
-import { UserFormValues } from "@/types/forms";
+import { UserFormValues } from "@/types/user";
 import { BASE_API_URL } from "@/config";
 
 export function useUserMutations() {

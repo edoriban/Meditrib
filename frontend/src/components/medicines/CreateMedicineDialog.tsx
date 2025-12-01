@@ -74,7 +74,7 @@ export function CreateMedicineDialog() {
         }
     };
 
-    const { data: medicineTags = [], isLoading: isLoadingTags } = useQuery({
+    const { data: medicineTags = [] } = useQuery({
         queryKey: ["medicineTags"],
         queryFn: async () => {
             const { data } = await axios.get(`${BASE_API_URL}/medicine-tags/`);
@@ -533,3 +533,5 @@ export function CreateMedicineDialog() {
         </>
     );
 }
+
+export default CreateMedicineDialog;

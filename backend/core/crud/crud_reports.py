@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional
 from backend.core.models import Sale, Expense, ExpenseCategory
 
@@ -179,6 +179,45 @@ def get_monthly_trend(db: Session, months: int = 6) -> List[Dict]:
         })
 
     return monthly_data
+
+
+def get_daily_sales_trend(db: Session, days: int = 90) -> List[Dict]:
+    """
+    Tendencia diaria de ventas y costos para la gráfica interactiva
+    """
+    from backend.core.models import PurchaseOrder
+    
+    today = date.today()
+    start_date = today - timedelta(days=days)
+    
+    daily_data = []
+    
+    current_date = start_date
+    while current_date <= today:
+        # Ventas del día (total_with_iva)
+        daily_sales = db.query(func.sum(Sale.total_with_iva)).filter(
+            func.date(Sale.sale_date) == current_date
+        ).scalar() or 0
+        
+        # Costos del día (compras/órdenes de compra)
+        daily_costs = db.query(func.sum(PurchaseOrder.total_amount)).filter(
+            func.date(PurchaseOrder.created_at) == current_date
+        ).scalar() or 0
+        
+        # También incluir gastos del día
+        daily_expenses = db.query(func.sum(Expense.amount)).filter(
+            func.date(Expense.expense_date) == current_date
+        ).scalar() or 0
+        
+        daily_data.append({
+            "date": current_date.isoformat(),
+            "venta": float(daily_sales),
+            "compra": float(daily_costs + daily_expenses)
+        })
+        
+        current_date += timedelta(days=1)
+    
+    return daily_data
 
 
 def get_financial_summary(db: Session) -> Dict:

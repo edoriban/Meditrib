@@ -354,3 +354,5 @@ export function CreateMedicineTagDialog({ onClose }: CreateMedicineTagDialogProp
         </>
     );
 }
+
+export default CreateMedicineTagDialog;

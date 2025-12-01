@@ -7,7 +7,8 @@ from backend.core.crud.crud_reports import (
     get_income_statement,
     get_product_profitability,
     get_monthly_trend,
-    get_financial_summary
+    get_financial_summary,
+    get_daily_sales_trend
 )
 
 router = APIRouter()
@@ -46,3 +47,12 @@ def read_monthly_trend(
 def read_financial_summary(db: Session = Depends(get_db)):
     """Get complete financial summary with current vs last month comparison"""
     return get_financial_summary(db)
+
+
+@router.get("/daily-trend")
+def read_daily_trend(
+    days: int = Query(90, description="Number of days to analyze", ge=7, le=365),
+    db: Session = Depends(get_db)
+):
+    """Get daily sales and costs trend for charts"""
+    return get_daily_sales_trend(db, days)

@@ -1,12 +1,12 @@
-import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { Expense, ExpenseCategory, ExpenseSummary } from "@/types/expense";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, DollarSign, TrendingUp, TrendingDown } from "lucide-react";
+import { Plus, DollarSign } from "lucide-react";
+import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
 import { BASE_API_URL } from "@/config";
 
 const getCategoryColor = (type: string) => {
@@ -65,46 +65,76 @@ export function ExpensesList() {
 
     return (
         <div className="space-y-4">
-            {/* Summary Cards */}
+            {/* Summary Cards - Same style as SectionCards */}
             {summary && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Gastos</CardTitle>
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-3">
+                    <Card className="@container/card">
+                        <CardHeader>
+                            <CardDescription>Total Gastos</CardDescription>
+                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                                ${summary.total_expenses.toFixed(2)}
+                            </CardTitle>
+                            <CardAction>
+                                <Badge variant="outline">
+                                    <IconTrendingDown />
+                                    {summary.expense_count} registros
+                                </Badge>
+                            </CardAction>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">${summary.total_expenses.toFixed(2)}</div>
-                            <p className="text-xs text-muted-foreground">
-                                {summary.expense_count} registros
-                            </p>
-                        </CardContent>
+                        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                            <div className="line-clamp-1 flex gap-2 font-medium">
+                                Gastos del período <IconTrendingDown className="size-4" />
+                            </div>
+                            <div className="text-muted-foreground">
+                                Total de egresos registrados
+                            </div>
+                        </CardFooter>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">IVA Deducible</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <Card className="@container/card">
+                        <CardHeader>
+                            <CardDescription>IVA Deducible</CardDescription>
+                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl text-green-600">
+                                ${summary.total_tax_amount.toFixed(2)}
+                            </CardTitle>
+                            <CardAction>
+                                <Badge variant="outline">
+                                    <IconTrendingUp />
+                                    A favor
+                                </Badge>
+                            </CardAction>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">${summary.total_tax_amount.toFixed(2)}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Crédito fiscal disponible
-                            </p>
-                        </CardContent>
+                        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                            <div className="line-clamp-1 flex gap-2 font-medium">
+                                Crédito fiscal disponible <IconTrendingUp className="size-4" />
+                            </div>
+                            <div className="text-muted-foreground">
+                                IVA recuperable
+                            </div>
+                        </CardFooter>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Categorías</CardTitle>
-                            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                    <Card className="@container/card">
+                        <CardHeader>
+                            <CardDescription>Categorías</CardDescription>
+                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                                {Object.keys(summary.categories).length}
+                            </CardTitle>
+                            <CardAction>
+                                <Badge variant="outline">
+                                    <IconTrendingUp />
+                                    Activas
+                                </Badge>
+                            </CardAction>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{Object.keys(summary.categories).length}</div>
-                            <p className="text-xs text-muted-foreground">
+                        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                            <div className="line-clamp-1 flex gap-2 font-medium">
+                                Tipos de gastos <IconTrendingUp className="size-4" />
+                            </div>
+                            <div className="text-muted-foreground">
                                 Fijos y variables
-                            </p>
-                        </CardContent>
+                            </div>
+                        </CardFooter>
                     </Card>
                 </div>
             )}

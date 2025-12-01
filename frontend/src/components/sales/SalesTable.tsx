@@ -26,7 +26,7 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
     const [saleToDelete, setSaleToDelete] = useState<Sale | null>(null);
     const editRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
 
-    const { updateSale, deleteSale } = useSaleMutations();
+    const { deleteSale } = useSaleMutations();
 
     const filteredData = data.filter((sale) =>
         sale.medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

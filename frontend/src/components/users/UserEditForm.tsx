@@ -1,7 +1,7 @@
 import React from "react";
 import { FormInput } from "@/components/ui/form-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserFormValues, UserEditFormProps } from "@/types/user";
+import { UserEditFormProps } from "@/types/user";
 
 export const UserEditForm: React.FC<UserEditFormProps> = ({ form, roles }) => {
     const { control, formState: { errors }, setValue, watch } = form;

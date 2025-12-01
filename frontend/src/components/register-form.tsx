@@ -51,7 +51,7 @@ export function RegisterForm({
     className,
     ...props
 }: React.ComponentProps<"div">) {
-    const { register, handleSubmit, control, formState: { errors }, watch } = useForm<RegisterFormValues>({
+    const { handleSubmit, control, formState: { errors } } = useForm<RegisterFormValues>({
         resolver: zodResolver(registerFormSchema),
         defaultValues,
         mode: "onSubmit",

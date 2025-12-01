@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ClientCreateValues, clientFormSchema } from "@/types/clients";
@@ -11,7 +10,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
     Form,
@@ -23,7 +21,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
 
 interface CreateClientDialogProps {
     open: boolean;
@@ -123,3 +120,5 @@ export function CreateClientDialog({ open, onOpenChange }: CreateClientDialogPro
         </Dialog>
     );
 }
+
+export default CreateClientDialog;

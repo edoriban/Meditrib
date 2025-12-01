@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ReportCreateValues, reportFormSchema } from "@/types/reports";
@@ -21,7 +20,6 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText } from "lucide-react";
 
 interface GenerateReportDialogProps {
     open: boolean;
@@ -100,3 +98,5 @@ export function GenerateReportDialog({ open, onOpenChange }: GenerateReportDialo
         </Dialog>
     );
 }
+
+export default GenerateReportDialog;

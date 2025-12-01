@@ -20,7 +20,7 @@ interface UsersTableProps {
     roles?: any[];
 }
 
-export function UsersTable({ users, onUpdate, onDelete, roles }: UsersTableProps) {
+export function UsersTable({ users, onUpdate, onDelete, roles: _roles }: UsersTableProps) {
     const editRefs = React.useRef<Record<number, HTMLButtonElement | null>>({});
 
     return (

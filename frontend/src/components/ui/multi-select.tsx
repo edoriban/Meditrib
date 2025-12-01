@@ -139,7 +139,7 @@ export function MultiSelect({
                                     <CommandItem
                                         key={option.value}
                                         value={option.value}
-                                        onSelect={(currentValue) => {
+                                        onSelect={() => {
                                             handleSelect(option.value);
                                         }}
                                         className="cursor-pointer"

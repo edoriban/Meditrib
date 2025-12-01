@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SaleCreateValues, saleFormSchema } from "@/types/sales";
@@ -11,7 +10,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
     Form,
@@ -23,7 +21,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
 
 interface CreateSaleDialogProps {
     open: boolean;
@@ -198,3 +195,5 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         </Dialog>
     );
 }
+
+export default CreateSaleDialog;

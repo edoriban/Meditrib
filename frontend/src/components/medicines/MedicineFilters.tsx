@@ -30,7 +30,6 @@ export function MedicineFilters({
 }: MedicineFiltersProps) {
     const [showFilters, setShowFilters] = useState(false);
     const [localPriceRange, setLocalPriceRange] = useState<[number, number]>(priceRange);
-    const [profitabilityFilter, setProfitabilityFilter] = useState<"all" | "high" | "medium" | "low">("all");
     const hasActiveFilters = stockFilter !== "all" || priceRange[0] > 0 || priceRange[1] < maxPrice;
 
     const filterButtonRef = useRef<HTMLButtonElement>(null);

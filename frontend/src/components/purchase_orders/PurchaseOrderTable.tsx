@@ -26,7 +26,7 @@ export function PurchaseOrderTable({ data, searchTerm, onSearchChange }: Purchas
     const [orderToDelete, setOrderToDelete] = useState<PurchaseOrder | null>(null);
     const editRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
 
-    const { updatePurchaseOrder, deletePurchaseOrder } = usePurchaseOrderMutations();
+    const { deletePurchaseOrder } = usePurchaseOrderMutations();
 
     const filteredData = data.filter((order) =>
         order.supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -32,9 +32,9 @@ export function CreateRoleDialog() {
     const [open, setOpen] = React.useState(false);
     const [activeTab, setActiveTab] = React.useState("create");
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+    const [_deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [editingRole, setEditingRole] = React.useState<Role | null>(null);
-    const [roleToDelete, setRoleToDelete] = React.useState<Role | null>(null);
+    const [_roleToDelete, setRoleToDelete] = React.useState<Role | null>(null);
 
     const queryClient = useQueryClient();
 
@@ -324,3 +324,5 @@ export function CreateRoleDialog() {
         </>
     );
 }
+
+export default CreateRoleDialog;

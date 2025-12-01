@@ -6,6 +6,7 @@ export interface Medicine {
     name: string;
     description?: string;
     tags?: MedicineTag[];
+    type?: string; // Campo legacy para compatibilidad con DataTable
     sale_price: number;
     purchase_price: number;
     expiration_date?: string;
