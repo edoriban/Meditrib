@@ -24,6 +24,7 @@ class Medicine(Base):
     laboratory = Column(String, nullable=True)
     concentration = Column(String, nullable=True)
     prescription_required = Column(Boolean, default=False)
+    iva_rate = Column(Float, default=0.0)  # 0.0 = exento (medicamentos), 0.16 = 16% (material de curación)
     inventory = relationship("Inventory", uselist=False, back_populates="medicine", cascade="all, delete")
     suppliers = relationship("SupplierMedicine", back_populates="medicine", cascade="all, delete")
     purchase_order_items = relationship("PurchaseOrderItem", back_populates="medicine", cascade="all, delete")
@@ -80,26 +81,46 @@ class Role(Base):
 
 
 class Sale(Base):
+    """Venta/Pedido principal - puede contener múltiples medicamentos"""
     __tablename__ = "sales"
     id = Column(Integer, primary_key=True, index=True)
-    medicine_id = Column(ForeignKey("medicines.id"))
-    quantity = Column(Integer)
-    total_price = Column(Float)
     sale_date = Column(DateTime, default=datetime.now)
     shipping_date = Column(Date, nullable=True)
-    shipping_status = Column(String, default="pending")  # e.g., "pending", "completed", "canceled"
-    payment_status = Column(String, default="pending")  # e.g., "pending", "paid", "refunded"
-    payment_method = Column(String, nullable=True)  # e.g., "credit_card", "cash", "insurance"
+    shipping_status = Column(String, default="pending")  # e.g., "pending", "shipped", "delivered", "canceled"
+    payment_status = Column(String, default="pending")  # e.g., "pending", "paid", "partial", "refunded"
+    payment_method = Column(String, nullable=True)  # e.g., "credit_card", "cash", "transfer"
     document_type = Column(String, default="invoice")  # "invoice" (IVA) or "remission" (nota de remisión)
     iva_rate = Column(Float, default=0.16)  # Tasa de IVA (0.16 = 16%, 0.0 = exento)
+    subtotal = Column(Float, default=0.0)  # Suma de todos los items sin IVA
     iva_amount = Column(Float, default=0.0)  # Monto de IVA calculado
-    subtotal = Column(Float)  # Subtotal sin IVA
-    total_with_iva = Column(Float)  # Total con IVA incluido
+    total = Column(Float, default=0.0)  # Total con IVA incluido
+    notes = Column(String, nullable=True)  # Notas del pedido
+    
     user_id = Column(ForeignKey("users.id"))
     user = relationship("User")
-    medicine = relationship("Medicine")
     client_id = Column(ForeignKey("clients.id"))
     client = relationship("Client", back_populates="sales")
+    
+    # Relación con los items de la venta
+    items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
+
+
+class SaleItem(Base):
+    """Items individuales de una venta - cada medicamento con su cantidad"""
+    __tablename__ = "sale_items"
+    id = Column(Integer, primary_key=True, index=True)
+    sale_id = Column(ForeignKey("sales.id"), nullable=False)
+    medicine_id = Column(ForeignKey("medicines.id"), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    unit_price = Column(Float, nullable=False)  # Precio unitario al momento de la venta
+    discount = Column(Float, default=0.0)  # Descuento por item
+    iva_rate = Column(Float, default=0.0)  # Tasa de IVA del producto (0.0, 0.16, etc.)
+    subtotal = Column(Float, nullable=False)  # (quantity * unit_price) - discount
+    iva_amount = Column(Float, default=0.0)  # IVA calculado para este item
+    
+    # Relationships
+    sale = relationship("Sale", back_populates="items")
+    medicine = relationship("Medicine")
 
 
 class Client(Base):

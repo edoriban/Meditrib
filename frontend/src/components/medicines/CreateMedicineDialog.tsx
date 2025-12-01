@@ -14,10 +14,11 @@ import {
     DialogClose,
 } from "@/components/ui/dialog";
 import { X } from "lucide-react";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMedicineMutations } from "@/hooks/useMedicineMutations";
 import { MedicineCreateValues, MedicineTag, medicineCreateSchema } from "@/types/medicine";
 import { useQuery } from "@tanstack/react-query";
@@ -96,6 +97,7 @@ export function CreateMedicineDialog() {
             laboratory: "",
             concentration: "",
             prescription_required: false,
+            iva_rate: 0,
             tags: [],
             inventory: {
                 quantity: 0,
@@ -359,25 +361,53 @@ export function CreateMedicineDialog() {
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="prescription_required"
+                                    name="iva_rate"
                                     render={({ field }) => (
-                                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                            <FormControl>
-                                                <Checkbox
-                                                    checked={field.value}
-                                                    onCheckedChange={field.onChange}
-                                                />
-                                            </FormControl>
-                                            <div className="space-y-1 leading-none">
-                                                <FormLabel>
-                                                    Requiere receta médica
-                                                </FormLabel>
-                                            </div>
+                                        <FormItem>
+                                            <FormLabel>IVA del producto</FormLabel>
+                                            <Select
+                                                onValueChange={(value) => field.onChange(parseFloat(value))}
+                                                value={field.value?.toString() || "0"}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecciona tasa de IVA" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="0">Exento (0%) - Medicamentos</SelectItem>
+                                                    <SelectItem value="0.16">16% - Material de curación</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormDescription className="text-xs">
+                                                Medicamentos: 0%, Material (gasas, jeringas): 16%
+                                            </FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                             </div>
+
+                            <FormField
+                                control={form.control}
+                                name="prescription_required"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                        <div className="space-y-1 leading-none">
+                                            <FormLabel>
+                                                Requiere receta médica
+                                            </FormLabel>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
                             {/* Reemplazar el campo tipo con el selector de etiquetas */}
                             <FormField

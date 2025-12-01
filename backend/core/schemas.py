@@ -55,6 +55,7 @@ class MedicineBase(BaseModel):
     laboratory: Optional[str] = None
     concentration: Optional[str] = None
     prescription_required: bool = False
+    iva_rate: float = 0.0  # 0.0 = exento (medicamentos), 0.16 = 16% (material de curación)
 
 
 class MedicineCreate(MedicineBase):
@@ -211,12 +212,34 @@ class Client(ClientBase):
         from_attributes = True
 
 # Sale Schemas
-class SaleBase(BaseModel):
+
+class SaleItemBase(BaseModel):
     medicine_id: int
     quantity: int
+    unit_price: float
+    discount: float = 0.0
+
+class SaleItemCreate(SaleItemBase):
+    pass
+
+class SaleItemUpdate(BaseModel):
+    quantity: Optional[int] = None
+    unit_price: Optional[float] = None
+    discount: Optional[float] = None
+
+class SaleItem(SaleItemBase):
+    id: int
+    sale_id: int
     subtotal: float
+    iva_rate: float = 0.0
+    iva_amount: float = 0.0
+    medicine: Medicine
+
+    class Config:
+        from_attributes = True
+
+class SaleBase(BaseModel):
     client_id: int
-    sale_date: datetime
     user_id: int
     document_type: str = "invoice"  # "invoice" or "remission"
     iva_rate: float = 0.16
@@ -224,16 +247,14 @@ class SaleBase(BaseModel):
     shipping_status: str = "pending"
     payment_status: str = "pending"
     payment_method: Optional[str] = None
+    notes: Optional[str] = None
 
 class SaleCreate(SaleBase):
-    pass
+    items: List[SaleItemCreate]
+    sale_date: Optional[datetime] = None
 
 class SaleUpdate(BaseModel):
-    medicine_id: Optional[int] = None
-    quantity: Optional[int] = None
-    subtotal: Optional[float] = None
     client_id: Optional[int] = None
-    sale_date: Optional[datetime] = None
     user_id: Optional[int] = None
     document_type: Optional[str] = None
     iva_rate: Optional[float] = None
@@ -241,13 +262,16 @@ class SaleUpdate(BaseModel):
     shipping_status: Optional[str] = None
     payment_status: Optional[str] = None
     payment_method: Optional[str] = None
+    notes: Optional[str] = None
+    items: Optional[List[SaleItemCreate]] = None
 
 class Sale(SaleBase):
     id: int
+    sale_date: datetime
+    subtotal: float
     iva_amount: float
-    total_with_iva: float
-    total_price: float  # Para compatibilidad
-    medicine: Medicine
+    total: float
+    items: List[SaleItem] = []
     client: Client
     user: User
     invoice: Optional["Invoice"] = None

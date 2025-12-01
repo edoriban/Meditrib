@@ -15,6 +15,7 @@ export interface Medicine {
     laboratory?: string;
     concentration?: string;
     prescription_required: boolean;
+    iva_rate: number; // 0.0 = exento (medicamentos), 0.16 = 16% (material de curación)
     inventory?: {
         quantity: number;
     };
@@ -39,6 +40,7 @@ export const medicineFormSchema = z.object({
     laboratory: z.string().optional(),
     concentration: z.string().optional(),
     prescription_required: z.boolean(),
+    iva_rate: z.number().min(0).max(1).default(0), // 0 = exento, 0.16 = 16%
     tags: z.array(z.number()).default([]),
     inventory: z
         .object({
@@ -63,6 +65,7 @@ export interface MedicineFormValues {
     laboratory?: string;
     concentration?: string;
     prescription_required: boolean;
+    iva_rate?: number;
     tags?: number[];
     inventory?: {
         quantity: number;
@@ -81,6 +84,7 @@ export type MedicineCreateValues = {
     laboratory?: string;
     concentration?: string;
     prescription_required: boolean;
+    iva_rate?: number;
     tags?: number[];
     inventory?: {
         quantity: number;

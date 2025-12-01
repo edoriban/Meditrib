@@ -16,9 +16,14 @@ export function useSaleMutations() {
         onSuccess: () => {
             toast.success("Venta creada correctamente");
             queryClient.invalidateQueries({ queryKey: ["sales"] });
+            queryClient.invalidateQueries({ queryKey: ["medicines"] }); // Actualizar inventario
         },
         onError: (error) => {
-            toast.error(`Error al crear venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            if (axios.isAxiosError(error) && error.response?.data?.detail) {
+                toast.error(error.response.data.detail);
+            } else {
+                toast.error(`Error al crear venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            }
         }
     });
 
@@ -31,10 +36,14 @@ export function useSaleMutations() {
         onSuccess: () => {
             toast.success("Venta actualizada correctamente");
             queryClient.invalidateQueries({ queryKey: ["sales"] });
+            queryClient.invalidateQueries({ queryKey: ["medicines"] });
         },
         onError: (error) => {
-            toast.error(`Error al actualizar venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
-            console.error("Error completo:", error);
+            if (axios.isAxiosError(error) && error.response?.data?.detail) {
+                toast.error(error.response.data.detail);
+            } else {
+                toast.error(`Error al actualizar venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            }
         }
     });
 
@@ -47,17 +56,22 @@ export function useSaleMutations() {
         onSuccess: () => {
             toast.success("Venta eliminada correctamente");
             queryClient.invalidateQueries({ queryKey: ["sales"] });
+            queryClient.invalidateQueries({ queryKey: ["medicines"] }); // El stock se revierte
         },
         onError: (error) => {
-            toast.error(`Error al eliminar venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            if (axios.isAxiosError(error) && error.response?.data?.detail) {
+                toast.error(error.response.data.detail);
+            } else {
+                toast.error(`Error al eliminar venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            }
         }
     });
 
     return {
-        createSale: (saleData: SaleCreateValues) => createSale.mutate(saleData),
+        createSale: (saleData: SaleCreateValues) => createSale.mutateAsync(saleData),
         updateSale: (saleId: number, saleData: SaleUpdateValues) =>
-            updateSale.mutate({ saleId, saleData }),
-        deleteSale: (saleId: number) => deleteSale.mutate(saleId),
+            updateSale.mutateAsync({ saleId, saleData }),
+        deleteSale: (saleId: number) => deleteSale.mutateAsync(saleId),
         isCreating: createSale.isPending,
         isUpdating: updateSale.isPending,
         isDeleting: deleteSale.isPending

@@ -28,6 +28,7 @@ import {
   IconGripVertical,
   IconLayoutColumns,
   IconPlus,
+  IconTrendingDown,
   IconTrendingUp,
 } from "@tabler/icons-react"
 import {
@@ -45,18 +46,11 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { toast } from "sonner"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Drawer,
@@ -633,32 +627,24 @@ export function DataTable({
   )
 }
 
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-]
-
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--primary)",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "var(--secondary)",
-  }
-} satisfies ChartConfig
-
 interface TableCellViewerProps {
   item: Medicine
 }
 
 function TableCellViewer({ item }: TableCellViewerProps) {
   const isMobile = useIsMobile()
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN'
+    }).format(amount);
+  };
+
+  const profit = item.sale_price - item.purchase_price;
+  const profitPercentage = item.purchase_price > 0 
+    ? ((profit / item.purchase_price) * 100).toFixed(1) 
+    : '0';
 
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
@@ -671,62 +657,43 @@ function TableCellViewer({ item }: TableCellViewerProps) {
         <DrawerHeader className="gap-1">
           <DrawerTitle>{item.name}</DrawerTitle>
           <DrawerDescription>
-            Showing total visitors for the last 6 months
+            Detalles del medicamento
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
           {!isMobile && (
             <>
-              <ChartContainer config={chartConfig}>
-                <AreaChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{
-                    left: 0,
-                    right: 10,
-                  }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                    hide
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
-                  />
-                  <Area
-                    dataKey="mobile"
-                    type="natural"
-                    fill="var(--color-mobile)"
-                    fillOpacity={0.6}
-                    stroke="var(--color-mobile)"
-                    stackId="a"
-                  />
-                  <Area
-                    dataKey="desktop"
-                    type="natural"
-                    fill="var(--color-desktop)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-desktop)"
-                    stackId="a"
-                  />
-                </AreaChart>
-              </ChartContainer>
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs">Precio Compra</span>
+                  <span className="font-semibold text-lg">{formatCurrency(item.purchase_price)}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs">Precio Venta</span>
+                  <span className="font-semibold text-lg">{formatCurrency(item.sale_price)}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs">Stock Actual</span>
+                  <span className="font-semibold text-lg">{item.inventory?.quantity || 0} unidades</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs">Margen de Ganancia</span>
+                  <span className={`font-semibold text-lg ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(profit)} ({profitPercentage}%)
+                  </span>
+                </div>
+              </div>
               <Separator />
               <div className="grid gap-2">
                 <div className="flex gap-2 leading-none font-medium">
-                  Trending up by 5.2% this month{" "}
-                  <IconTrendingUp className="size-4" />
+                  {profit >= 0 ? (
+                    <>Margen positivo de {profitPercentage}% <IconTrendingUp className="size-4 text-green-600" /></>
+                  ) : (
+                    <>Margen negativo <IconTrendingDown className="size-4 text-red-600" /></>
+                  )}
                 </div>
                 <div className="text-muted-foreground">
-                  Showing total visitors for the last 6 months. This is just
-                  some random text to test the layout. It spans multiple lines
-                  and should wrap around.
+                  {item.description || 'Sin descripción disponible'}
                 </div>
               </div>
               <Separator />
@@ -734,72 +701,39 @@ function TableCellViewer({ item }: TableCellViewerProps) {
           )}
           <form className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
-              <Label htmlFor="header">Header</Label>
+              <Label htmlFor="header">Nombre</Label>
               <Input id="header" defaultValue={item.name} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="type">Type</Label>
-                <Select defaultValue={item.type}>
-                  <SelectTrigger id="type" className="w-full">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Table of Contents">
-                      Table of Contents
-                    </SelectItem>
-                    <SelectItem value="Executive Summary">
-                      Executive Summary
-                    </SelectItem>
-                    <SelectItem value="Technical Approach">
-                      Technical Approach
-                    </SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
-                    <SelectItem value="Capabilities">Capabilities</SelectItem>
-                    <SelectItem value="Focus Documents">
-                      Focus Documents
-                    </SelectItem>
-                    <SelectItem value="Narrative">Narrative</SelectItem>
-                    <SelectItem value="Cover Page">Cover Page</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="type">Tipo</Label>
+                <Input id="type" defaultValue={item.type} readOnly className="bg-muted" />
               </div>
               <div className="flex flex-col gap-3">
-                <Label htmlFor="purchase_price">Purchase Price</Label>
-                <Input id="purchase_price" defaultValue={item.purchase_price} />
+                <Label htmlFor="purchase_price">Precio Compra</Label>
+                <Input id="purchase_price" defaultValue={item.purchase_price} type="number" step="0.01" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-3">
-                  <Label htmlFor="target">Target</Label>
-                  <Input id="target" defaultValue={item.sale_price} />
-                </div>
-                <div className="flex flex-col gap-3">
-                  <Label htmlFor="limit">Limit</Label>
-                  <Input id="limit" defaultValue={item.inventory?.quantity} />
-                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="sale_price">Precio Venta</Label>
+                <Input id="sale_price" defaultValue={item.sale_price} type="number" step="0.01" />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="inventory">Inventario</Label>
+                <Input id="inventory" defaultValue={item.inventory?.quantity || 0} type="number" />
               </div>
             </div>
             <div className="flex flex-col gap-3">
-              <Label htmlFor="reviewer">Reviewer</Label>
-              <Select defaultValue={item.suppliers?.name}>
-                <SelectTrigger id="reviewer" className="w-full">
-                  <SelectValue placeholder="Select a reviewer" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-                  <SelectItem value="Jamik Tashpulatov">
-                    Jamik Tashpulatov
-                  </SelectItem>
-                  <SelectItem value="Emily Whalen">Emily Whalen</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="supplier">Proveedor</Label>
+              <Input id="supplier" defaultValue={item.suppliers?.name || 'Sin asignar'} readOnly className="bg-muted" />
             </div>
           </form>
         </div>
         <DrawerFooter>
-          <Button>Submit</Button>
+          <Button>Guardar Cambios</Button>
           <DrawerClose asChild>
-            <Button variant="outline">Done</Button>
+            <Button variant="outline">Cerrar</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

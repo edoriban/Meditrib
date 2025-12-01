@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FormInput } from "@/components/ui/form-input";
 import { MedicineEditFormProps } from "@/types/medicine";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -9,6 +9,7 @@ import { BASE_API_URL } from "@/config";
 import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog";
 import { Button } from "@/components/ui/button";
 import { TagToggleGroup } from "@/components/medicines/TagToggleGroup";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
     const { control, formState: { errors } } = form;
@@ -103,6 +104,34 @@ export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
                     )}
                 />
             </div>
+
+            <FormField
+                control={control}
+                name="iva_rate"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>IVA del producto</FormLabel>
+                        <Select
+                            onValueChange={(value) => field.onChange(parseFloat(value))}
+                            value={field.value?.toString() || "0"}
+                        >
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona tasa de IVA" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="0">Exento (0%) - Medicamentos</SelectItem>
+                                <SelectItem value="0.16">16% - Material de curación</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormDescription className="text-xs">
+                            Medicamentos: 0%, Material (gasas, jeringas): 16%
+                        </FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
 
             <FormField
                 control={control}
