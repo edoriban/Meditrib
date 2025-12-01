@@ -274,6 +274,13 @@ class Sale(SaleBase):
     items: List[SaleItem] = []
     client: Client
     user: User
+
+    class Config:
+        from_attributes = True
+
+
+class SaleWithInvoice(Sale):
+    """Sale with optional invoice - use only when invoice data is needed"""
     invoice: Optional["Invoice"] = None
 
     class Config:
@@ -566,4 +573,5 @@ class Token(BaseModel):
 
 # Actualizar referencias después de definir todas las clases
 Sale.model_rebuild()
+SaleWithInvoice.model_rebuild()
 Invoice.model_rebuild()

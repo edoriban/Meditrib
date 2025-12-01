@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { IconPackage } from "@tabler/icons-react";
+import { IconPackage, IconFileInvoice, IconFileText } from "@tabler/icons-react";
 
 interface SalesTableProps {
     data: Sale[];
@@ -60,6 +60,13 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
     const handleEdit = (sale: Sale) => {
         setSaleToEdit(sale);
         setEditDialogOpen(true);
+    };
+
+    const handleEditDialogClose = (open: boolean) => {
+        setEditDialogOpen(open);
+        if (!open) {
+            setSaleToEdit(null);
+        }
     };
 
     const confirmDelete = async () => {
@@ -124,6 +131,7 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
                     <TableHeader>
                         <TableRow>
                             <TableHead>Pedido</TableHead>
+                            <TableHead>Tipo</TableHead>
                             <TableHead>Cliente</TableHead>
                             <TableHead>Productos</TableHead>
                             <TableHead className="text-right">Cantidad</TableHead>
@@ -137,7 +145,7 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
                     <TableBody>
                         {filteredData.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                                     No hay ventas registradas
                                 </TableCell>
                             </TableRow>
@@ -146,6 +154,19 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
                                 <TableRow key={sale.id}>
                                     <TableCell>
                                         <SaleCellViewer sale={sale} />
+                                    </TableCell>
+                                    <TableCell>
+                                        {sale.document_type === 'invoice' ? (
+                                            <Badge variant="default" className="bg-blue-600 hover:bg-blue-700 flex items-center gap-1 w-fit">
+                                                <IconFileInvoice className="h-3 w-3" />
+                                                Factura
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+                                                <IconFileText className="h-3 w-3" />
+                                                Remisión
+                                            </Badge>
+                                        )}
                                     </TableCell>
                                     <TableCell className="font-medium">{sale.client?.name || '-'}</TableCell>
                                     <TableCell>
@@ -199,7 +220,7 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
             {saleToEdit && (
                 <EditSaleDialog
                     open={editDialogOpen}
-                    onOpenChange={setEditDialogOpen}
+                    onOpenChange={handleEditDialogClose}
                     sale={saleToEdit}
                 />
             )}

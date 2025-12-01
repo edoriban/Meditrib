@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { SaleCreateValues, SaleItemValues, saleFormSchema } from "@/types/sales";
+import { SaleCreateValues, SaleItemValues, SaleFormValues, saleFormSchema } from "@/types/sales";
 import { useSaleMutations } from "@/hooks/useSaleMutations";
 import { Medicine } from "@/types/medicine";
 import { Client } from "@/types/clients";
@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconPlus, IconTrash, IconMinus, IconSearch } from "@tabler/icons-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CreateSaleDialogProps {
@@ -45,10 +45,24 @@ const formatCurrency = (amount: number) => {
 };
 
 export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) {
-    const { createSale } = useSaleMutations();
+    const { createSale, isCreating } = useSaleMutations();
     const [items, setItems] = useState<SaleItemValues[]>([]);
     const [selectedMedicine, setSelectedMedicine] = useState<number>(0);
     const [itemQuantity, setItemQuantity] = useState<number>(1);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Cerrar dropdown al hacer clic fuera
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowDropdown(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     // Cargar medicamentos desde la API
     const { data: medicines } = useQuery<Medicine[]>({
@@ -70,7 +84,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         enabled: open,
     });
 
-    const form = useForm<SaleCreateValues>({
+    const form = useForm<SaleFormValues>({
         resolver: zodResolver(saleFormSchema),
         defaultValues: {
             client_id: 0,
@@ -121,6 +135,34 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         setItems(items.filter((_, i) => i !== index));
     };
 
+    // Actualizar cantidad de un item
+    const updateItemQuantity = (index: number, newQuantity: number) => {
+        const item = items[index];
+        const medicine = medicines?.find(m => m.id === item.medicine_id);
+        const maxStock = medicine?.inventory?.quantity || 999;
+        
+        // Validar cantidad entre 1 y el stock disponible
+        const validQuantity = Math.max(1, Math.min(newQuantity, maxStock));
+        
+        const updatedItems = [...items];
+        updatedItems[index] = { ...updatedItems[index], quantity: validQuantity };
+        setItems(updatedItems);
+    };
+
+    // Filtrar medicamentos disponibles (no seleccionados y con stock)
+    const availableMedicines = medicines?.filter(medicine => {
+        // Excluir medicamentos ya agregados
+        const isAlreadyAdded = items.some(item => item.medicine_id === medicine.id);
+        // Solo mostrar medicamentos con stock disponible
+        const hasStock = medicine.inventory && medicine.inventory.quantity > 0;
+        return !isAlreadyAdded && hasStock;
+    }) || [];
+
+    // Filtrar por búsqueda
+    const filteredMedicines = availableMedicines.filter(medicine =>
+        medicine.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     // Calcular totales con IVA por producto
     const subtotal = items.reduce((sum, item) => {
         return sum + (item.quantity * item.unit_price) - item.discount;
@@ -138,21 +180,31 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         : 0;
     const total = subtotal + ivaAmount;
 
-    const onSubmit = async (data: SaleCreateValues) => {
+    const onSubmit = async (data: SaleFormValues) => {
         if (items.length === 0) {
             form.setError("items", { message: "Agrega al menos un medicamento" });
             return;
         }
 
-        const saleData: SaleCreateValues = {
-            ...data,
-            items: items,
-        };
+        if (!data.client_id || data.client_id === 0) {
+            form.setError("client_id", { message: "Selecciona un cliente" });
+            return;
+        }
 
-        await createSale(saleData);
-        onOpenChange(false);
-        form.reset();
-        setItems([]);
+        try {
+            const saleData: SaleCreateValues = {
+                ...data,
+                items: items,
+            };
+
+            await createSale(saleData);
+            onOpenChange(false);
+            form.reset();
+            setItems([]);
+            setSelectedMedicine(0);
+        } catch (error) {
+            console.error("Error al crear venta:", error);
+        }
     };
 
     const getMedicineName = (medicineId: number) => {
@@ -286,35 +338,73 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="flex gap-2 items-end">
-                                    <div className="flex-1">
+                                    {/* Input con autocompletado */}
+                                    <div className="flex-1 relative" ref={dropdownRef}>
                                         <label className="text-sm font-medium">Medicamento</label>
-                                        <Select 
-                                            value={selectedMedicine.toString()} 
-                                            onValueChange={(v) => setSelectedMedicine(parseInt(v))}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccionar medicamento" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {medicines?.map((medicine) => (
-                                                    <SelectItem key={medicine.id} value={medicine.id.toString()}>
-                                                        {medicine.name} - {formatCurrency(medicine.sale_price)} 
-                                                        {medicine.inventory && ` (Stock: ${medicine.inventory.quantity})`}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="relative">
+                                            <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                                            <Input
+                                                placeholder="Escribe para buscar..."
+                                                value={searchQuery}
+                                                onChange={(e) => {
+                                                    setSearchQuery(e.target.value);
+                                                    setShowDropdown(true);
+                                                    // Si borra la búsqueda, limpiar selección
+                                                    if (!e.target.value) {
+                                                        setSelectedMedicine(0);
+                                                    }
+                                                }}
+                                                onFocus={() => setShowDropdown(true)}
+                                                className="pl-9"
+                                            />
+                                            
+                                            {/* Dropdown de resultados */}
+                                            {showDropdown && (
+                                                <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-[250px] overflow-y-auto">
+                                                    {filteredMedicines.length === 0 ? (
+                                                        <div className="py-4 px-3 text-center text-sm text-muted-foreground">
+                                                            {searchQuery ? "No se encontraron medicamentos" : "Escribe para buscar medicamentos"}
+                                                        </div>
+                                                    ) : (
+                                                        filteredMedicines.map((medicine) => (
+                                                            <div
+                                                                key={medicine.id}
+                                                                onClick={() => {
+                                                                    setSelectedMedicine(medicine.id);
+                                                                    setSearchQuery(medicine.name);
+                                                                    setShowDropdown(false);
+                                                                }}
+                                                                className={`flex flex-col px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground ${
+                                                                    selectedMedicine === medicine.id ? "bg-accent" : ""
+                                                                }`}
+                                                            >
+                                                                <span className="font-medium">{medicine.name}</span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {formatCurrency(medicine.sale_price)} · Stock: {medicine.inventory?.quantity || 0}
+                                                                </span>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="w-24">
                                         <label className="text-sm font-medium">Cantidad</label>
                                         <Input 
                                             type="number" 
                                             min="1"
+                                            max={medicines?.find(m => m.id === selectedMedicine)?.inventory?.quantity || 999}
                                             value={itemQuantity}
                                             onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
+                                            onFocus={() => setShowDropdown(false)}
                                         />
                                     </div>
-                                    <Button type="button" onClick={addItem} disabled={!selectedMedicine}>
+                                    <Button type="button" onClick={() => {
+                                        addItem();
+                                        setSearchQuery("");
+                                        setShowDropdown(false);
+                                    }} disabled={!selectedMedicine}>
                                         <IconPlus className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -325,7 +415,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Medicamento</TableHead>
-                                                <TableHead className="text-right">Cant.</TableHead>
+                                                <TableHead className="text-center w-40">Cantidad</TableHead>
                                                 <TableHead className="text-right">Precio</TableHead>
                                                 <TableHead className="text-right">IVA</TableHead>
                                                 <TableHead className="text-right">Subtotal</TableHead>
@@ -336,10 +426,49 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                             {items.map((item, index) => {
                                                 const medicine = medicines?.find(m => m.id === item.medicine_id);
                                                 const productIvaRate = medicine?.iva_rate || 0;
+                                                const maxStock = medicine?.inventory?.quantity || 999;
                                                 return (
                                                     <TableRow key={index}>
-                                                        <TableCell>{getMedicineName(item.medicine_id)}</TableCell>
-                                                        <TableCell className="text-right">{item.quantity}</TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-col">
+                                                                <span>{getMedicineName(item.medicine_id)}</span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    Stock disponible: {maxStock}
+                                                                </span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="icon"
+                                                                    className="h-8 w-8"
+                                                                    onClick={() => updateItemQuantity(index, item.quantity - 1)}
+                                                                    disabled={item.quantity <= 1}
+                                                                >
+                                                                    <IconMinus className="h-4 w-4" />
+                                                                </Button>
+                                                                <Input
+                                                                    type="number"
+                                                                    min={1}
+                                                                    max={maxStock}
+                                                                    value={item.quantity}
+                                                                    onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 1)}
+                                                                    className="w-16 h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                />
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="icon"
+                                                                    className="h-8 w-8"
+                                                                    onClick={() => updateItemQuantity(index, item.quantity + 1)}
+                                                                    disabled={item.quantity >= maxStock}
+                                                                >
+                                                                    <IconPlus className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </TableCell>
                                                         <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
                                                         <TableCell className="text-right">
                                                             <span className={productIvaRate > 0 ? "text-amber-600" : "text-green-600"}>
@@ -422,8 +551,8 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                                 Cancelar
                             </Button>
-                            <Button type="submit" disabled={form.formState.isSubmitting || items.length === 0}>
-                                {form.formState.isSubmitting ? "Creando..." : "Crear Venta"}
+                            <Button type="submit" disabled={isCreating || items.length === 0}>
+                                {isCreating ? "Creando..." : "Crear Venta"}
                             </Button>
                         </DialogFooter>
                     </form>

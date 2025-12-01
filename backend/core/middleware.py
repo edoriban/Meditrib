@@ -71,9 +71,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             # Calcular duración incluso en error
             duration_ms = (time.time() - start_time) * 1000
 
-            # Registrar error
+            # Registrar error con traceback completo
+            import traceback
+            full_traceback = traceback.format_exc()
+            
             logger.error(
-                f"Request failed: {method} {full_path}",
+                f"Request failed: {method} {full_path}\n{full_traceback}",
                 extra={
                     "request_id": request_id,
                     "user_id": user_id,
@@ -85,10 +88,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 }
             )
 
-            # Retornar respuesta de error
+            # Retornar respuesta de error con más detalle en desarrollo
             return JSONResponse(
                 status_code=500,
-                content={"detail": "Internal server error", "request_id": request_id}
+                content={
+                    "detail": f"Internal server error: {str(e)}", 
+                    "request_id": request_id,
+                    "error_type": type(e).__name__
+                }
             )
 
 

@@ -54,9 +54,22 @@ export const saleItemSchema = z.object({
     discount: z.number().min(0),
 });
 
-// Schema para crear una venta
+// Schema para crear una venta (usado en el formulario)
 export const saleFormSchema = z.object({
-    client_id: z.number().int().positive("Selecciona un cliente"),
+    client_id: z.number().int(), // Validamos manualmente en el componente
+    user_id: z.number().int().positive(),
+    document_type: z.enum(["invoice", "remission"]),
+    iva_rate: z.number().min(0).max(1),
+    shipping_status: z.string(),
+    payment_status: z.string(),
+    payment_method: z.string().optional(),
+    notes: z.string().optional(),
+    items: z.array(saleItemSchema).optional(), // Validamos manualmente en el componente
+});
+
+// Schema para enviar al backend (requiere items)
+export const saleCreateSchema = z.object({
+    client_id: z.number().int().min(1),
     user_id: z.number().int().positive(),
     document_type: z.enum(["invoice", "remission"]),
     iva_rate: z.number().min(0).max(1),
@@ -66,8 +79,6 @@ export const saleFormSchema = z.object({
     notes: z.string().optional(),
     items: z.array(saleItemSchema).min(1, "Agrega al menos un medicamento"),
 });
-
-export const saleCreateSchema = saleFormSchema;
 
 export const saleUpdateSchema = saleFormSchema.partial();
 
