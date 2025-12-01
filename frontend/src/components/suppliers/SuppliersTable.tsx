@@ -2,7 +2,6 @@ import * as React from "react";
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { Skeleton } from "../ui/skeleton"
-import { CreateSupplierDialog } from "@/components/suppliers/CreateSupplierDialog";
 import { SupplierFilters } from "@/components/suppliers/SupplierFilters";
 import { useSupplierMutations } from "@/hooks/useSupplierMutations";
 import { SupplierActionsMenu } from "@/components/suppliers/SupplierActionsMenu";
@@ -33,11 +32,6 @@ const SuppliersTable: React.FC<SuppliersTableProps> = ({ suppliers, isLoading })
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Proveedores</h2>
-                <CreateSupplierDialog />
-            </div>
-
             <SupplierFilters
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}

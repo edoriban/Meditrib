@@ -14,6 +14,13 @@ const ClientsPage = React.lazy(() => import("./pages/clients/ClientsPage"));
 const SalesPage = React.lazy(() => import("./pages/sales/SalesPage"));
 const PurchaseOrderPage = React.lazy(() => import("./pages/purchase_orders/PurchaseOrderPage"));
 const ReportsPage = React.lazy(() => import("./pages/reports/ReportsPage"));
+const BatchesPage = React.lazy(() => import("./pages/batches/BatchesPage"));
+const AlertsPage = React.lazy(() => import("./pages/alerts/AlertsPage"));
+const InvoicesPage = React.lazy(() => import("./pages/invoices/InvoicesPage"));
+const ExpensesPage = React.lazy(() => import("./pages/expenses/ExpensesPage"));
+const RolesPage = React.lazy(() => import("./pages/roles/RolesPage"));
+const SettingsPage = React.lazy(() => import("./pages/settings/SettingsPage"));
+const HelpPage = React.lazy(() => import("./pages/help/HelpPage"));
 
 const MainLayout = React.lazy(() => import("./layouts/MainLayout"));
 const ProtectedRoute = React.lazy(() => import("./components/auth/ProtectedRoute"));
@@ -115,65 +122,65 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              {/* Lotes - Placeholder por ahora */}
+              {/* Lotes */}
               <Route path="/batches" element={
                 <ProtectedRoute>
                   <MainLayout>
-                    <div className="p-6"><h1 className="text-2xl font-bold">Gestión de Lotes</h1><p className="text-muted-foreground mt-2">Próximamente...</p></div>
+                    <BatchesPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />
 
-              {/* Alertas - Placeholder por ahora */}
+              {/* Alertas */}
               <Route path="/alerts" element={
                 <ProtectedRoute>
                   <MainLayout>
-                    <div className="p-6"><h1 className="text-2xl font-bold">Alertas</h1><p className="text-muted-foreground mt-2">Próximamente...</p></div>
+                    <AlertsPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />
 
-              {/* Facturas - Placeholder por ahora */}
+              {/* Facturas */}
               <Route path="/invoices" element={
                 <ProtectedRoute>
                   <MainLayout>
-                    <div className="p-6"><h1 className="text-2xl font-bold">Facturas</h1><p className="text-muted-foreground mt-2">Próximamente...</p></div>
+                    <InvoicesPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />
 
-              {/* Gastos - Placeholder por ahora */}
+              {/* Gastos */}
               <Route path="/expenses" element={
                 <ProtectedRoute>
                   <MainLayout>
-                    <div className="p-6"><h1 className="text-2xl font-bold">Gastos</h1><p className="text-muted-foreground mt-2">Próximamente...</p></div>
+                    <ExpensesPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />
 
-              {/* Roles - Placeholder por ahora */}
+              {/* Roles */}
               <Route path="/roles" element={
                 <ProtectedRoute>
                   <MainLayout>
-                    <div className="p-6"><h1 className="text-2xl font-bold">Gestión de Roles</h1><p className="text-muted-foreground mt-2">Próximamente...</p></div>
+                    <RolesPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />
 
-              {/* Configuración - Placeholder */}
+              {/* Configuración */}
               <Route path="/settings" element={
                 <ProtectedRoute>
                   <MainLayout>
-                    <div className="p-6"><h1 className="text-2xl font-bold">Configuración</h1><p className="text-muted-foreground mt-2">Próximamente...</p></div>
+                    <SettingsPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />
 
-              {/* Ayuda - Placeholder */}
+              {/* Ayuda */}
               <Route path="/help" element={
                 <ProtectedRoute>
                   <MainLayout>
-                    <div className="p-6"><h1 className="text-2xl font-bold">Ayuda</h1><p className="text-muted-foreground mt-2">Próximamente...</p></div>
+                    <HelpPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />
