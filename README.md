@@ -69,7 +69,11 @@ Este proyecto sigue una arquitectura cliente-servidor:
    - Dashboard: Vista general con métricas clave.
    - Medicamentos: Gestión del inventario.
    - Usuarios: Administración de usuarios y roles.
-   - (Próximamente: Ventas, Clientes, Proveedores, Reportes)
+   - Proveedores: Gestión de proveedores y órdenes de compra.
+   - Clientes: Administración de clientes.
+   - Ventas: Registro y seguimiento de ventas.
+   - Órdenes de Compra: Gestión de pedidos a proveedores.
+   - Reportes: Generación de reportes en PDF y Excel.
 
 ## Tecnologías Utilizadas
 
@@ -121,10 +125,24 @@ Para contribuir o modificar:
 
 ## Próximas Implementaciones
 
-- Páginas completas para Ventas, Clientes, Proveedores y Reportes.
-- Mejoras en la responsividad móvil.
-- Notificaciones push para alertas de inventario.
-- Exportación de datos en más formatos.
+### Funcionalidades Críticas para Farmacia
+- **Campos faltantes en medicamentos**: Fecha de caducidad, número de lote, código de barras, laboratorio, concentración, requerimiento de receta.
+- **Sistema de alertas**: Notificaciones de inventario bajo, medicamentos próximos a caducar, stock crítico.
+- **Gestión de lotes**: Control de entrada/salida por lotes con fechas de caducidad.
+- **Sistema de recetas médicas**: Para medicamentos controlados y de alto riesgo.
+- **Dashboard avanzado**: Métricas reales, gráficos de ventas, KPIs de farmacia.
+
+### Mejoras Técnicas
+- **Control de acceso granular**: Permisos específicos por módulo y acción.
+- **Testing completo**: Unit tests, integration tests, e2e testing.
+- **Optimización de performance**: Caché avanzado, lazy loading, índices de BD.
+- **Logging y monitoreo**: Sistema de logs estructurado, métricas de sistema.
+- **Backup y recuperación**: Estrategias automáticas de respaldo.
+
+### Integraciones
+- **Sistema de punto de venta**: Integración con terminales POS.
+- **Facturación electrónica**: Cumplimiento con regulaciones locales.
+- **API externas**: Integración con sistemas de salud gubernamentales.
 
 ## Licencia
 
