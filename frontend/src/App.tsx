@@ -9,6 +9,11 @@ const LoginPage = React.lazy(() => import("./pages/login/LoginPage"));
 const RegisterPage = React.lazy(() => import("./pages/login/RegisterPage"));
 const UsersPage = React.lazy(() => import("./pages/users/UsersPage"));
 const MedicinesPage = React.lazy(() => import("./pages/inventory/MedicinesPage"));
+const SuppliersPage = React.lazy(() => import("./pages/suppliers/SuppliersPage"));
+const ClientsPage = React.lazy(() => import("./pages/clients/ClientsPage"));
+const SalesPage = React.lazy(() => import("./pages/sales/SalesPage"));
+const PurchaseOrderPage = React.lazy(() => import("./pages/purchase_orders/PurchaseOrderPage"));
+const ReportsPage = React.lazy(() => import("./pages/reports/ReportsPage"));
 
 const MainLayout = React.lazy(() => import("./layouts/MainLayout"));
 const ProtectedRoute = React.lazy(() => import("./components/auth/ProtectedRoute"));
@@ -54,6 +59,41 @@ function App() {
                 <ProtectedRoute>
                   <MainLayout>
                     <MedicinesPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/suppliers" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <SuppliersPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/clients" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ClientsPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/sales" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <SalesPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/purchase-orders" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <PurchaseOrderPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/reports" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ReportsPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />

@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.core.database import engine, Base
 from backend.routers import medicines, suppliers, users, roles, sales,clients,reports,auth, medicine_tags, purchase_order
 from backend.init_db import init_db
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Crear tablas en la base de datos
 Base.metadata.create_all(bind=engine)
@@ -35,6 +40,7 @@ app.include_router(purchase_order.router, prefix="/api/v1", tags=["purchase-orde
 
 @app.get("/")
 def read_root():
+    logger.info("Root endpoint accessed")
     return {"message": "Bienvenido a la API de Meditrib"}
 
 

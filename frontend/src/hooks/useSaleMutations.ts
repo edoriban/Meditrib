@@ -1,0 +1,65 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import { toast } from "sonner";
+import { SaleCreateValues, SaleUpdateValues } from "@/types/sales";
+import { BASE_API_URL } from "@/config";
+
+export function useSaleMutations() {
+    const queryClient = useQueryClient();
+
+    // Crear venta
+    const createSale = useMutation({
+        mutationFn: async (saleData: SaleCreateValues) => {
+            const response = await axios.post(`${BASE_API_URL}/sales/`, saleData);
+            return response.data;
+        },
+        onSuccess: () => {
+            toast.success("Venta creada correctamente");
+            queryClient.invalidateQueries({ queryKey: ["sales"] });
+        },
+        onError: (error) => {
+            toast.error(`Error al crear venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        }
+    });
+
+    // Actualizar venta
+    const updateSale = useMutation({
+        mutationFn: async ({ saleId, saleData }: { saleId: number, saleData: SaleUpdateValues }) => {
+            const response = await axios.put(`${BASE_API_URL}/sales/${saleId}`, saleData);
+            return response.data;
+        },
+        onSuccess: () => {
+            toast.success("Venta actualizada correctamente");
+            queryClient.invalidateQueries({ queryKey: ["sales"] });
+        },
+        onError: (error) => {
+            toast.error(`Error al actualizar venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            console.error("Error completo:", error);
+        }
+    });
+
+    // Eliminar venta
+    const deleteSale = useMutation({
+        mutationFn: async (saleId: number) => {
+            const response = await axios.delete(`${BASE_API_URL}/sales/${saleId}`);
+            return response.data;
+        },
+        onSuccess: () => {
+            toast.success("Venta eliminada correctamente");
+            queryClient.invalidateQueries({ queryKey: ["sales"] });
+        },
+        onError: (error) => {
+            toast.error(`Error al eliminar venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        }
+    });
+
+    return {
+        createSale: (saleData: SaleCreateValues) => createSale.mutate(saleData),
+        updateSale: (saleId: number, saleData: SaleUpdateValues) =>
+            updateSale.mutate({ saleId, saleData }),
+        deleteSale: (saleId: number) => deleteSale.mutate(saleId),
+        isCreating: createSale.isPending,
+        isUpdating: updateSale.isPending,
+        isDeleting: deleteSale.isPending
+    };
+}

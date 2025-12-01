@@ -15,7 +15,6 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
-  IconUser
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -47,12 +46,12 @@ const data = {
     },
     {
       title: "Ventas",
-      url: "#",
+      url: "/sales",
       icon: IconChartBar,
     },
     {
       title: "Clientes",
-      url: "#",
+      url: "/clients",
       icon: IconFolder,
     },
     {
@@ -62,7 +61,7 @@ const data = {
     },
     {
       title: "Proveedores",
-      url: "#",
+      url: "/suppliers",
       icon: IconListDetails,
     },
   ],
@@ -138,8 +137,13 @@ const data = {
       icon: IconDatabase,
     },
     {
+      name: "Órdenes de Compra",
+      url: "/purchase-orders",
+      icon: IconFileDescription,
+    },
+    {
       name: "Reports",
-      url: "#",
+      url: "/reports",
       icon: IconReport,
     },
     {
@@ -152,7 +156,6 @@ const data = {
 
 function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -161,8 +164,6 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setCurrentUser(userData);
       } catch (error) {
         console.error("Error al obtener usuario:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
