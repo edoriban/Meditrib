@@ -152,6 +152,47 @@ class PurchaseOrderItem(Base):
     medicine = relationship("Medicine")
 
 
+class MedicineBatch(Base):
+    """Lotes de medicamentos con fechas de caducidad"""
+    __tablename__ = "medicine_batches"
+    id = Column(Integer, primary_key=True, index=True)
+    medicine_id = Column(ForeignKey("medicines.id"))
+    batch_number = Column(String, nullable=False)
+    expiration_date = Column(Date, nullable=False)
+    quantity_received = Column(Integer, default=0)  # Cantidad recibida en este lote
+    quantity_remaining = Column(Integer, default=0)  # Cantidad restante en este lote
+    unit_cost = Column(Float)  # Costo unitario de este lote
+    supplier_id = Column(ForeignKey("suppliers.id"))
+    received_date = Column(DateTime, default=datetime.now)
+    notes = Column(String, nullable=True)
+
+    # Relationships
+    medicine = relationship("Medicine", backref="batches")
+    supplier = relationship("Supplier")
+
+    # Stock movements for this batch
+    stock_movements = relationship("BatchStockMovement", back_populates="batch")
+
+
+class BatchStockMovement(Base):
+    """Movimientos de stock por lote"""
+    __tablename__ = "batch_stock_movements"
+    id = Column(Integer, primary_key=True, index=True)
+    batch_id = Column(ForeignKey("medicine_batches.id"))
+    movement_type = Column(String)  # "in", "out", "adjustment"
+    quantity = Column(Integer)
+    previous_quantity = Column(Integer)
+    new_quantity = Column(Integer)
+    reason = Column(String, nullable=True)  # "sale", "return", "expiration", "damage", etc.
+    reference_id = Column(String, nullable=True)  # Sale ID, Purchase Order ID, etc.
+    movement_date = Column(DateTime, default=datetime.now)
+    user_id = Column(ForeignKey("users.id"))
+
+    # Relationships
+    batch = relationship("MedicineBatch", back_populates="stock_movements")
+    user = relationship("User")
+
+
 class Alert(Base):
     __tablename__ = "alerts"
     id = Column(Integer, primary_key=True, index=True)

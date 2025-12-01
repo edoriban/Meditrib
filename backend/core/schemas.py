@@ -430,6 +430,68 @@ class Expense(ExpenseBase):
     class Config:
         from_attributes = True
 
+# Batch Management Schemas
+class MedicineBatchBase(BaseModel):
+    medicine_id: int
+    batch_number: str
+    expiration_date: date
+    quantity_received: int = 0
+    quantity_remaining: int = 0
+    unit_cost: Optional[float] = None
+    supplier_id: Optional[int] = None
+    received_date: datetime
+    notes: Optional[str] = None
+
+class MedicineBatchCreate(MedicineBatchBase):
+    pass
+
+class MedicineBatchUpdate(BaseModel):
+    batch_number: Optional[str] = None
+    expiration_date: Optional[date] = None
+    quantity_received: Optional[int] = None
+    quantity_remaining: Optional[int] = None
+    unit_cost: Optional[float] = None
+    supplier_id: Optional[int] = None
+    notes: Optional[str] = None
+
+class MedicineBatch(MedicineBatchBase):
+    id: int
+    medicine: Medicine
+    supplier: Optional[Supplier] = None
+
+    class Config:
+        from_attributes = True
+
+class BatchStockMovementBase(BaseModel):
+    batch_id: int
+    movement_type: str
+    quantity: int
+    previous_quantity: int
+    new_quantity: int
+    reason: Optional[str] = None
+    reference_id: Optional[str] = None
+    movement_date: datetime
+    user_id: int
+
+class BatchStockMovementCreate(BatchStockMovementBase):
+    pass
+
+class BatchStockMovementUpdate(BaseModel):
+    movement_type: Optional[str] = None
+    quantity: Optional[int] = None
+    previous_quantity: Optional[int] = None
+    new_quantity: Optional[int] = None
+    reason: Optional[str] = None
+    reference_id: Optional[str] = None
+
+class BatchStockMovement(BatchStockMovementBase):
+    id: int
+    batch: MedicineBatch
+    user: User
+
+    class Config:
+        from_attributes = True
+
 class InvoiceBase(BaseModel):
     serie: str = "A"
     folio: Optional[str] = None
