@@ -1,9 +1,7 @@
 import {
-  IconCreditCard,
-  IconDotsVertical,
   IconLogout,
-  IconNotification,
-  IconUserCircle,
+  IconSettings,
+  IconUser,
 } from "@tabler/icons-react"
 
 import {
@@ -26,6 +24,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { auth } from "@/utils/auth"
+import { useNavigate } from "react-router-dom"
+import { IconDotsVertical } from "@tabler/icons-react"
 
 export function NavUser({
   user,
@@ -38,6 +39,15 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    auth.logout()
+  }
+
+  const handleSettings = () => {
+    navigate("/settings")
+  }
 
   return (
     <SidebarMenu>
@@ -50,7 +60,7 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{user.initials}</AvatarFallback> {/* Fixed to use user.initials */}
+                <AvatarFallback className="rounded-lg">{user.initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -71,7 +81,7 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{user.initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -83,23 +93,19 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <IconUserCircle />
-                Account
+              <DropdownMenuItem onClick={handleSettings}>
+                <IconSettings className="mr-2 size-4" />
+                Configuración
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
+              <DropdownMenuItem onClick={() => navigate("/users")}>
+                <IconUser className="mr-2 size-4" />
+                Mi cuenta
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <IconLogout />
-              Log out
+            <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+              <IconLogout className="mr-2 size-4" />
+              Cerrar sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

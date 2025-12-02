@@ -6,6 +6,7 @@ export interface Supplier {
     contact_info?: string;
     email?: string;
     phone?: string;
+    address?: string;
 }
 
 export const supplierFormSchema = z.object({
@@ -13,6 +14,7 @@ export const supplierFormSchema = z.object({
     contact_info: z.string().optional(),
     email: z.string().email({ message: "Email inválido" }).optional().or(z.literal("")),
     phone: z.string().optional(),
+    address: z.string().optional(),
 });
 
 export const supplierCreateSchema = supplierFormSchema;

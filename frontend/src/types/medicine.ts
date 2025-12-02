@@ -190,3 +190,15 @@ export interface ExcelImportConfirmResponse {
     errors: ExcelImportError[];
     total_processed: number;
 }
+
+// ============================================================================
+// TIPOS PARA PAGINACIÓN
+// ============================================================================
+
+export interface MedicinePaginatedResponse {
+    items: Medicine[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+}

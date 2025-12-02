@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional
-from backend.core.models import Sale, Expense, ExpenseCategory
+from backend.core.models import Sale, SaleItem, Medicine, Expense, ExpenseCategory
 
 
 def get_income_statement(db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None) -> Dict:
@@ -27,8 +27,8 @@ def get_income_statement(db: Session, start_date: Optional[date] = None, end_dat
     sales_by_type = {"invoice": 0, "remission": 0}
 
     for sale in sales_query.all():
-        sales_by_type[sale.document_type] += sale.total_with_iva
-        total_sales += sale.total_with_iva
+        sales_by_type[sale.document_type] += sale.total
+        total_sales += sale.total
         total_iva_collected += sale.iva_amount
 
     # Calcular gastos
@@ -102,22 +102,24 @@ def get_product_profitability(db: Session, start_date: Optional[date] = None, en
         start_date = date(today.year, today.month, 1)
         end_date = date(today.year, today.month + 1, 1) if today.month < 12 else date(today.year + 1, 1, 1)
 
-    # Obtener ventas por medicamento
+    # Obtener ventas por medicamento usando SaleItem
     sales_query = db.query(
-        Sale.medicine_id,
-        Sale.medicine,
-        func.sum(Sale.quantity).label('total_quantity'),
-        func.sum(Sale.subtotal).label('total_subtotal'),
-        func.sum(Sale.iva_amount).label('total_iva'),
-        func.sum(Sale.total_with_iva).label('total_sales')
-    ).filter(
+        SaleItem.medicine_id,
+        func.sum(SaleItem.quantity).label('total_quantity'),
+        func.sum(SaleItem.subtotal).label('total_subtotal'),
+        func.sum(SaleItem.iva_amount).label('total_iva'),
+        func.sum(SaleItem.subtotal + SaleItem.iva_amount).label('total_sales')
+    ).join(Sale).filter(
         func.date(Sale.sale_date) >= start_date,
         func.date(Sale.sale_date) <= end_date
-    ).group_by(Sale.medicine_id, Sale.medicine)
+    ).group_by(SaleItem.medicine_id)
 
     products = []
     for row in sales_query.all():
-        medicine = row.medicine
+        medicine = db.query(Medicine).filter(Medicine.id == row.medicine_id).first()
+        if not medicine:
+            continue
+            
         total_quantity = row.total_quantity or 0
         total_subtotal = row.total_subtotal or 0
         total_sales = row.total_sales or 0
@@ -159,7 +161,7 @@ def get_monthly_trend(db: Session, months: int = 6) -> List[Dict]:
         month_end = date(month_start.year, month_start.month + 1, 1) if month_start.month < 12 else date(month_start.year + 1, 1, 1)
 
         # Ingresos del mes
-        monthly_sales = db.query(func.sum(Sale.total_with_iva)).filter(
+        monthly_sales = db.query(func.sum(Sale.total)).filter(
             func.date(Sale.sale_date) >= month_start,
             func.date(Sale.sale_date) < month_end
         ).scalar() or 0
@@ -194,14 +196,14 @@ def get_daily_sales_trend(db: Session, days: int = 90) -> List[Dict]:
     
     current_date = start_date
     while current_date <= today:
-        # Ventas del día (total_with_iva)
-        daily_sales = db.query(func.sum(Sale.total_with_iva)).filter(
+        # Ventas del día (total con IVA)
+        daily_sales = db.query(func.sum(Sale.total)).filter(
             func.date(Sale.sale_date) == current_date
         ).scalar() or 0
         
         # Costos del día (compras/órdenes de compra)
         daily_costs = db.query(func.sum(PurchaseOrder.total_amount)).filter(
-            func.date(PurchaseOrder.created_at) == current_date
+            func.date(PurchaseOrder.order_date) == current_date
         ).scalar() or 0
         
         # También incluir gastos del día

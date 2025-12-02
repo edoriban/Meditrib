@@ -79,6 +79,18 @@ class Medicine(MedicineBase):
     class Config:
         from_attributes = True
 
+
+class MedicinePaginatedResponse(BaseModel):
+    """Schema para respuesta paginada de medicamentos"""
+    items: List[Medicine]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+    class Config:
+        from_attributes = True
+
 # Otros esquemas existentes...
 
 class SupplierBase(BaseModel):

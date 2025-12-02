@@ -182,6 +182,7 @@ async def preview_excel_import(
     - IVA: "IVA" o "s/IVA" para indicar si lleva IVA
     - INV: Cantidad en inventario
     - DELTA: Precio de compra
+    - P. PUBLICO / P.PUBLICO: Precio al público (opcional)
     """
     try:
         # Validar extensión del archivo
@@ -192,15 +193,99 @@ async def preview_excel_import(
             )
 
         # Leer el Excel usando pandas
-        df = pd.read_excel(file.file)
+        contents = await file.read()
+        import io
+        
+        print(f"[EXCEL IMPORT] Archivo recibido: {file.filename}, tamaño: {len(contents)} bytes")
+        
+        # Primero intentar leer normalmente
+        df = pd.read_excel(io.BytesIO(contents))
+        
+        # Normalizar nombres de columnas
+        df.columns = df.columns.str.strip().str.upper()
+        
+        print(f"[EXCEL IMPORT] Columnas encontradas: {df.columns.tolist()}")
+        
+        # Si la primera fila parece ser un encabezado extra (no contiene las columnas esperadas),
+        # intentar buscar la fila correcta de encabezados
+        expected_headers = ['CODIGO DE BARRAS', 'DESCRIPCION', 'DELTA', 'IVA', 'LABORATORIO', 'CLAVE']
+        
+        # Verificar si las columnas actuales contienen alguna de las esperadas
+        has_expected_columns = any(col in df.columns for col in expected_headers)
+        
+        print(f"[EXCEL IMPORT] ¿Tiene columnas esperadas? {has_expected_columns}")
+        
+        if not has_expected_columns:
+            # Buscar la fila que contiene los encabezados
+            df_raw = pd.read_excel(io.BytesIO(contents), header=None)
+            header_row = None
+            
+            for idx, row in df_raw.iterrows():
+                row_values = [str(v).strip().upper() for v in row.values if pd.notna(v)]
+                row_text = ' '.join(row_values)
+                print(f"[EXCEL IMPORT] Fila {idx}: {row_text[:100]}...")
+                # Buscar si esta fila contiene palabras clave de encabezado
+                if any(keyword in row_text for keyword in ['CODIGO DE BARRAS', 'DESCRIPCION', 'DELTA', 'CLAVE']):
+                    header_row = idx
+                    print(f"[EXCEL IMPORT] Encontrada fila de encabezados en: {idx}")
+                    break
+            
+            if header_row is not None:
+                # Re-leer el Excel con la fila correcta como encabezado
+                df = pd.read_excel(io.BytesIO(contents), header=header_row)
+                df.columns = df.columns.str.strip().str.upper()
+                print(f"[EXCEL IMPORT] Nuevas columnas: {df.columns.tolist()}")
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"No se encontraron las columnas esperadas. Columnas encontradas: {', '.join(df.columns.tolist())}"
+                )
+        
+        # Mapeo flexible de columnas
+        column_mappings = {
+            'CODIGO DE BARRAS': ['CODIGO DE BARRAS', 'CODIGO_DE_BARRAS', 'CODIGODEBARRAS', 'BARCODE', 'CODIGO', 'COD_BARRAS'],
+            'DESCRIPCION': ['DESCRIPCION', 'DESCRIPCIÓN', 'NOMBRE', 'NAME', 'PRODUCTO'],
+            'DELTA': ['DELTA', 'PRECIO_COMPRA', 'PRECIO COMPRA', 'COSTO', 'PRECIO'],
+            'IVA': ['IVA', 'IMPUESTO', 'TAX'],
+            'INV': ['INV', 'INVENTARIO', 'STOCK', 'CANTIDAD', 'QTY'],
+            'SUSTANCIA ACTIVA': ['SUSTANCIA ACTIVA', 'SUSTANCIA_ACTIVA', 'INGREDIENTE', 'ACTIVO'],
+            'LABORATORIO': ['LABORATORIO', 'LAB', 'FABRICANTE', 'MARCA'],
+            'P. PUBLICO': ['P. PUBLICO', 'P.PUBLICO', 'P_PUBLICO', 'PRECIO_PUBLICO', 'PRECIO PUBLICO', 'PPUBLICO', 'PRECIO_VENTA', 'PRECIO VENTA'],
+            'CC': ['CC', 'CANTIDAD_CAJA', 'CANT'],
+            'CLAVE': ['CLAVE', 'SKU', 'CODIGO_INTERNO'],
+        }
+        
+        def find_column(target_col):
+            """Busca una columna usando múltiples nombres posibles"""
+            for possible_name in column_mappings.get(target_col, [target_col]):
+                if possible_name in df.columns:
+                    return possible_name
+            return None
+        
+        # Encontrar columnas
+        barcode_col = find_column('CODIGO DE BARRAS')
+        desc_col = find_column('DESCRIPCION')
+        delta_col = find_column('DELTA')
+        iva_col = find_column('IVA')
+        inv_col = find_column('INV')
+        substance_col = find_column('SUSTANCIA ACTIVA')
+        lab_col = find_column('LABORATORIO')
+        public_price_col = find_column('P. PUBLICO')
 
         # Validar columnas requeridas
-        required_columns = ['CODIGO DE BARRAS', 'DESCRIPCION', 'DELTA']
-        missing_columns = [col for col in required_columns if col not in df.columns]
+        missing_columns = []
+        if not barcode_col:
+            missing_columns.append('CODIGO DE BARRAS')
+        if not desc_col:
+            missing_columns.append('DESCRIPCION')
+        if not delta_col:
+            missing_columns.append('DELTA')
+            
         if missing_columns:
+            available_cols = ', '.join(df.columns.tolist())
             raise HTTPException(
                 status_code=400,
-                detail=f"Columnas requeridas faltantes: {', '.join(missing_columns)}"
+                detail=f"Columnas requeridas faltantes: {', '.join(missing_columns)}. Columnas disponibles: {available_cols}"
             )
 
         preview_items = []
@@ -212,40 +297,61 @@ async def preview_excel_import(
         for idx, row in df.iterrows():
             try:
                 # Extraer datos del Excel
-                barcode = str(row.get("CODIGO DE BARRAS", "")).strip()
-                if not barcode:
+                barcode = str(row.get(barcode_col, "")).strip()
+                if not barcode or barcode == "nan":
                     continue  # Saltar filas sin código de barras
 
-                name = str(row.get("DESCRIPCION", "")).strip()
-                if not name:
+                name = str(row.get(desc_col, "")).strip()
+                if not name or name == "nan":
                     continue  # Saltar filas sin nombre
 
-                active_substance = str(row.get("SUSTANCIA ACTIVA", "")).strip() if pd.notna(row.get("SUSTANCIA ACTIVA")) else None
-                laboratory = str(row.get("LABORATORIO", "")).strip() if pd.notna(row.get("LABORATORIO")) else None
+                # Campos opcionales
+                active_substance = None
+                if substance_col and pd.notna(row.get(substance_col)):
+                    active_substance = str(row.get(substance_col)).strip()
+                    if active_substance == "nan":
+                        active_substance = None
+                
+                laboratory = None
+                if lab_col and pd.notna(row.get(lab_col)):
+                    laboratory = str(row.get(lab_col)).strip()
+                    if laboratory == "nan":
+                        laboratory = None
 
                 # Convertir precio de compra (Delta)
-                delta_value = row.get("DELTA", 0)
+                delta_value = row.get(delta_col, 0)
                 if isinstance(delta_value, str):
                     delta_str = delta_value.replace("$", "").replace(",", "").strip()
-                    purchase_price_new = float(delta_str) if delta_str else 0.0
+                    purchase_price_new = float(delta_str) if delta_str and delta_str != "nan" else 0.0
                 else:
                     purchase_price_new = float(delta_value) if pd.notna(delta_value) else 0.0
 
                 # Determinar IVA
-                iva_text = str(row.get("IVA", "")).upper().strip()
-                iva_rate = 0.16 if iva_text == "IVA" else 0.0
+                iva_rate = 0.0
+                if iva_col:
+                    iva_text = str(row.get(iva_col, "")).upper().strip()
+                    if iva_text in ["IVA", "SI", "YES", "1", "TRUE", "16", "16%", "0.16"]:
+                        iva_rate = 0.16
 
                 # Obtener inventario
-                inv_value = row.get("INV", 0)
-                inventory_to_add = int(inv_value) if pd.notna(inv_value) else 0
+                inventory_to_add = 0
+                if inv_col:
+                    inv_value = row.get(inv_col, 0)
+                    if pd.notna(inv_value):
+                        try:
+                            inventory_to_add = int(float(inv_value))
+                        except (ValueError, TypeError):
+                            inventory_to_add = 0
 
                 # Buscar si existe el medicamento por código de barras
                 existing_medicine = db.query(models.Medicine).filter(
                     models.Medicine.barcode == barcode
                 ).first()
 
-                # Calcular precio sugerido
+                # Calcular precio sugerido usando nuestra fórmula
+                # Ignoramos el precio público del Excel ya que suele ser muy alto
                 suggested_price = calculate_sale_price(purchase_price_new)
+                
                 price_range_desc = get_price_range(purchase_price_new)
 
                 # Comparar precios si existe
@@ -299,6 +405,8 @@ async def preview_excel_import(
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        print(f"Error completo: {traceback.format_exc()}")
         raise HTTPException(
             status_code=400,
             detail=f"Error al procesar el archivo Excel: {str(e)}"
@@ -312,52 +420,51 @@ async def confirm_excel_import(
 ):
     """
     Confirma la importación con los precios ajustados por el usuario.
-    - Si el medicamento existe: actualiza stock y precios
-    - Si no existe: crea nuevo medicamento con inventario
+    Procesa cada item individualmente para evitar que un error afecte a otros.
+    NOTA: No importa cantidades de inventario - solo crea/actualiza datos del medicamento.
+    
+    IDENTIFICADOR: El código de barras es el identificador único.
+    - Si existe un medicamento con ese barcode: actualiza precios y datos
+    - Si no existe: crea nuevo medicamento con inventario en 0
     """
     results = {"created": 0, "updated": 0, "errors": []}
-
-    for item in items:
+    
+    total_items = len(items)
+    print(f"[EXCEL IMPORT] Iniciando importación de {total_items} items")
+    
+    # Procesar cada item individualmente para aislar errores
+    for idx, item in enumerate(items):
         try:
-            if item.exists and item.medicine_id:
+            # SIEMPRE buscar por código de barras como identificador único
+            existing_medicine = db.query(models.Medicine).filter(
+                models.Medicine.barcode == item.barcode
+            ).first()
+            
+            if existing_medicine:
                 # Actualizar medicamento existente
-                existing_medicine = db.query(models.Medicine).filter(
-                    models.Medicine.id == item.medicine_id
-                ).first()
+                existing_medicine.name = item.name
+                existing_medicine.purchase_price = item.purchase_price
+                existing_medicine.sale_price = item.sale_price
+                existing_medicine.iva_rate = item.iva_rate
 
-                if existing_medicine:
-                    # Actualizar campos básicos
-                    existing_medicine.name = item.name
-                    existing_medicine.purchase_price = item.purchase_price
-                    existing_medicine.sale_price = item.sale_price
-                    existing_medicine.iva_rate = item.iva_rate
+                # Actualizar campos opcionales si se proporcionan
+                if item.active_substance:
+                    existing_medicine.active_substance = item.active_substance
+                if item.laboratory:
+                    existing_medicine.laboratory = item.laboratory
+                if item.sat_key:
+                    existing_medicine.sat_key = item.sat_key
 
-                    # Actualizar campos opcionales si se proporcionan
-                    if item.active_substance:
-                        existing_medicine.active_substance = item.active_substance
-                    if item.laboratory:
-                        existing_medicine.laboratory = item.laboratory
-                    if item.sat_key:
-                        existing_medicine.sat_key = item.sat_key
-
-                    # Actualizar inventario (sumar cantidad)
-                    if existing_medicine.inventory:
-                        existing_medicine.inventory.quantity += item.inventory_to_add
-                    else:
-                        # Crear inventario si no existe
-                        new_inventory = models.Inventory(
-                            medicine_id=existing_medicine.id,
-                            quantity=item.inventory_to_add
-                        )
-                        db.add(new_inventory)
-
-                    results["updated"] += 1
-                else:
-                    results["errors"].append({
-                        "barcode": item.barcode,
-                        "error": f"Medicamento con ID {item.medicine_id} no encontrado"
-                    })
-
+                # Solo crear inventario si no existe (con cantidad 0)
+                if not existing_medicine.inventory:
+                    new_inventory = models.Inventory(
+                        medicine_id=existing_medicine.id,
+                        quantity=0
+                    )
+                    db.add(new_inventory)
+                
+                db.commit()
+                results["updated"] += 1
             else:
                 # Crear nuevo medicamento
                 new_medicine = models.Medicine(
@@ -374,30 +481,29 @@ async def confirm_excel_import(
                 db.add(new_medicine)
                 db.flush()  # Obtener el ID
 
-                # Crear inventario
+                # Crear inventario con cantidad 0 (el usuario ajustará manualmente)
                 inventory = models.Inventory(
                     medicine_id=new_medicine.id,
-                    quantity=item.inventory_to_add
+                    quantity=0
                 )
                 db.add(inventory)
-
+                db.commit()
                 results["created"] += 1
+            
+            # Log de progreso cada 100 items
+            if (idx + 1) % 100 == 0:
+                print(f"[EXCEL IMPORT] Progreso: {idx + 1}/{total_items} procesados")
 
         except Exception as e:
+            db.rollback()  # Rollback solo este item
             results["errors"].append({
                 "barcode": item.barcode,
+                "name": item.name,
                 "error": str(e)
             })
 
-    try:
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error al guardar cambios: {str(e)}"
-        )
-
+    print(f"[EXCEL IMPORT] Importación completada: {results['created']} creados, {results['updated']} actualizados, {len(results['errors'])} errores")
+    
     return ExcelImportResult(
         created=results["created"],
         updated=results["updated"],
@@ -409,6 +515,32 @@ async def confirm_excel_import(
 # ============================================================================
 # ENDPOINTS CRUD BÁSICOS
 # ============================================================================
+
+@router.get("/paginated", response_model=schemas.MedicinePaginatedResponse)
+def read_medicines_paginated(
+    page: int = 1,
+    page_size: int = 50,
+    search: str = None,
+    stock_filter: str = "all",
+    db: Session = Depends(get_db)
+):
+    """
+    Obtener lista de medicamentos con paginación del lado del servidor.
+    
+    - page: Número de página (empezando en 1)
+    - page_size: Cantidad de items por página (default 50)
+    - search: Término de búsqueda (busca en nombre, código de barras, laboratorio, sustancia activa)
+    - stock_filter: "all", "in-stock", "out-of-stock"
+    """
+    result = crud_medicines.get_medicines_paginated(
+        db, 
+        page=page, 
+        page_size=page_size,
+        search=search,
+        stock_filter=stock_filter
+    )
+    return result
+
 
 @router.get("/", response_model=List[schemas.Medicine])
 def read_medicines(

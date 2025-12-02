@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
+import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-
 import {
     Card,
     CardContent,
@@ -17,6 +17,8 @@ import {
 import { FormInput } from "@/components/ui/form-input"
 import { toast } from "sonner"
 import { BASE_API_URL } from '@/config';
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { IconAlertCircle, IconLoader2, IconCheck } from "@tabler/icons-react"
 
 const registerFormSchema = z.object({
     email: z.string({
@@ -51,6 +53,10 @@ export function RegisterForm({
     className,
     ...props
 }: React.ComponentProps<"div">) {
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
     const { handleSubmit, control, formState: { errors } } = useForm<RegisterFormValues>({
         resolver: zodResolver(registerFormSchema),
         defaultValues,
@@ -58,7 +64,9 @@ export function RegisterForm({
     })
 
     async function onSubmit(data: RegisterFormValues) {
-        console.log("Datos del formulario válidos:", data);
+        setIsLoading(true);
+        setErrorMessage(null);
+        setSuccessMessage(null);
 
         try {
             const userData = {
@@ -66,8 +74,6 @@ export function RegisterForm({
                 password: data.password,
                 name: data.name || undefined
             };
-
-            console.log("Datos del usuario:", JSON.stringify(userData));
 
             const response = await fetch(`${BASE_API_URL}/users/`, {
                 method: 'POST',
@@ -77,26 +83,36 @@ export function RegisterForm({
                 body: JSON.stringify(userData)
             });
 
+            const responseData = await response.json();
+
             if (!response.ok) {
-                const errorData = await response.json();
-
-                if (response.status === 400 && errorData.detail.includes("Email already registered")) {
-                    toast.error("Este correo electrónico ya está registrado. Por favor, usa otro o intenta iniciar sesión.");
-                    return;
+                if (response.status === 400) {
+                    if (responseData.detail?.includes("Email already registered")) {
+                        setErrorMessage("Este correo electrónico ya está registrado. ¿Quieres iniciar sesión?");
+                    } else {
+                        setErrorMessage(responseData.detail || "Error en los datos proporcionados.");
+                    }
+                } else if (response.status === 422) {
+                    setErrorMessage("Por favor, verifica que todos los campos estén correctos.");
+                } else {
+                    setErrorMessage(responseData.detail || 'Error al registrar. Intenta de nuevo.');
                 }
-
-                throw new Error(errorData.detail || 'Error al registrar el usuario');
+                return;
             }
-            const result = await response.json();
-            console.log("Usuario creado:", result);
 
-            toast("Registro exitoso. Por favor, inicia sesión con tus credenciales.");
+            setSuccessMessage("¡Cuenta creada exitosamente! Redirigiendo al inicio de sesión...");
+            toast.success("¡Registro exitoso!");
 
-            window.location.href = '/Login';
+            // Esperar un momento para que el usuario vea el mensaje
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
 
         } catch (error) {
             console.error("Error al registrar:", error);
-            toast(`Error: ${error instanceof Error ? error.message : 'Ha ocurrido un problema al registrar el usuario'}`);
+            setErrorMessage('Error de conexión. Verifica tu conexión a internet e intenta de nuevo.');
+        } finally {
+            setIsLoading(false);
         }
     }
     return (
@@ -111,6 +127,31 @@ export function RegisterForm({
                 <CardContent>
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div className="grid gap-4">
+                            {/* Mensaje de error */}
+                            {errorMessage && (
+                                <Alert variant="destructive">
+                                    <IconAlertCircle className="h-4 w-4" />
+                                    <AlertDescription>
+                                        {errorMessage}
+                                        {errorMessage.includes("iniciar sesión") && (
+                                            <a href="/login" className="ml-1 underline font-medium">
+                                                Ir a iniciar sesión
+                                            </a>
+                                        )}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+
+                            {/* Mensaje de éxito */}
+                            {successMessage && (
+                                <Alert className="border-green-200 bg-green-50 text-green-800">
+                                    <IconCheck className="h-4 w-4 text-green-600" />
+                                    <AlertDescription className="text-green-700">
+                                        {successMessage}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+
                             <FormInput
                                 name="name"
                                 control={control}
@@ -151,13 +192,26 @@ export function RegisterForm({
                             <Button
                                 type="submit"
                                 className="w-full mt-2"
+                                disabled={isLoading || !!successMessage}
                             >
-                                Crear cuenta
+                                {isLoading ? (
+                                    <>
+                                        <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Creando cuenta...
+                                    </>
+                                ) : successMessage ? (
+                                    <>
+                                        <IconCheck className="mr-2 h-4 w-4" />
+                                        ¡Cuenta creada!
+                                    </>
+                                ) : (
+                                    'Crear cuenta'
+                                )}
                             </Button>
                         </div>
                         <div className="mt-4 text-center text-sm">
                             ¿Ya tienes una cuenta?{" "}
-                            <a href="/Login" className="underline underline-offset-4">
+                            <a href="/login" className="underline underline-offset-4">
                                 Inicia sesión
                             </a>
                         </div>
@@ -165,8 +219,8 @@ export function RegisterForm({
                 </CardContent>
             </Card>
             <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-                Al hacer clic en continuar, aceptas nuestros <a href="#">Términos de Servicio</a>{" "}
-                y <a href="#">Política de Privacidad</a>.
+                Al hacer clic en continuar, aceptas nuestros <a href="/terms">Términos de Servicio</a>{" "}
+                y <a href="/privacy">Política de Privacidad</a>.
             </div>
         </div>
     )

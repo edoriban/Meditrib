@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { IconDownload, IconUpload } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query"
-import { Medicine } from "@/types/medicine";
+import { MedicinePaginatedResponse } from "@/types/medicine";
 import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog"
 import MedicineDashboard from "@/components/medicines/MedicineDashboard";
 import { ExcelImportDialog } from "@/components/medicines/ExcelImportDialog";
@@ -13,12 +13,24 @@ import { BASE_API_URL } from "@/config";
 
 export default function MedicinesPage() {
     const [importDialogOpen, setImportDialogOpen] = useState(false);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(50);
+    const [search, setSearch] = useState("");
+    const [stockFilter, setStockFilter] = useState<"all" | "in-stock" | "out-of-stock">("all");
 
-    const { data, isLoading, error } = useQuery<Medicine[]>({
-        queryKey: ["medicines"],
+    const { data, isLoading, error } = useQuery<MedicinePaginatedResponse>({
+        queryKey: ["medicines", page, pageSize, search, stockFilter],
         queryFn: async () => {
             try {
-                const { data } = await axios.get(`${BASE_API_URL}/medicines/`)
+                const params = new URLSearchParams({
+                    page: page.toString(),
+                    page_size: pageSize.toString(),
+                    stock_filter: stockFilter,
+                });
+                if (search) {
+                    params.append("search", search);
+                }
+                const { data } = await axios.get(`${BASE_API_URL}/medicines/paginated?${params}`)
                 console.log("Medicamentos obtenidos:", data)
                 return data
             } catch (error) {
@@ -41,6 +53,11 @@ export default function MedicinesPage() {
                         <h1 className="text-3xl font-bold tracking-tight">Inventario de Medicamentos</h1>
                         <p className="text-muted-foreground mt-2">
                             Gestiona los medicamentos disponibles, stock y precios.
+                            {data && (
+                                <span className="ml-2 font-medium">
+                                    ({data.total} medicamentos en total)
+                                </span>
+                            )}
                         </p>
                     </div>
 
@@ -56,10 +73,35 @@ export default function MedicinesPage() {
                         </Button>
                     </div>
                 </div>
-                <MedicineDashboard medicines={data} isLoading={isLoading} error={error} />
+                <MedicineDashboard medicines={data?.items} isLoading={isLoading} error={error} />
             </div>
 
-            <MedicineTable medicines={data} isLoading={isLoading} error={error} />
+            <MedicineTable 
+                medicines={data?.items} 
+                isLoading={isLoading} 
+                error={error}
+                // Paginación
+                page={page}
+                pageSize={pageSize}
+                totalPages={data?.total_pages || 1}
+                totalItems={data?.total || 0}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => {
+                    setPageSize(size);
+                    setPage(1); // Reset a página 1 al cambiar tamaño
+                }}
+                // Filtros del servidor
+                searchTerm={search}
+                onSearchChange={(term) => {
+                    setSearch(term);
+                    setPage(1); // Reset a página 1 al buscar
+                }}
+                stockFilter={stockFilter}
+                onStockFilterChange={(filter) => {
+                    setStockFilter(filter);
+                    setPage(1);
+                }}
+            />
 
             {/* Dialog de importación Excel */}
             <ExcelImportDialog

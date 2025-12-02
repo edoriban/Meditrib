@@ -7,6 +7,9 @@ import React, { Suspense } from "react";
 const DashboardPage = React.lazy(() => import("./pages/DashboardPage"));
 const LoginPage = React.lazy(() => import("./pages/login/LoginPage"));
 const RegisterPage = React.lazy(() => import("./pages/login/RegisterPage"));
+const ForgotPasswordPage = React.lazy(() => import("./pages/login/ForgotPasswordPage"));
+const TermsOfServicePage = React.lazy(() => import("./pages/legal/TermsOfServicePage"));
+const PrivacyPolicyPage = React.lazy(() => import("./pages/legal/PrivacyPolicyPage"));
 const UsersPage = React.lazy(() => import("./pages/users/UsersPage"));
 const MedicinesPage = React.lazy(() => import("./pages/inventory/MedicinesPage"));
 const SuppliersPage = React.lazy(() => import("./pages/suppliers/SuppliersPage"));
@@ -46,6 +49,9 @@ function App() {
               {/* Rutas públicas */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/terms" element={<TermsOfServicePage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
               {/* Redirigir raíz a dashboard */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

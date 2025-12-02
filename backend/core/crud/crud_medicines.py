@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
 from backend.core import models
 from backend.core import schemas
 from backend.core.crud.crud_alert import check_and_create_alerts
@@ -10,6 +11,57 @@ def get_medicine(db: Session, medicine_id: int):
 
 def get_medicines(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Medicine).offset(skip).limit(limit).all()
+
+
+def get_medicines_paginated(
+    db: Session, 
+    page: int = 1, 
+    page_size: int = 50,
+    search: str = None,
+    stock_filter: str = "all"  # "all", "in-stock", "out-of-stock"
+):
+    """Obtener medicamentos con paginación y filtros del lado del servidor"""
+    query = db.query(models.Medicine)
+    
+    # Filtro de búsqueda
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                models.Medicine.name.ilike(search_term),
+                models.Medicine.barcode.ilike(search_term),
+                models.Medicine.laboratory.ilike(search_term),
+                models.Medicine.active_substance.ilike(search_term)
+            )
+        )
+    
+    # Filtro de stock
+    if stock_filter == "in-stock":
+        query = query.join(models.Inventory).filter(models.Inventory.quantity > 0)
+    elif stock_filter == "out-of-stock":
+        query = query.outerjoin(models.Inventory).filter(
+            or_(models.Inventory.quantity == 0, models.Inventory.quantity == None)
+        )
+    
+    # Contar total
+    total = query.count()
+    
+    # Aplicar paginación
+    offset = (page - 1) * page_size
+    medicines = query.offset(offset).limit(page_size).all()
+    
+    return {
+        "items": medicines,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size
+    }
+
+
+def get_medicines_count(db: Session):
+    """Obtener el conteo total de medicamentos"""
+    return db.query(func.count(models.Medicine.id)).scalar()
 
 
 def create_medicine(db: Session, medicine: schemas.MedicineCreate):

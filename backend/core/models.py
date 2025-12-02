@@ -14,7 +14,7 @@ medicine_tag_association = Table(
 class Medicine(Base):
     __tablename__ = "medicines"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True)
+    name = Column(String, index=True)  # Sin UNIQUE - el barcode es el identificador único
     description = Column(String)
     purchase_price = Column(Float)
     sale_price = Column(Float)

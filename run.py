@@ -16,10 +16,18 @@ def stream_output(process, prefix):
         print(f"{prefix}: {line}", end="")
 
 
-# Función para transmitir errores al stderr
+# Función para transmitir stderr (no necesariamente son errores)
 def stream_error(process, prefix):
     for line in iter(process.stderr.readline, ""):
-        print(f"{prefix} ERROR: {line}", end="", file=sys.stderr)
+        # Uvicorn y logging envían mensajes INFO/WARNING a stderr
+        # Solo marcar como ERROR si realmente contiene "error" o "exception"
+        line_lower = line.lower()
+        if "error" in line_lower or "exception" in line_lower or "traceback" in line_lower:
+            print(f"{prefix} ❌: {line}", end="", file=sys.stderr)
+        elif "warning" in line_lower:
+            print(f"{prefix} ⚠️: {line}", end="")
+        else:
+            print(f"{prefix}: {line}", end="")
 
 
 def signal_handler(sig, frame):

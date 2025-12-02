@@ -46,11 +46,12 @@ interface MonthlyTrend {
 interface ProductProfitability {
     medicine_id: number;
     medicine_name: string;
-    units_sold: number;
-    total_revenue: number;
-    total_cost: number;
-    gross_profit: number;
+    total_quantity: number;
+    total_sales: number;
+    estimated_cost: number;
+    profit: number;
     margin_percentage: number;
+    average_price: number;
 }
 
 const formatCurrency = (amount: number) => {
@@ -288,15 +289,15 @@ export default function ReportsPage() {
                                 {profitability.slice(0, 10).map((product) => (
                                     <TableRow key={product.medicine_id}>
                                         <TableCell className="font-medium">{product.medicine_name}</TableCell>
-                                        <TableCell className="text-right">{product.units_sold}</TableCell>
-                                        <TableCell className="text-right">{formatCurrency(product.total_revenue)}</TableCell>
-                                        <TableCell className="text-right text-muted-foreground">{formatCurrency(product.total_cost)}</TableCell>
-                                        <TableCell className={`text-right font-semibold ${product.gross_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {formatCurrency(product.gross_profit)}
+                                        <TableCell className="text-right">{product.total_quantity || 0}</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(product.total_sales || 0)}</TableCell>
+                                        <TableCell className="text-right text-muted-foreground">{formatCurrency(product.estimated_cost || 0)}</TableCell>
+                                        <TableCell className={`text-right font-semibold ${(product.profit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {formatCurrency(product.profit || 0)}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Badge variant="outline" className={product.margin_percentage >= 20 ? 'text-green-600' : product.margin_percentage >= 10 ? 'text-amber-600' : 'text-red-600'}>
-                                                {product.margin_percentage.toFixed(1)}%
+                                            <Badge variant="outline" className={(product.margin_percentage || 0) >= 20 ? 'text-green-600' : (product.margin_percentage || 0) >= 10 ? 'text-amber-600' : 'text-red-600'}>
+                                                {(product.margin_percentage || 0).toFixed(1)}%
                                             </Badge>
                                         </TableCell>
                                     </TableRow>

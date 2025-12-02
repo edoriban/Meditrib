@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { Skeleton } from "../ui/skeleton"
 import { CreateMedicineDialog } from "@/components/medicines/CreateMedicineDialog";
@@ -8,8 +8,11 @@ import { useMedicineMutations } from "@/hooks/useMedicineMutations";
 import { MedicineActionsMenu } from "@/components/medicines/MedicineActionsMenu";
 import { MedicineCellViewer } from "@/components/medicines/MedicineCellViewer";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Medicine } from "@/types/medicine";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from "@tabler/icons-react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, XAxis, YAxis, Tooltip, ScatterChart, ZAxis, Scatter, ReferenceLine, Treemap, PieChart, Pie, ComposedChart, Cell, Line, ReferenceArea } from "recharts";
 import {
     ChartContainer,
@@ -22,14 +25,39 @@ interface MedicineTableProps {
     medicines: Medicine[] | undefined | null;
     isLoading: boolean;
     error: any;
+    // Props de paginación
+    page?: number;
+    pageSize?: number;
+    totalPages?: number;
+    totalItems?: number;
+    onPageChange?: (page: number) => void;
+    onPageSizeChange?: (size: number) => void;
+    // Props de filtros del servidor
+    searchTerm?: string;
+    onSearchChange?: (term: string) => void;
+    stockFilter?: "all" | "in-stock" | "out-of-stock";
+    onStockFilterChange?: (filter: "all" | "in-stock" | "out-of-stock") => void;
 };
 
 
-const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading }) => {
+const MedicineTable: React.FC<MedicineTableProps> = ({ 
+    medicines, 
+    isLoading,
+    // Paginación
+    page = 1,
+    pageSize = 50,
+    totalPages = 1,
+    totalItems = 0,
+    onPageChange,
+    onPageSizeChange,
+    // Filtros del servidor
+    searchTerm = "",
+    onSearchChange,
+    stockFilter = "all",
+    onStockFilterChange,
+}) => {
     const data = medicines;
-    const [searchTerm, setSearchTerm] = useState("");
-    const [stockFilter, setStockFilter] = useState<"all" | "in-stock" | "out-of-stock">("all");
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); // Valor predeterminado
+    const [priceRange, setPriceRange] = React.useState<[number, number]>([0, 10000]);
     const { updateMedicine, deleteMedicine } = useMedicineMutations();
     const editRefs = React.useRef<Record<number, HTMLButtonElement | null>>({});
 
@@ -119,22 +147,14 @@ const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading }) =
         return (med.inventory?.quantity || 0) * price;
     }, []);
 
+    // Los filtros de búsqueda y stock ahora vienen del servidor
+    // Solo aplicamos filtro de precio en el cliente (opcional)
     const filteredData = data?.filter(medicine => {
-        const matchesSearchTerm =
-            searchTerm === "" ||
-            medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            medicine.description?.toLowerCase().includes(searchTerm.toLowerCase());
-
-        const matchesStockFilter =
-            stockFilter === "all" ||
-            (stockFilter === "in-stock" && (medicine.inventory?.quantity || 0) > 0) ||
-            (stockFilter === "out-of-stock" && (medicine.inventory?.quantity || 0) === 0);
-
         const matchesPriceRange =
             medicine.sale_price >= priceRange[0] &&
             medicine.sale_price <= priceRange[1];
 
-        return matchesSearchTerm && matchesStockFilter && matchesPriceRange;
+        return matchesPriceRange;
     });
 
     const maxMargin = React.useMemo(() => {
@@ -349,14 +369,78 @@ const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading }) =
 
             <MedicineFilters
                 searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
+                setSearchTerm={onSearchChange || (() => {})}
                 stockFilter={stockFilter}
-                setStockFilter={setStockFilter}
+                setStockFilter={onStockFilterChange || (() => {})}
                 priceRange={priceRange}
                 setPriceRange={setPriceRange}
                 maxPrice={maxPrice}
-                resultsCount={filteredData?.length || 0}
+                resultsCount={totalItems}
             />
+
+            {/* Controles de paginación */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Mostrando {filteredData?.length || 0} de {totalItems} medicamentos</span>
+                    <span>|</span>
+                    <span>Página {page} de {totalPages}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Por página:</span>
+                    <Select 
+                        value={pageSize.toString()} 
+                        onValueChange={(val) => onPageSizeChange?.(parseInt(val))}
+                    >
+                        <SelectTrigger className="w-[80px] h-8">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                            <SelectItem value="200">200</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <div className="flex items-center gap-1">
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => onPageChange?.(1)}
+                            disabled={page <= 1}
+                        >
+                            <IconChevronsLeft className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => onPageChange?.(page - 1)}
+                            disabled={page <= 1}
+                        >
+                            <IconChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => onPageChange?.(page + 1)}
+                            disabled={page >= totalPages}
+                        >
+                            <IconChevronRight className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => onPageChange?.(totalPages)}
+                            disabled={page >= totalPages}
+                        >
+                            <IconChevronsRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            </div>
 
             <div className="rounded-md border bg-card">
                 <Tabs defaultValue="table" className="mt-4">
@@ -887,6 +971,33 @@ const MedicineTable: React.FC<MedicineTableProps> = ({ medicines, isLoading }) =
                         </div>
                     </TabsContent>
                 </Tabs>
+            </div>
+
+            {/* Paginación inferior */}
+            <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                    Página {page} de {totalPages} ({totalItems} medicamentos)
+                </div>
+                <div className="flex items-center gap-1">
+                    <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => onPageChange?.(page - 1)}
+                        disabled={page <= 1}
+                    >
+                        <IconChevronLeft className="h-4 w-4 mr-1" />
+                        Anterior
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => onPageChange?.(page + 1)}
+                        disabled={page >= totalPages}
+                    >
+                        Siguiente
+                        <IconChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                </div>
             </div>
         </div>
     )
