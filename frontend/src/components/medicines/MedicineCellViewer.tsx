@@ -36,7 +36,7 @@ export const MedicineCellViewer = forwardRef<HTMLButtonElement, MedicineCellView
             resolver: zodResolver(medicineFormSchema),
             defaultValues: {
                 name: medicine.name,
-                description: medicine.description,
+                active_substance: medicine.active_substance,
                 sale_price: medicine.sale_price,
                 purchase_price: medicine.purchase_price,
                 tags: medicine.tags ? medicine.tags.map(tag => Number(tag.id)) : [],

@@ -16,7 +16,6 @@ import {
 import { X } from "lucide-react";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMedicineMutations } from "@/hooks/useMedicineMutations";
@@ -88,7 +87,7 @@ export function CreateMedicineDialog() {
         resolver: zodResolver(medicineCreateSchema),
         defaultValues: {
             name: "",
-            description: "",
+            active_substance: "",
             sale_price: 0,
             purchase_price: 0,
             expiration_date: "",
@@ -182,15 +181,14 @@ export function CreateMedicineDialog() {
 
                             <FormField
                                 control={form.control}
-                                name="description"
+                                name="active_substance"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Descripción</FormLabel>
+                                        <FormLabel>Ingrediente Activo</FormLabel>
                                         <FormControl>
-                                            <Textarea
-                                                placeholder="Ej: Amoxicilina 500mg + Acido Clavulanico 125mg"
+                                            <Input
+                                                placeholder="Ej: Paracetamol, Ibuprofeno, Amoxicilina"
                                                 {...field}
-                                                rows={3}
                                                 value={field.value || ""}
                                             />
                                         </FormControl>

@@ -40,9 +40,41 @@ export default function MedicinesPage() {
         }
     })
 
-    const handleExport = () => {
-        toast.success("Exportando medicamentos...");
-        // TODO: Implementar lógica de exportación real aquí
+    const handleExport = async () => {
+        try {
+            toast.info("Generando archivo Excel...");
+            
+            // Descargar el archivo Excel del backend
+            const response = await axios.get(`${BASE_API_URL}/medicines/export/excel`, {
+                responseType: 'blob'
+            });
+            
+            // Crear URL para descargar
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // Obtener nombre del archivo del header o usar uno por defecto
+            const contentDisposition = response.headers['content-disposition'];
+            let filename = `Catalogo_Medicamentos_${new Date().toISOString().split('T')[0]}.xlsx`;
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename=(.+)/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1].replace(/"/g, '');
+                }
+            }
+            
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            
+            toast.success("Catálogo exportado correctamente");
+        } catch (error) {
+            console.error("Error al exportar:", error);
+            toast.error("Error al exportar el catálogo");
+        }
     };
 
     return (

@@ -49,10 +49,10 @@ export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
             />
 
             <FormInput
-                name="description"
+                name="active_substance"
                 control={control}
-                label="Descripción"
-                placeholder="Descripción del medicamento"
+                label="Ingrediente Activo"
+                placeholder="Ej: Paracetamol, Ibuprofeno, Amoxicilina"
                 errors={errors}
             />
 

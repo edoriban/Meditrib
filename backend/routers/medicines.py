@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import pandas as pd
 import os
 import uuid
+import io
 from pathlib import Path
+from datetime import datetime
 
 # Importaciones del proyecto
 from backend.core.dependencies import get_db
@@ -127,6 +129,78 @@ async def delete_medicine_image(medicine_id: int, db: Session = Depends(get_db))
     db.commit()
     
     return {"message": "Imagen eliminada correctamente"}
+
+
+# ============================================================================
+# ENDPOINTS DE EXPORTACIÓN
+# ============================================================================
+
+@router.get("/export/excel")
+async def export_medicines_to_excel(
+    db: Session = Depends(get_db)
+):
+    """
+    Exporta la lista completa de medicamentos a Excel para compartir con clientes.
+    
+    Incluye:
+    - Código de barras
+    - Nombre del medicamento
+    - Ingrediente activo
+    - Laboratorio
+    - Precio de venta
+    - IVA
+    
+    NO incluye (para proteger información comercial):
+    - Precio de compra
+    - Ganancia/Margen
+    - Cantidad en inventario
+    """
+    # Obtener todos los medicamentos
+    medicines = db.query(models.Medicine).all()
+    
+    # Crear DataFrame con las columnas para clientes
+    data = []
+    for med in medicines:
+        # Determinar texto de IVA
+        iva_text = "16%" if med.iva_rate and med.iva_rate > 0 else "Exento"
+        
+        data.append({
+            "CODIGO DE BARRAS": med.barcode or "",
+            "NOMBRE": med.name,
+            "INGREDIENTE ACTIVO": med.active_substance or "",
+            "LABORATORIO": med.laboratory or "",
+            "PRECIO": round(med.sale_price, 2) if med.sale_price else 0,
+            "IVA": iva_text,
+        })
+    
+    df = pd.DataFrame(data)
+    
+    # Crear archivo Excel en memoria
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Catálogo de Medicamentos')
+        
+        # Ajustar ancho de columnas
+        worksheet = writer.sheets['Catálogo de Medicamentos']
+        for idx, col in enumerate(df.columns):
+            max_length = max(
+                df[col].astype(str).map(len).max(),
+                len(col)
+            ) + 2
+            # Limitar ancho máximo
+            max_length = min(max_length, 50)
+            worksheet.column_dimensions[chr(65 + idx)].width = max_length
+    
+    output.seek(0)
+    
+    # Generar nombre de archivo con fecha
+    filename = f"Catalogo_Medicamentos_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 
 # ============================================================================

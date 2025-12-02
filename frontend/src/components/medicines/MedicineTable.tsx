@@ -455,7 +455,7 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                             <TableHeader>
                                 <TableRow className="bg-muted/50">
                                     <TableHead>Nombre</TableHead>
-                                    <TableHead>Descripción</TableHead>
+                                    <TableHead>Ingrediente Activo</TableHead>
                                     <TableHead>Precio de compra</TableHead>
                                     <TableHead>Precio de venta</TableHead>
                                     <TableHead>Ganancia</TableHead>
@@ -496,7 +496,7 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                                                 }}
                                             />
                                         </TableCell>
-                                        <TableCell className="max-w-xs truncate">{medicine.description || "—"}</TableCell>
+                                        <TableCell className="max-w-xs truncate">{medicine.active_substance || "—"}</TableCell>
                                         <TableCell>
                                             {typeof medicine.purchase_price === 'number'
                                                 ? `$${medicine.purchase_price.toFixed(2)}`
