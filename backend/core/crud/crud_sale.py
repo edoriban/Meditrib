@@ -22,6 +22,49 @@ def calculate_sale_totals(items_subtotal: float, items_iva: float, document_type
     }
 
 
+def check_stock_availability(db: Session, items: List[schemas.SaleItemCreate]) -> dict:
+    """
+    Verifica disponibilidad de stock para los items de una venta.
+    Retorna información sobre items con stock insuficiente.
+    """
+    stock_issues = []
+    
+    for item_data in items:
+        medicine = db.query(models.Medicine).filter(
+            models.Medicine.id == item_data.medicine_id
+        ).first()
+        
+        if not medicine:
+            stock_issues.append({
+                "medicine_id": item_data.medicine_id,
+                "medicine_name": "Medicamento no encontrado",
+                "requested": item_data.quantity,
+                "available": 0,
+                "shortage": item_data.quantity
+            })
+            continue
+        
+        inventory = db.query(models.Inventory).filter(
+            models.Inventory.medicine_id == item_data.medicine_id
+        ).first()
+        
+        available = inventory.quantity if inventory else 0
+        
+        if available < item_data.quantity:
+            stock_issues.append({
+                "medicine_id": item_data.medicine_id,
+                "medicine_name": medicine.name,
+                "requested": item_data.quantity,
+                "available": available,
+                "shortage": item_data.quantity - available
+            })
+    
+    return {
+        "has_issues": len(stock_issues) > 0,
+        "issues": stock_issues
+    }
+
+
 def get_sale(db: Session, sale_id: int):
     return db.query(models.Sale).options(
         joinedload(models.Sale.items).joinedload(models.SaleItem.medicine),
@@ -38,7 +81,15 @@ def get_sales(db: Session, skip: int = 0, limit: int = 100):
     ).order_by(models.Sale.sale_date.desc()).offset(skip).limit(limit).all()
 
 
-def create_sale(db: Session, sale: schemas.SaleCreate):
+def create_sale(db: Session, sale: schemas.SaleCreate, auto_adjust_stock: bool = False):
+    """
+    Crea una venta.
+    
+    Args:
+        db: Sesión de base de datos
+        sale: Datos de la venta
+        auto_adjust_stock: Si es True, crea inventario faltante automáticamente
+    """
     # Crear la venta principal
     sale_data = sale.model_dump(exclude={'items'})
     if sale_data.get('sale_date') is None:
@@ -51,12 +102,22 @@ def create_sale(db: Session, sale: schemas.SaleCreate):
     # Crear los items de la venta y calcular subtotales
     items_subtotal = 0.0
     items_iva = 0.0
+    
     for item_data in sale.items:
         # Obtener el medicamento para saber su tasa de IVA
-        medicine = db.query(models.Medicine).filter(models.Medicine.id == item_data.medicine_id).first()
+        medicine = db.query(models.Medicine).filter(
+            models.Medicine.id == item_data.medicine_id
+        ).first()
+        
+        if not medicine:
+            raise ValueError(f"Medicamento con ID {item_data.medicine_id} no encontrado")
+        
         product_iva_rate = medicine.iva_rate if medicine else 0.0
         
-        item_subtotal = (item_data.quantity * item_data.unit_price) - item_data.discount
+        # Usar el precio del item (puede haber sido editado) o el precio del medicamento
+        unit_price = item_data.unit_price if item_data.unit_price else medicine.sale_price
+        
+        item_subtotal = (item_data.quantity * unit_price) - item_data.discount
         item_iva = item_subtotal * product_iva_rate
         items_subtotal += item_subtotal
         items_iva += item_iva
@@ -65,7 +126,7 @@ def create_sale(db: Session, sale: schemas.SaleCreate):
             sale_id=db_sale.id,
             medicine_id=item_data.medicine_id,
             quantity=item_data.quantity,
-            unit_price=item_data.unit_price,
+            unit_price=unit_price,
             discount=item_data.discount,
             iva_rate=product_iva_rate,
             subtotal=item_subtotal,
@@ -73,12 +134,34 @@ def create_sale(db: Session, sale: schemas.SaleCreate):
         )
         db.add(db_item)
         
-        # Actualizar inventario (reducir stock)
+        # Manejar inventario
         inventory = db.query(models.Inventory).filter(
             models.Inventory.medicine_id == item_data.medicine_id
         ).first()
+        
         if inventory:
-            inventory.quantity = max(0, inventory.quantity - item_data.quantity)
+            if inventory.quantity < item_data.quantity and auto_adjust_stock:
+                # Si el stock es insuficiente y se permite ajuste automático,
+                # primero ajustamos el inventario al mínimo necesario
+                shortage = item_data.quantity - inventory.quantity
+                inventory.quantity = 0  # Se vende todo el stock disponible
+                # Nota: El faltante se registra pero no se crea stock adicional
+                # porque la venta consume todo lo disponible
+            else:
+                # Reducir stock normalmente
+                inventory.quantity = max(0, inventory.quantity - item_data.quantity)
+        elif auto_adjust_stock:
+            # Crear inventario con cantidad 0 (ya se vendió todo)
+            new_inventory = models.Inventory(
+                medicine_id=item_data.medicine_id,
+                quantity=0
+            )
+            db.add(new_inventory)
+        
+        # Si el precio del item es diferente al precio actual del medicamento,
+        # actualizar el precio de venta del medicamento
+        if item_data.unit_price and item_data.unit_price != medicine.sale_price:
+            medicine.sale_price = item_data.unit_price
     
     # Calcular totales de la venta
     totals = calculate_sale_totals(items_subtotal, items_iva, sale.document_type)

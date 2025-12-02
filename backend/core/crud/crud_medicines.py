@@ -107,3 +107,19 @@ def get_medicine_by_name(db: Session, name: str):
 
 def get_medicine_with_inventory(db: Session, medicine_id: int):
     return db.query(models.Medicine).filter(models.Medicine.id == medicine_id).first()
+
+def get_medicine_by_barcode(db: Session, barcode: str):
+    """Buscar medicamento por código de barras"""
+    return db.query(models.Medicine).filter(models.Medicine.barcode == barcode).first()
+
+def search_medicines_by_barcode(db: Session, barcode: str):
+    """Buscar medicamentos que contengan el código de barras (búsqueda parcial)"""
+    return db.query(models.Medicine).filter(models.Medicine.barcode.contains(barcode)).all()
+
+def search_medicines(db: Session, query: str):
+    """Buscar medicamentos por nombre, código de barras o sustancia activa"""
+    return db.query(models.Medicine).filter(
+        models.Medicine.name.contains(query) |
+        models.Medicine.barcode.contains(query) |
+        models.Medicine.active_substance.contains(query)
+    ).all()

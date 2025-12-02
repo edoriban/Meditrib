@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
+from pydantic import BaseModel
 
 from backend.core.dependencies import get_db
 from backend.core import schemas
@@ -14,8 +15,63 @@ router = APIRouter(
 )
 
 
+# ============================================================================
+# SCHEMAS DE VALIDACIÓN DE STOCK
+# ============================================================================
+
+class StockIssue(BaseModel):
+    """Problema de stock para un item"""
+    medicine_id: int
+    medicine_name: str
+    requested: int
+    available: int
+    shortage: int
+
+
+class StockCheckResult(BaseModel):
+    """Resultado de verificación de stock"""
+    has_issues: bool
+    issues: List[StockIssue]
+
+
+class StockCheckRequest(BaseModel):
+    """Request para verificar stock"""
+    items: List[schemas.SaleItemCreate]
+
+
+# ============================================================================
+# ENDPOINTS DE VERIFICACIÓN DE STOCK
+# ============================================================================
+
+@router.post("/check-stock", response_model=StockCheckResult)
+def check_stock_for_sale(request: StockCheckRequest, db: Session = Depends(get_db)):
+    """
+    Verifica la disponibilidad de stock para los items de una venta.
+    Útil para mostrar advertencias antes de confirmar una venta.
+    """
+    result = crud_sale.check_stock_availability(db, request.items)
+    return StockCheckResult(
+        has_issues=result["has_issues"],
+        issues=[StockIssue(**issue) for issue in result["issues"]]
+    )
+
+
+# ============================================================================
+# ENDPOINTS CRUD DE VENTAS
+# ============================================================================
+
 @router.post("/", response_model=schemas.Sale)
-def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db)):
+def create_sale(
+    sale: schemas.SaleCreate,
+    auto_adjust_stock: bool = Query(False, description="Si es True, permite vender aunque no haya stock suficiente"),
+    db: Session = Depends(get_db)
+):
+    """
+    Crea una nueva venta.
+    
+    - Si auto_adjust_stock es False (default), valida que haya stock suficiente
+    - Si auto_adjust_stock es True, permite la venta aunque el stock sea insuficiente
+    """
     # Validar existencia de cliente
     db_client = crud_client.get_client(db, client_id=sale.client_id)
     if not db_client:
@@ -25,22 +81,31 @@ def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db)):
     if not sale.items or len(sale.items) == 0:
         raise HTTPException(status_code=400, detail="Sale must have at least one item")
     
-    # Validar existencia de medicamentos y stock
+    # Validar existencia de medicamentos
     for item in sale.items:
         db_medicine = crud_medicines.get_medicine(db, medicine_id=item.medicine_id)
         if not db_medicine:
             raise HTTPException(status_code=404, detail=f"Medicine with id {item.medicine_id} not found")
-        
-        # Validar stock disponible
-        if db_medicine.inventory and db_medicine.inventory.quantity < item.quantity:
+    
+    # Verificar stock si no se permite ajuste automático
+    if not auto_adjust_stock:
+        stock_check = crud_sale.check_stock_availability(db, sale.items)
+        if stock_check["has_issues"]:
+            issues_detail = ", ".join([
+                f"{issue['medicine_name']}: solicitado {issue['requested']}, disponible {issue['available']}"
+                for issue in stock_check["issues"]
+            ])
             raise HTTPException(
-                status_code=400, 
-                detail=f"Insufficient stock for {db_medicine.name}. Available: {db_medicine.inventory.quantity}, Requested: {item.quantity}"
+                status_code=400,
+                detail=f"Stock insuficiente: {issues_detail}"
             )
 
-    # Crear la venta (el CRUD maneja la actualización de inventario)
-    created_sale = crud_sale.create_sale(db=db, sale=sale)
-    return created_sale
+    # Crear la venta
+    try:
+        created_sale = crud_sale.create_sale(db=db, sale=sale, auto_adjust_stock=auto_adjust_stock)
+        return created_sale
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/", response_model=List[schemas.Sale])

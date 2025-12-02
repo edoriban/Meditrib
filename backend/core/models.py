@@ -25,6 +25,9 @@ class Medicine(Base):
     concentration = Column(String, nullable=True)
     prescription_required = Column(Boolean, default=False)
     iva_rate = Column(Float, default=0.0)  # 0.0 = exento (medicamentos), 0.16 = 16% (material de curación)
+    sat_key = Column(String, nullable=True)  # Clave SAT para facturación electrónica
+    image_path = Column(String, nullable=True)  # Ruta de la imagen del medicamento
+    active_substance = Column(String, nullable=True)  # Sustancia activa del medicamento
     inventory = relationship("Inventory", uselist=False, back_populates="medicine", cascade="all, delete")
     suppliers = relationship("SupplierMedicine", back_populates="medicine", cascade="all, delete")
     purchase_order_items = relationship("PurchaseOrderItem", back_populates="medicine", cascade="all, delete")
@@ -133,6 +136,15 @@ class Client(Base):
     rfc = Column(String, nullable=True)  # RFC del cliente para facturación
     tax_regime = Column(String, nullable=True)  # Régimen fiscal del cliente
     cfdi_use = Column(String, nullable=True)  # Uso del CFDI
+    # Campos de dirección fiscal para facturación electrónica
+    fiscal_street = Column(String, nullable=True)  # Calle fiscal
+    fiscal_exterior_number = Column(String, nullable=True)  # Número exterior fiscal
+    fiscal_interior_number = Column(String, nullable=True)  # Número interior fiscal
+    fiscal_neighborhood = Column(String, nullable=True)  # Colonia fiscal
+    fiscal_city = Column(String, nullable=True)  # Ciudad fiscal
+    fiscal_state = Column(String, nullable=True)  # Estado fiscal
+    fiscal_postal_code = Column(String, nullable=True)  # Código postal fiscal
+    fiscal_country = Column(String, default="México")  # País fiscal
     sales = relationship("Sale", back_populates="client")
     invoices = relationship("Invoice", back_populates="client")
 
@@ -271,7 +283,7 @@ class Invoice(Base):
     # Relaciones
     company_id = Column(ForeignKey("companies.id"))
     client_id = Column(ForeignKey("clients.id"))
-    sale_id = Column(ForeignKey("sales.id"), nullable=True)  # Factura generada desde venta
+    sale_id = Column(ForeignKey("sales.id"))  # Factura generada desde venta - REQUERIDO
 
     # Estado CFDI
     status = Column(String, default="draft")  # draft, issued, cancelled

@@ -56,6 +56,9 @@ class MedicineBase(BaseModel):
     concentration: Optional[str] = None
     prescription_required: bool = False
     iva_rate: float = 0.0  # 0.0 = exento (medicamentos), 0.16 = 16% (material de curación)
+    sat_key: Optional[str] = None  # Clave SAT para facturación electrónica
+    image_path: Optional[str] = None  # Ruta de la imagen del medicamento
+    active_substance: Optional[str] = None  # Sustancia activa del medicamento
 
 
 class MedicineCreate(MedicineBase):
@@ -195,6 +198,17 @@ class ClientBase(BaseModel):
     contact: Optional[str] = None
     address: Optional[str] = None
     email: Optional[EmailStr] = None
+    rfc: Optional[str] = None
+    tax_regime: Optional[str] = None
+    cfdi_use: Optional[str] = None
+    fiscal_street: Optional[str] = None
+    fiscal_exterior_number: Optional[str] = None
+    fiscal_interior_number: Optional[str] = None
+    fiscal_neighborhood: Optional[str] = None
+    fiscal_city: Optional[str] = None
+    fiscal_state: Optional[str] = None
+    fiscal_postal_code: Optional[str] = None
+    fiscal_country: Optional[str] = "México"
 
 class ClientCreate(ClientBase):
     pass
@@ -204,6 +218,17 @@ class ClientUpdate(BaseModel):
     contact: Optional[str] = None
     address: Optional[str] = None
     email: Optional[EmailStr] = None
+    rfc: Optional[str] = None
+    tax_regime: Optional[str] = None
+    cfdi_use: Optional[str] = None
+    fiscal_street: Optional[str] = None
+    fiscal_exterior_number: Optional[str] = None
+    fiscal_interior_number: Optional[str] = None
+    fiscal_neighborhood: Optional[str] = None
+    fiscal_city: Optional[str] = None
+    fiscal_state: Optional[str] = None
+    fiscal_postal_code: Optional[str] = None
+    fiscal_country: Optional[str] = None
 
 class Client(ClientBase):
     id: int
@@ -536,7 +561,7 @@ class InvoiceBase(BaseModel):
     total_taxes: float = 0.0
     company_id: int
     client_id: int
-    sale_id: Optional[int] = None
+    sale_id: int  # REQUERIDO - Factura debe estar asociada a una venta
     concepts: List[InvoiceConceptCreate] = []
     taxes: List[InvoiceTaxCreate] = []
 
@@ -571,6 +596,55 @@ class Token(BaseModel):
 
 
 
+
+# Excel Import Schemas
+class ExcelImportItem(BaseModel):
+    """Item de importación desde Excel con información de precios y cambios"""
+    barcode: str
+    name: str
+    active_substance: Optional[str] = None
+    laboratory: Optional[str] = None
+    purchase_price_new: float
+    purchase_price_old: Optional[float] = None
+    sale_price_suggested: float
+    sale_price_current: Optional[float] = None
+    price_change: str  # "up", "down", "new", "same"
+    iva_rate: float
+    inventory_to_add: int
+    exists: bool
+    medicine_id: Optional[int] = None
+    price_range: str
+    price_difference: Optional[dict] = None
+
+class ExcelImportPreviewResponse(BaseModel):
+    """Respuesta de previsualización de importación Excel"""
+    items: List[ExcelImportItem]
+    total_items: int
+    new_medicines: int
+    existing_medicines: int
+    price_changes: int
+
+class ExcelImportConfirmItem(BaseModel):
+    """Item de confirmación para importación Excel"""
+    barcode: str
+    name: str
+    active_substance: Optional[str] = None
+    laboratory: Optional[str] = None
+    purchase_price: float
+    sale_price: float  # Precio editado por el usuario
+    iva_rate: float
+    inventory_to_add: int
+    exists: bool
+    medicine_id: Optional[int] = None
+    sat_key: Optional[str] = None
+    image_path: Optional[str] = None
+
+class ExcelImportResult(BaseModel):
+    """Resultado de importación Excel"""
+    created: int
+    updated: int
+    errors: List[dict]
+    total_processed: int
 # Actualizar referencias después de definir todas las clases
 Sale.model_rebuild()
 SaleWithInvoice.model_rebuild()

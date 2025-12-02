@@ -16,6 +16,9 @@ export interface Medicine {
     concentration?: string;
     prescription_required: boolean;
     iva_rate: number; // 0.0 = exento (medicamentos), 0.16 = 16% (material de curación)
+    sat_key?: string; // Clave SAT para facturación electrónica
+    image_path?: string; // Ruta de la imagen del medicamento
+    active_substance?: string; // Sustancia activa del medicamento
     inventory?: {
         quantity: number;
     };
@@ -41,6 +44,9 @@ export const medicineFormSchema = z.object({
     concentration: z.string().optional(),
     prescription_required: z.boolean(),
     iva_rate: z.number().min(0).max(1).default(0), // 0 = exento, 0.16 = 16%
+    sat_key: z.string().optional(), // Clave SAT para facturación
+    image_path: z.string().optional(), // Ruta de imagen
+    active_substance: z.string().optional(), // Sustancia activa
     tags: z.array(z.number()).default([]),
     inventory: z
         .object({
@@ -66,6 +72,9 @@ export interface MedicineFormValues {
     concentration?: string;
     prescription_required: boolean;
     iva_rate?: number;
+    sat_key?: string;
+    image_path?: string;
+    active_substance?: string;
     tags?: number[];
     inventory?: {
         quantity: number;
@@ -85,6 +94,9 @@ export type MedicineCreateValues = {
     concentration?: string;
     prescription_required: boolean;
     iva_rate?: number;
+    sat_key?: string;
+    image_path?: string;
+    active_substance?: string;
     tags?: number[];
     inventory?: {
         quantity: number;
@@ -116,3 +128,65 @@ export interface CreateMedicineTagDialogProps {
 }
 
 export type MedicineTagFormValues = z.infer<typeof medicineTagSchema>;
+
+// ============================================================================
+// TIPOS PARA IMPORTACIÓN DE EXCEL
+// ============================================================================
+
+export interface PriceDifference {
+    direction: "up" | "down" | "same";
+    percentage: number;
+    absolute: number;
+}
+
+export interface ExcelImportPreviewItem {
+    barcode: string;
+    name: string;
+    active_substance?: string | null;
+    laboratory?: string | null;
+    purchase_price_new: number;
+    purchase_price_old: number | null;
+    sale_price_suggested: number;
+    sale_price_current: number | null;
+    price_change: "up" | "down" | "same" | "new";
+    iva_rate: number;
+    inventory_to_add: number;
+    exists: boolean;
+    medicine_id: number | null;
+    price_range: string;
+    price_difference: PriceDifference | null;
+}
+
+export interface ExcelImportPreviewResponse {
+    items: ExcelImportPreviewItem[];
+    total_items: number;
+    new_medicines: number;
+    existing_medicines: number;
+    price_changes: number;
+}
+
+export interface ExcelImportConfirmItem {
+    barcode: string;
+    name: string;
+    active_substance?: string | null;
+    laboratory?: string | null;
+    purchase_price: number;
+    sale_price: number;
+    iva_rate: number;
+    inventory_to_add: number;
+    exists: boolean;
+    medicine_id: number | null;
+    sat_key?: string | null;
+}
+
+export interface ExcelImportError {
+    barcode: string;
+    error: string;
+}
+
+export interface ExcelImportConfirmResponse {
+    created: number;
+    updated: number;
+    errors: ExcelImportError[];
+    total_processed: number;
+}
