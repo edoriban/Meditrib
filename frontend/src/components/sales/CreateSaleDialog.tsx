@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { SaleCreateValues, SaleItemValues, SaleFormValues, saleFormSchema } from "@/types/sales";
 import { useSaleMutations } from "@/hooks/useSaleMutations";
@@ -29,8 +29,20 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { IconPlus, IconTrash, IconMinus, IconSearch } from "@tabler/icons-react";
+import { IconPlus, IconTrash, IconMinus } from "@tabler/icons-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarcodeSearchInput } from "@/components/medicines/BarcodeSearchInput";
+import { EditablePriceCell } from "@/components/sales/EditablePriceCell";
+import { StockConfirmationDialog } from "@/components/sales/StockConfirmationDialog";
+
+// Tipo para problemas de stock
+interface StockIssue {
+    medicine_id: number;
+    medicine_name: string;
+    requested: number;
+    available: number;
+    shortage: number;
+}
 
 interface CreateSaleDialogProps {
     open: boolean;
@@ -52,6 +64,21 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
     const [searchQuery, setSearchQuery] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Estados para manejo de stock insuficiente
+    const [stockDialogOpen, setStockDialogOpen] = useState(false);
+    const [stockIssues, setStockIssues] = useState<StockIssue[]>([]);
+    const [pendingSaleData, setPendingSaleData] = useState<SaleCreateValues | null>(null);
+
+    // Mutation para verificar stock
+    const checkStockMutation = useMutation({
+        mutationFn: async (saleItems: SaleItemValues[]) => {
+            const { data } = await axios.post(`${BASE_API_URL}/sales/check-stock`, {
+                items: saleItems
+            });
+            return data;
+        }
+    });
 
     // Cerrar dropdown al hacer clic fuera
     useEffect(() => {
@@ -102,13 +129,13 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
     // Agregar un item a la lista
     const addItem = () => {
         if (!selectedMedicine || itemQuantity <= 0) return;
-        
+
         const medicine = medicines?.find(m => m.id === selectedMedicine);
         if (!medicine) return;
 
         // Verificar si ya existe el medicamento
         const existingIndex = items.findIndex(item => item.medicine_id === selectedMedicine);
-        
+
         if (existingIndex >= 0) {
             // Actualizar cantidad si ya existe
             const updatedItems = [...items];
@@ -130,20 +157,44 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         setItemQuantity(1);
     };
 
+    // Agregar item desde BarcodeSearchInput
+    const addItemFromBarcode = (medicine: Medicine) => {
+        const existingIndex = items.findIndex(item => item.medicine_id === medicine.id);
+
+        if (existingIndex >= 0) {
+            // Actualizar cantidad si ya existe
+            const updatedItems = [...items];
+            updatedItems[existingIndex].quantity += 1;
+            setItems(updatedItems);
+        } else {
+            // Agregar nuevo item
+            const newItem: SaleItemValues = {
+                medicine_id: medicine.id,
+                quantity: 1,
+                unit_price: medicine.sale_price,
+                discount: 0,
+            };
+            setItems([...items, newItem]);
+        }
+    };
+
+    // Actualizar precio de un item
+    const updateItemPrice = (index: number, newPrice: number) => {
+        const updatedItems = [...items];
+        updatedItems[index] = { ...updatedItems[index], unit_price: newPrice };
+        setItems(updatedItems);
+    };
+
     // Eliminar un item
     const removeItem = (index: number) => {
         setItems(items.filter((_, i) => i !== index));
     };
 
-    // Actualizar cantidad de un item
+    // Actualizar cantidad de un item (ahora permite exceder stock)
     const updateItemQuantity = (index: number, newQuantity: number) => {
-        const item = items[index];
-        const medicine = medicines?.find(m => m.id === item.medicine_id);
-        const maxStock = medicine?.inventory?.quantity || 999;
-        
-        // Validar cantidad entre 1 y el stock disponible
-        const validQuantity = Math.max(1, Math.min(newQuantity, maxStock));
-        
+        // Validar cantidad mínima de 1
+        const validQuantity = Math.max(1, newQuantity);
+
         const updatedItems = [...items];
         updatedItems[index] = { ...updatedItems[index], quantity: validQuantity };
         setItems(updatedItems);
@@ -170,7 +221,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
 
     // Calcular IVA basado en cada producto
     const documentType = form.watch("document_type");
-    const ivaAmount = documentType === "invoice" 
+    const ivaAmount = documentType === "invoice"
         ? items.reduce((sum, item) => {
             const medicine = medicines?.find(m => m.id === item.medicine_id);
             const itemSubtotal = (item.quantity * item.unit_price) - item.discount;
@@ -191,20 +242,53 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
             return;
         }
 
-        try {
-            const saleData: SaleCreateValues = {
-                ...data,
-                items: items,
-            };
+        const saleData: SaleCreateValues = {
+            ...data,
+            items: items,
+        };
 
+        // Verificar stock antes de crear la venta
+        try {
+            const stockResult = await checkStockMutation.mutateAsync(items);
+
+            if (stockResult.has_issues) {
+                // Hay problemas de stock, mostrar diálogo de confirmación
+                setStockIssues(stockResult.issues);
+                setPendingSaleData(saleData);
+                setStockDialogOpen(true);
+                return;
+            }
+
+            // Stock suficiente, crear venta normalmente
             await createSale(saleData);
-            onOpenChange(false);
-            form.reset();
-            setItems([]);
-            setSelectedMedicine(0);
+            handleSaleSuccess();
         } catch (error) {
             console.error("Error al crear venta:", error);
         }
+    };
+
+    // Confirmar venta con stock insuficiente
+    const handleConfirmWithInsufficientStock = async () => {
+        if (!pendingSaleData) return;
+
+        try {
+            // Crear venta con auto_adjust_stock=true
+            await axios.post(`${BASE_API_URL}/sales/?auto_adjust_stock=true`, pendingSaleData);
+            setStockDialogOpen(false);
+            handleSaleSuccess();
+        } catch (error) {
+            console.error("Error al crear venta:", error);
+        }
+    };
+
+    // Limpiar después de venta exitosa
+    const handleSaleSuccess = () => {
+        onOpenChange(false);
+        form.reset();
+        setItems([]);
+        setSelectedMedicine(0);
+        setPendingSaleData(null);
+        setStockIssues([]);
     };
 
     const getMedicineName = (medicineId: number) => {
@@ -226,7 +310,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                         Registra un nuevo pedido. Puedes agregar múltiples medicamentos.
                     </DialogDescription>
                 </DialogHeader>
-                
+
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         {/* Información del cliente y documento */}
@@ -237,7 +321,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Cliente *</FormLabel>
-                                        <Select 
+                                        <Select
                                             onValueChange={(value) => field.onChange(parseInt(value))}
                                             value={field.value ? field.value.toString() : undefined}
                                         >
@@ -337,27 +421,38 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                 <CardTitle className="text-base">Agregar Medicamentos</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                <div className="flex gap-2 items-end">
-                                    {/* Input con autocompletado */}
+                                {/* Búsqueda con código de barras */}
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium">Buscar por código de barras o nombre</label>
+                                    <BarcodeSearchInput
+                                        onMedicineSelect={addItemFromBarcode}
+                                        placeholder="Escanea código de barras o escribe para buscar..."
+                                        excludeIds={[]}
+                                        autoFocus
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Usa un escáner de código de barras o escribe el nombre del medicamento
+                                    </p>
+                                </div>
+
+                                {/* Búsqueda manual alternativa */}
+                                <div className="flex gap-2 items-end border-t pt-3">
                                     <div className="flex-1 relative" ref={dropdownRef}>
-                                        <label className="text-sm font-medium">Medicamento</label>
+                                        <label className="text-sm font-medium text-muted-foreground">O selecciona manualmente</label>
                                         <div className="relative">
-                                            <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                                             <Input
                                                 placeholder="Escribe para buscar..."
                                                 value={searchQuery}
                                                 onChange={(e) => {
                                                     setSearchQuery(e.target.value);
                                                     setShowDropdown(true);
-                                                    // Si borra la búsqueda, limpiar selección
                                                     if (!e.target.value) {
                                                         setSelectedMedicine(0);
                                                     }
                                                 }}
                                                 onFocus={() => setShowDropdown(true)}
-                                                className="pl-9"
                                             />
-                                            
+
                                             {/* Dropdown de resultados */}
                                             {showDropdown && (
                                                 <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-[250px] overflow-y-auto">
@@ -374,9 +469,8 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                                     setSearchQuery(medicine.name);
                                                                     setShowDropdown(false);
                                                                 }}
-                                                                className={`flex flex-col px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground ${
-                                                                    selectedMedicine === medicine.id ? "bg-accent" : ""
-                                                                }`}
+                                                                className={`flex flex-col px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground ${selectedMedicine === medicine.id ? "bg-accent" : ""
+                                                                    }`}
                                                             >
                                                                 <span className="font-medium">{medicine.name}</span>
                                                                 <span className="text-xs text-muted-foreground">
@@ -391,10 +485,9 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                     </div>
                                     <div className="w-24">
                                         <label className="text-sm font-medium">Cantidad</label>
-                                        <Input 
-                                            type="number" 
+                                        <Input
+                                            type="number"
                                             min="1"
-                                            max={medicines?.find(m => m.id === selectedMedicine)?.inventory?.quantity || 999}
                                             value={itemQuantity}
                                             onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
                                             onFocus={() => setShowDropdown(false)}
@@ -426,14 +519,15 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                             {items.map((item, index) => {
                                                 const medicine = medicines?.find(m => m.id === item.medicine_id);
                                                 const productIvaRate = medicine?.iva_rate || 0;
-                                                const maxStock = medicine?.inventory?.quantity || 999;
+                                                const currentStock = medicine?.inventory?.quantity || 0;
+                                                const exceedsStock = item.quantity > currentStock;
                                                 return (
-                                                    <TableRow key={index}>
+                                                    <TableRow key={index} className={exceedsStock ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
                                                         <TableCell>
                                                             <div className="flex flex-col">
                                                                 <span>{getMedicineName(item.medicine_id)}</span>
-                                                                <span className="text-xs text-muted-foreground">
-                                                                    Stock disponible: {maxStock}
+                                                                <span className={`text-xs ${exceedsStock ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
+                                                                    Stock: {currentStock} {exceedsStock && `(falta ${item.quantity - currentStock})`}
                                                                 </span>
                                                             </div>
                                                         </TableCell>
@@ -452,10 +546,9 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                                 <Input
                                                                     type="number"
                                                                     min={1}
-                                                                    max={maxStock}
                                                                     value={item.quantity}
                                                                     onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 1)}
-                                                                    className="w-16 h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                    className={`w-16 h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${exceedsStock ? "border-amber-500" : ""}`}
                                                                 />
                                                                 <Button
                                                                     type="button"
@@ -463,13 +556,18 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                                     size="icon"
                                                                     className="h-8 w-8"
                                                                     onClick={() => updateItemQuantity(index, item.quantity + 1)}
-                                                                    disabled={item.quantity >= maxStock}
                                                                 >
                                                                     <IconPlus className="h-4 w-4" />
                                                                 </Button>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
+                                                        <TableCell className="text-right">
+                                                            <EditablePriceCell
+                                                                value={item.unit_price}
+                                                                onChange={(newPrice) => updateItemPrice(index, newPrice)}
+                                                                originalValue={medicine?.sale_price}
+                                                            />
+                                                        </TableCell>
                                                         <TableCell className="text-right">
                                                             <span className={productIvaRate > 0 ? "text-amber-600" : "text-green-600"}>
                                                                 {(productIvaRate * 100).toFixed(0)}%
@@ -477,9 +575,9 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                         </TableCell>
                                                         <TableCell className="text-right">{formatCurrency(item.quantity * item.unit_price)}</TableCell>
                                                         <TableCell>
-                                                            <Button 
-                                                                type="button" 
-                                                                variant="ghost" 
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
                                                                 size="icon"
                                                                 onClick={() => removeItem(index)}
                                                                 className="h-8 w-8 text-red-600"
@@ -537,7 +635,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                 <FormItem>
                                     <FormLabel>Notas (opcional)</FormLabel>
                                     <FormControl>
-                                        <Textarea 
+                                        <Textarea
                                             placeholder="Notas adicionales del pedido..."
                                             {...field}
                                         />
@@ -551,13 +649,26 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                                 Cancelar
                             </Button>
-                            <Button type="submit" disabled={isCreating || items.length === 0}>
-                                {isCreating ? "Creando..." : "Crear Venta"}
+                            <Button type="submit" disabled={isCreating || checkStockMutation.isPending || items.length === 0}>
+                                {isCreating || checkStockMutation.isPending ? "Verificando..." : "Crear Venta"}
                             </Button>
                         </DialogFooter>
                     </form>
                 </Form>
             </DialogContent>
+
+            {/* Diálogo de confirmación de stock insuficiente */}
+            <StockConfirmationDialog
+                open={stockDialogOpen}
+                onOpenChange={setStockDialogOpen}
+                stockIssues={stockIssues}
+                onConfirm={handleConfirmWithInsufficientStock}
+                onCancel={() => {
+                    setStockDialogOpen(false);
+                    setPendingSaleData(null);
+                }}
+                isLoading={isCreating}
+            />
         </Dialog>
     );
 }

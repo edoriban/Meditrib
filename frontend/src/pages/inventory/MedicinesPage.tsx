@@ -1,3 +1,4 @@
+import { useState } from "react";
 import MedicineTable from "@/components/medicines/MedicineTable";
 import { Button } from "@/components/ui/button";
 import { IconDownload, IconUpload } from "@tabler/icons-react";
@@ -6,9 +7,12 @@ import { useQuery } from "@tanstack/react-query"
 import { Medicine } from "@/types/medicine";
 import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog"
 import MedicineDashboard from "@/components/medicines/MedicineDashboard";
+import { ExcelImportDialog } from "@/components/medicines/ExcelImportDialog";
 import axios from "axios"
 import { BASE_API_URL } from "@/config";
+
 export default function MedicinesPage() {
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
 
     const { data, isLoading, error } = useQuery<Medicine[]>({
         queryKey: ["medicines"],
@@ -26,12 +30,7 @@ export default function MedicinesPage() {
 
     const handleExport = () => {
         toast.success("Exportando medicamentos...");
-        // Implementar lógica de exportación real aquí
-    };
-
-    const handleImport = () => {
-        toast.success("Importando medicamentos...");
-        // Implementar lógica de importación real aquí
+        // TODO: Implementar lógica de exportación real aquí
     };
 
     return (
@@ -51,9 +50,9 @@ export default function MedicinesPage() {
                             <IconDownload className="mr-1 h-4 w-4" />
                             Exportar
                         </Button>
-                        <Button variant="outline" size="sm" onClick={handleImport}>
+                        <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
                             <IconUpload className="mr-1 h-4 w-4" />
-                            Importar
+                            Importar Excel
                         </Button>
                     </div>
                 </div>
@@ -61,6 +60,12 @@ export default function MedicinesPage() {
             </div>
 
             <MedicineTable medicines={data} isLoading={isLoading} error={error} />
+
+            {/* Dialog de importación Excel */}
+            <ExcelImportDialog
+                open={importDialogOpen}
+                onOpenChange={setImportDialogOpen}
+            />
         </div>
     );
 }

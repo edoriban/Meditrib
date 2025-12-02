@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { Invoice, Company } from "@/types/invoice";
@@ -9,7 +10,7 @@ import { IconFileInvoice, IconDownload, IconEye, IconTrash, IconTrendingUp, Icon
 import { BASE_API_URL } from "@/config";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { useState } from "react";
+import { CreateInvoiceDialog } from "@/components/invoices/CreateInvoiceDialog";
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -37,6 +38,7 @@ export default function InvoicesPage() {
     const queryClient = useQueryClient();
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [showDetailDialog, setShowDetailDialog] = useState(false);
+    const [showCreateDialog, setShowCreateDialog] = useState(false);
 
     const { data: invoices, isLoading } = useQuery<Invoice[]>({
         queryKey: ["invoices"],
@@ -105,7 +107,7 @@ export default function InvoicesPage() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button size="sm">
+                        <Button size="sm" onClick={() => setShowCreateDialog(true)}>
                             <IconPlus className="mr-1 h-4 w-4" />
                             Nueva Factura
                         </Button>
@@ -292,8 +294,8 @@ export default function InvoicesPage() {
                                         <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex items-center justify-end gap-1">
-                                                <Button 
-                                                    variant="ghost" 
+                                                <Button
+                                                    variant="ghost"
                                                     size="icon"
                                                     onClick={() => handleViewDetails(invoice)}
                                                     title="Ver detalles"
@@ -301,8 +303,8 @@ export default function InvoicesPage() {
                                                     <IconEye className="h-4 w-4" />
                                                 </Button>
                                                 {invoice.status !== 'cancelled' && (
-                                                    <Button 
-                                                        variant="ghost" 
+                                                    <Button
+                                                        variant="ghost"
                                                         size="icon"
                                                         onClick={() => generateXmlMutation.mutate(invoice.id)}
                                                         disabled={generateXmlMutation.isPending}
@@ -312,8 +314,8 @@ export default function InvoicesPage() {
                                                     </Button>
                                                 )}
                                                 {invoice.status === 'draft' && (
-                                                    <Button 
-                                                        variant="ghost" 
+                                                    <Button
+                                                        variant="ghost"
                                                         size="icon"
                                                         onClick={() => deleteMutation.mutate(invoice.id)}
                                                         disabled={deleteMutation.isPending}
@@ -344,7 +346,7 @@ export default function InvoicesPage() {
                             Detalles de la factura electrónica
                         </DialogDescription>
                     </DialogHeader>
-                    
+
                     {selectedInvoice && (
                         <div className="space-y-4">
                             {selectedInvoice.uuid && (
@@ -435,6 +437,12 @@ export default function InvoicesPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Create Invoice Dialog */}
+            <CreateInvoiceDialog
+                open={showCreateDialog}
+                onOpenChange={setShowCreateDialog}
+            />
         </div>
     );
 }
