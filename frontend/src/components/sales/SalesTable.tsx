@@ -65,7 +65,12 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
     const handleEditDialogClose = (open: boolean) => {
         setEditDialogOpen(open);
         if (!open) {
-            setSaleToEdit(null);
+            // Limpiar el estado después de un pequeño delay para evitar race conditions
+            setTimeout(() => {
+                setSaleToEdit(null);
+                // Forzar limpieza de pointer-events en caso de que Radix no lo haga
+                document.body.style.pointerEvents = '';
+            }, 100);
         }
     };
 

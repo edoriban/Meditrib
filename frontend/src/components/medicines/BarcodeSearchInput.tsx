@@ -56,14 +56,15 @@ export function BarcodeSearchInput({
         queryFn: async () => {
             if (!searchValue || searchValue.length < 2) return [];
 
-            // Determinar si buscar por barcode o general
-            const isNumeric = /^\d+$/.test(searchValue);
-            const endpoint = isNumeric && searchValue.length >= 8
-                ? `${BASE_API_URL}/medicines/search/barcode/?barcode=${searchValue}`
-                : `${BASE_API_URL}/medicines/search/?query=${searchValue}`;
-
-            const { data } = await axios.get(endpoint);
-            return data;
+            // Usar el endpoint paginado que tiene búsqueda case-insensitive
+            const params = new URLSearchParams({
+                page: "1",
+                page_size: "20",
+                search: searchValue,
+                stock_filter: "all"
+            });
+            const { data } = await axios.get(`${BASE_API_URL}/medicines/paginated?${params}`);
+            return data.items || [];
         },
         enabled: searchValue.length >= 2,
         staleTime: 1000,
