@@ -200,7 +200,8 @@ export function BarcodeSearchInput({
                                             </span>
                                         )}
                                         {medicine.laboratory && (
-                                            <span>• {medicine.laboratory}</span>
+                                            <span>• {medicine.laboratory} • {medicine.active_substance}</span>
+                                            
                                         )}
                                     </div>
                                 </div>
