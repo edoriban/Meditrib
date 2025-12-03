@@ -10,7 +10,7 @@ export function usePurchaseOrderMutations() {
     // Crear orden de compra
     const createPurchaseOrder = useMutation({
         mutationFn: async (purchaseOrderData: PurchaseOrderCreateValues) => {
-            const response = await axios.post(`${BASE_API_URL}/purchase_order/`, purchaseOrderData);
+            const response = await axios.post(`${BASE_API_URL}/purchase-orders/`, purchaseOrderData);
             return response.data;
         },
         onSuccess: () => {
@@ -25,7 +25,7 @@ export function usePurchaseOrderMutations() {
     // Actualizar orden de compra
     const updatePurchaseOrder = useMutation({
         mutationFn: async ({ purchaseOrderId, purchaseOrderData }: { purchaseOrderId: number, purchaseOrderData: PurchaseOrderUpdateValues }) => {
-            const response = await axios.put(`${BASE_API_URL}/purchase_order/${purchaseOrderId}`, purchaseOrderData);
+            const response = await axios.put(`${BASE_API_URL}/purchase-orders/${purchaseOrderId}`, purchaseOrderData);
             return response.data;
         },
         onSuccess: () => {
@@ -41,7 +41,7 @@ export function usePurchaseOrderMutations() {
     // Eliminar orden de compra
     const deletePurchaseOrder = useMutation({
         mutationFn: async (purchaseOrderId: number) => {
-            const response = await axios.delete(`${BASE_API_URL}/purchase_order/${purchaseOrderId}`);
+            const response = await axios.delete(`${BASE_API_URL}/purchase-orders/${purchaseOrderId}`);
             return response.data;
         },
         onSuccess: () => {

@@ -44,7 +44,9 @@ class Supplier(Base):
     __tablename__ = "suppliers"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
-    contact = Column(String)
+    contact_info = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
     medicines = relationship("SupplierMedicine", back_populates="supplier")
     purchase_orders = relationship("PurchaseOrder", back_populates="supplier")
 
