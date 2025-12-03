@@ -245,7 +245,8 @@ class Company(Base):
     __tablename__ = "companies"
     id = Column(Integer, primary_key=True, index=True)
     rfc = Column(String, unique=True, index=True)
-    name = Column(String)
+    name = Column(String)  # Razón Social
+    business_name = Column(String, nullable=True)  # Nombre Comercial
     tax_regime = Column(String)  # Régimen fiscal
     street = Column(String)
     exterior_number = Column(String)
@@ -257,6 +258,7 @@ class Company(Base):
     postal_code = Column(String)
     email = Column(String)
     phone = Column(String, nullable=True)
+    logo = Column(String, nullable=True)  # Base64 del logo
 
     invoices = relationship("Invoice", back_populates="company")
 

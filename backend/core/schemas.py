@@ -376,7 +376,8 @@ class Alert(AlertBase):
 # Company Schemas
 class CompanyBase(BaseModel):
     rfc: str
-    name: str
+    name: str  # Razón Social
+    business_name: Optional[str] = None  # Nombre Comercial
     tax_regime: str
     street: str
     exterior_number: str
@@ -388,16 +389,27 @@ class CompanyBase(BaseModel):
     postal_code: str
     email: str
     phone: Optional[str] = None
+    logo: Optional[str] = None  # Base64 del logo
 
 class CompanyCreate(CompanyBase):
     pass
 
-class CompanyUpdate(CompanyBase):
+class CompanyUpdate(BaseModel):
     rfc: Optional[str] = None
     name: Optional[str] = None
+    business_name: Optional[str] = None
     tax_regime: Optional[str] = None
     street: Optional[str] = None
     exterior_number: Optional[str] = None
+    interior_number: Optional[str] = None
+    neighborhood: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    postal_code: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    logo: Optional[str] = None
 
 class Company(CompanyBase):
     id: int

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, selectinload
 from backend.core.models import Invoice, InvoiceConcept, InvoiceTax, Company, Client, Sale, SaleItem
-from backend.core.schemas import InvoiceCreate, InvoiceUpdate, CompanyCreate, InvoiceConceptCreate, InvoiceTaxCreate
+from backend.core.schemas import InvoiceCreate, InvoiceUpdate, CompanyCreate, CompanyUpdate, InvoiceConceptCreate, InvoiceTaxCreate
 from typing import List, Optional
 from datetime import datetime
 import uuid
@@ -161,6 +161,28 @@ def get_company(db: Session, company_id: int) -> Optional[Company]:
 
 def get_companies(db: Session) -> List[Company]:
     return db.query(Company).all()
+
+
+def update_company(db: Session, company_id: int, company_update: CompanyUpdate) -> Optional[Company]:
+    """Actualizar datos de una empresa"""
+    db_company = db.query(Company).filter(Company.id == company_id).first()
+    if db_company:
+        update_data = company_update.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(db_company, key, value)
+        db.commit()
+        db.refresh(db_company)
+    return db_company
+
+
+def delete_company(db: Session, company_id: int) -> bool:
+    """Eliminar una empresa"""
+    db_company = db.query(Company).filter(Company.id == company_id).first()
+    if db_company:
+        db.delete(db_company)
+        db.commit()
+        return True
+    return False
 
 
 def create_invoice_from_sale(db: Session, sale_id: int, payment_form: str = "01", payment_method: str = "PUE") -> dict:

@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from backend.core.database import get_db
-from backend.core.schemas import Invoice, InvoiceCreate, InvoiceUpdate, Company, CompanyCreate
+from backend.core.schemas import Invoice, InvoiceCreate, InvoiceUpdate, Company, CompanyCreate, CompanyUpdate
 from backend.core.crud.crud_invoice import (
     get_invoices, get_invoice, create_invoice, update_invoice,
     delete_invoice, generate_cfdi_xml, create_company, get_company,
-    get_companies, create_invoice_from_sale
+    get_companies, create_invoice_from_sale, update_company, delete_company
 )
 
 router = APIRouter()
@@ -29,6 +29,22 @@ def read_company(company_id: int, db: Session = Depends(get_db)):
     if db_company is None:
         raise HTTPException(status_code=404, detail="Company not found")
     return db_company
+
+
+@router.put("/companies/{company_id}", response_model=Company)
+def update_existing_company(company_id: int, company: CompanyUpdate, db: Session = Depends(get_db)):
+    db_company = update_company(db, company_id=company_id, company_update=company)
+    if db_company is None:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return db_company
+
+
+@router.delete("/companies/{company_id}")
+def delete_existing_company(company_id: int, db: Session = Depends(get_db)):
+    success = delete_company(db, company_id=company_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return {"message": "Company deleted successfully"}
 
 
 # Invoice endpoints

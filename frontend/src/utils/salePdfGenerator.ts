@@ -3,7 +3,8 @@ import autoTable from "jspdf-autotable";
 import { Sale } from "@/types/sales";
 
 interface CompanySettings {
-    companyName: string;
+    companyName: string; // Nombre comercial
+    companyLegalName?: string; // Razón social
     companyRfc: string;
     companyAddress: string;
     companyPhone: string;
