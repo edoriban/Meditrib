@@ -459,7 +459,6 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                                     <TableHead>Precio de compra</TableHead>
                                     <TableHead>Precio de venta</TableHead>
                                     <TableHead>Ganancia</TableHead>
-                                    <TableHead>Proveedor</TableHead>
                                     <TableHead>Stock</TableHead>
                                     <TableHead>Tags</TableHead>
                                     <TableHead className="text-right">Acciones</TableHead>
@@ -523,15 +522,6 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                                                 </div>
                                             ) : "N/A"}
                                         </TableCell>
-                                        <TableCell>
-                                            {medicine.suppliers ?
-                                                (
-                                                    <Badge key={medicine.suppliers.id} className="text-white bg-blue-500">
-                                                        {medicine.suppliers.name}
-                                                    </Badge>
-                                                )
-                                                : "—"}
-                                        </TableCell>
                                         <TableCell className="font-mono">
                                             {(medicine.inventory?.quantity || 0) > 10 ? (
                                                 <div className="flex items-center">
@@ -542,17 +532,13 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                                                 <div className="flex items-center">
                                                     <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2" />
                                                     <span>{medicine.inventory?.quantity || 0}</span>
-                                                    <Badge variant="outline" className="ml-2 text-xs text-yellow-600 border-yellow-300">
-                                                        Stock bajo
-                                                    </Badge>
+                                                    
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center">
                                                     <div className="w-2 h-2 rounded-full bg-red-500 mr-2" />
                                                     <span>0</span>
-                                                    <Badge variant="destructive" className="ml-2 text-xs">
-                                                        Sin stock
-                                                    </Badge>
+                                                    
                                                 </div>
                                             )}
                                         </TableCell>
