@@ -226,38 +226,59 @@ export function CreateInvoiceDialog({
                                             <IconPackage className="h-4 w-4" />
                                             Productos ({selectedSale.items.length})
                                         </div>
-                                        {selectedSale.items.map((item) => (
-                                            <div key={item.id} className="flex justify-between text-sm pl-6 gap-2">
-                                                <span className="text-muted-foreground flex-1 truncate">
-                                                    {item.medicine.name} x{item.quantity}
-                                                </span>
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    <span>{formatCurrency(item.subtotal)}</span>
-                                                    {item.iva_rate > 0 && (
-                                                        <Badge variant="outline" className="text-xs px-1.5 py-0.5">
-                                                            +IVA {(item.iva_rate * 100).toFixed(0)}%
-                                                        </Badge>
-                                                    )}
+                                        {selectedSale.items.map((item) => {
+                                            // Calcular el IVA que se agregaría a este item
+                                            const itemIvaRate = item.medicine.iva_rate || 0;
+                                            const itemIvaAmount = item.subtotal * itemIvaRate;
+                                            const itemTotalWithIva = item.subtotal + itemIvaAmount;
+                                            
+                                            return (
+                                                <div key={item.id} className="flex justify-between text-sm pl-6 gap-2">
+                                                    <span className="text-muted-foreground flex-1 truncate">
+                                                        {item.medicine.name} x{item.quantity}
+                                                    </span>
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        <span>{formatCurrency(itemTotalWithIva)}</span>
+                                                        {itemIvaRate > 0 && (
+                                                            <Badge variant="outline" className="text-xs px-1.5 py-0.5 text-amber-600 border-amber-200 bg-amber-50">
+                                                                IVA {(itemIvaRate * 100).toFixed(0)}%
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
 
-                                        {/* Resumen de totales */}
+                                        {/* Resumen de totales para la FACTURA (con IVA calculado) */}
                                         <div className="border-t mt-3 pt-3 space-y-1.5">
-                                            <div className="flex justify-between text-sm">
-                                                <span className="text-muted-foreground">Subtotal:</span>
-                                                <span>{formatCurrency(selectedSale.subtotal)}</span>
-                                            </div>
-                                            {selectedSale.iva_amount > 0 && (
-                                                <div className="flex justify-between text-sm">
-                                                    <span className="text-muted-foreground">IVA:</span>
-                                                    <span>{formatCurrency(selectedSale.iva_amount)}</span>
-                                                </div>
-                                            )}
-                                            <div className="flex justify-between text-sm font-medium">
-                                                <span>Total:</span>
-                                                <span>{formatCurrency(selectedSale.total)}</span>
-                                            </div>
+                                            {(() => {
+                                                // Calcular totales para la factura
+                                                const invoiceSubtotal = selectedSale.subtotal;
+                                                const invoiceIva = selectedSale.items.reduce((sum, item) => {
+                                                    const itemIvaRate = item.medicine.iva_rate || 0;
+                                                    return sum + (item.subtotal * itemIvaRate);
+                                                }, 0);
+                                                const invoiceTotal = invoiceSubtotal + invoiceIva;
+                                                
+                                                return (
+                                                    <>
+                                                        <div className="flex justify-between text-sm">
+                                                            <span className="text-muted-foreground">Subtotal:</span>
+                                                            <span>{formatCurrency(invoiceSubtotal)}</span>
+                                                        </div>
+                                                        {invoiceIva > 0 && (
+                                                            <div className="flex justify-between text-sm text-amber-600">
+                                                                <span>IVA:</span>
+                                                                <span>+{formatCurrency(invoiceIva)}</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex justify-between text-sm font-medium">
+                                                            <span>Total Factura:</span>
+                                                            <span>{formatCurrency(invoiceTotal)}</span>
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
 
