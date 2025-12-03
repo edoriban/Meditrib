@@ -32,7 +32,6 @@ import {
     IconCheck,
     IconReceipt,
     IconUser,
-    IconCash,
     IconPackage,
     IconLoader2
 } from "@tabler/icons-react";
@@ -56,13 +55,13 @@ export function CreateInvoiceDialog({
     const [showValidationDialog, setShowValidationDialog] = useState(false);
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
-    // Obtener ventas que no tienen factura (remisiones)
+    // Obtener ventas que pueden ser facturadas (remisiones e invoices sin invoice_id)
     const { data: sales, isLoading: salesLoading } = useQuery<Sale[]>({
         queryKey: ["sales-for-invoice"],
         queryFn: async () => {
             const { data } = await axios.get(`${BASE_API_URL}/sales/`);
-            // Filtrar solo las ventas tipo remisión que pueden facturarse
-            return data.filter((sale: Sale) => sale.document_type === "remission");
+            // Filtrar ventas que no tienen invoice asignado
+            return data.filter((sale: Sale) => !sale.invoice);
         },
         enabled: open,
     });
@@ -104,8 +103,15 @@ export function CreateInvoiceDialog({
             handleClose();
             onSuccess?.();
         },
-        onError: (error: Error) => {
-            toast.error(`Error al crear factura: ${error.message}`);
+        onError: (error: unknown) => {
+            // Manejar errores de axios con mensaje del servidor
+            if (axios.isAxiosError(error) && error.response?.data?.detail) {
+                toast.error(error.response.data.detail);
+            } else if (error instanceof Error) {
+                toast.error(`Error al crear factura: ${error.message}`);
+            } else {
+                toast.error("Error al crear factura");
+            }
         }
     });
 
@@ -154,7 +160,7 @@ export function CreateInvoiceDialog({
                             Crear Nueva Factura
                         </DialogTitle>
                         <DialogDescription>
-                            Selecciona una venta (remisión) para convertirla en factura CFDI.
+                            Selecciona una venta para convertirla en factura CFDI.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -194,8 +200,8 @@ export function CreateInvoiceDialog({
                                     <IconAlertTriangle className="h-4 w-4" />
                                     <AlertTitle>Sin ventas disponibles</AlertTitle>
                                     <AlertDescription>
-                                        No hay ventas tipo remisión disponibles para facturar.
-                                        Primero crea una venta con tipo de documento "Remisión".
+                                        No hay ventas disponibles para facturar.
+                                        Crea una venta primero para poder generar su factura CFDI.
                                     </AlertDescription>
                                 </Alert>
                             )}
@@ -208,33 +214,51 @@ export function CreateInvoiceDialog({
                                 <div className="space-y-4">
                                     <h4 className="font-medium text-sm">Detalles de la Venta</h4>
 
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <IconUser className="h-4 w-4 text-muted-foreground" />
-                                            <span className="text-muted-foreground">Cliente:</span>
-                                            <span className="font-medium">{selectedSale.client.name}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <IconCash className="h-4 w-4 text-muted-foreground" />
-                                            <span className="text-muted-foreground">Total:</span>
-                                            <span className="font-medium">{formatCurrency(selectedSale.total)}</span>
-                                        </div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <IconUser className="h-4 w-4 text-muted-foreground" />
+                                        <span className="text-muted-foreground">Cliente:</span>
+                                        <span className="font-medium">{selectedSale.client.name}</span>
                                     </div>
 
                                     {/* Items de la venta */}
-                                    <div className="rounded-lg border p-3 space-y-2 max-h-40 overflow-y-auto">
+                                    <div className="rounded-lg border p-3 space-y-2 max-h-48 overflow-y-auto">
                                         <div className="flex items-center gap-2 text-sm font-medium">
                                             <IconPackage className="h-4 w-4" />
                                             Productos ({selectedSale.items.length})
                                         </div>
                                         {selectedSale.items.map((item) => (
-                                            <div key={item.id} className="flex justify-between text-sm pl-6">
-                                                <span className="text-muted-foreground">
+                                            <div key={item.id} className="flex justify-between text-sm pl-6 gap-2">
+                                                <span className="text-muted-foreground flex-1 truncate">
                                                     {item.medicine.name} x{item.quantity}
                                                 </span>
-                                                <span>{formatCurrency(item.subtotal)}</span>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span>{formatCurrency(item.subtotal)}</span>
+                                                    {item.iva_rate > 0 && (
+                                                        <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                                                            +IVA {(item.iva_rate * 100).toFixed(0)}%
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                         ))}
+
+                                        {/* Resumen de totales */}
+                                        <div className="border-t mt-3 pt-3 space-y-1.5">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Subtotal:</span>
+                                                <span>{formatCurrency(selectedSale.subtotal)}</span>
+                                            </div>
+                                            {selectedSale.iva_amount > 0 && (
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-muted-foreground">IVA:</span>
+                                                    <span>{formatCurrency(selectedSale.iva_amount)}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between text-sm font-medium">
+                                                <span>Total:</span>
+                                                <span>{formatCurrency(selectedSale.total)}</span>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Estado del cliente para facturación */}

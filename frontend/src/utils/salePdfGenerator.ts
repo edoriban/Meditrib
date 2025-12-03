@@ -154,17 +154,48 @@ export function generateSalePDF(sale: Sale): void {
     yPosition += 8;
 
     // ====== TABLA DE PRODUCTOS ======
-    const tableData = sale.items?.map((item) => [
-        item.medicine?.name || 'Producto',
-        item.quantity.toString(),
-        formatCurrency(item.unit_price),
-        `${((item.iva_rate || 0) * 100).toFixed(0)}%`,
-        formatCurrency(item.subtotal)
-    ]) || [];
+    const isInvoice = sale.document_type === 'invoice';
+    
+    // Construir datos de la tabla según el tipo de documento
+    const tableData = sale.items?.map((item) => {
+        const row = [
+            item.medicine?.name || 'Producto',
+            item.quantity.toString(),
+            formatCurrency(item.unit_price),
+        ];
+        
+        if (isInvoice) {
+            row.push(`${((item.iva_rate || 0) * 100).toFixed(0)}%`);
+        }
+        
+        row.push(formatCurrency(item.subtotal));
+        return row;
+    }) || [];
+
+    // Headers según tipo de documento
+    const tableHeaders = isInvoice 
+        ? [['Producto', 'Cant.', 'Precio Unit.', 'IVA', 'Subtotal']]
+        : [['Producto', 'Cant.', 'Precio Unit.', 'Subtotal']];
+
+    // Estilos de columnas según tipo de documento
+    const columnStyles = isInvoice 
+        ? {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 20, halign: 'center' as const },
+            2: { cellWidth: 30, halign: 'right' as const },
+            3: { cellWidth: 20, halign: 'center' as const },
+            4: { cellWidth: 30, halign: 'right' as const },
+        }
+        : {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 25, halign: 'center' as const },
+            2: { cellWidth: 35, halign: 'right' as const },
+            3: { cellWidth: 35, halign: 'right' as const },
+        };
 
     autoTable(doc, {
         startY: yPosition,
-        head: [['Producto', 'Cant.', 'Precio Unit.', 'IVA', 'Subtotal']],
+        head: tableHeaders,
         body: tableData,
         theme: 'striped',
         headStyles: {
@@ -176,13 +207,7 @@ export function generateSalePDF(sale: Sale): void {
         bodyStyles: {
             fontSize: 9,
         },
-        columnStyles: {
-            0: { cellWidth: 'auto' },
-            1: { cellWidth: 20, halign: 'center' },
-            2: { cellWidth: 30, halign: 'right' },
-            3: { cellWidth: 20, halign: 'center' },
-            4: { cellWidth: 30, halign: 'right' },
-        },
+        columnStyles: columnStyles,
         margin: { left: 15, right: 15 },
     });
 

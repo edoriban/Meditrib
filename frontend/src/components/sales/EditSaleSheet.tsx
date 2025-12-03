@@ -683,6 +683,11 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
                                             <span>{formatCurrency(ivaAmount)}</span>
                                         </div>
                                     )}
+                                    {documentType === "remission" && (
+                                        <div className="flex justify-between text-muted-foreground">
+                                            <span className="text-xs">Nota de remisión - Sin IVA</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between font-bold text-base border-t pt-1">
                                         <span>Total:</span>
                                         <span>{formatCurrency(total)}</span>

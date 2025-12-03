@@ -573,7 +573,9 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                                     <TableHead>Medicamento</TableHead>
                                                     <TableHead className="text-center w-[130px]">Cantidad</TableHead>
                                                     <TableHead className="text-right w-[85px]">Precio</TableHead>
-                                                    <TableHead className="text-right w-[45px]">IVA</TableHead>
+                                                    {documentType === "invoice" && (
+                                                        <TableHead className="text-right w-[45px]">IVA</TableHead>
+                                                    )}
                                                     <TableHead className="text-right w-[85px]">Subtotal</TableHead>
                                                     {productEditability.canEdit && <TableHead className="w-[40px]" />}
                                                 </TableRow>
@@ -629,11 +631,13 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
-                                                        <TableCell className="text-right">
-                                                            <span className={productIvaRate > 0 ? "text-amber-600" : "text-green-600"}>
-                                                                {(productIvaRate * 100).toFixed(0)}%
-                                                            </span>
-                                                        </TableCell>
+                                                        {documentType === "invoice" && (
+                                                            <TableCell className="text-right">
+                                                                <span className={productIvaRate > 0 ? "text-amber-600" : "text-green-600"}>
+                                                                    {(productIvaRate * 100).toFixed(0)}%
+                                                                </span>
+                                                            </TableCell>
+                                                        )}
                                                         <TableCell className="text-right whitespace-nowrap">{formatCurrency(item.quantity * item.unit_price)}</TableCell>
                                                         {productEditability.canEdit && (
                                                             <TableCell>

@@ -27,6 +27,26 @@ export function useSaleMutations() {
         }
     });
 
+    // Crear venta con ajuste automático de stock (para stock insuficiente)
+    const createSaleWithAutoAdjust = useMutation({
+        mutationFn: async (saleData: SaleCreateValues) => {
+            const response = await axios.post(`${BASE_API_URL}/sales/?auto_adjust_stock=true`, saleData);
+            return response.data;
+        },
+        onSuccess: () => {
+            toast.success("Venta creada correctamente (stock ajustado)");
+            queryClient.invalidateQueries({ queryKey: ["sales"] });
+            queryClient.invalidateQueries({ queryKey: ["medicines"] });
+        },
+        onError: (error) => {
+            if (axios.isAxiosError(error) && error.response?.data?.detail) {
+                toast.error(error.response.data.detail);
+            } else {
+                toast.error(`Error al crear venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            }
+        }
+    });
+
     // Actualizar venta
     const updateSale = useMutation({
         mutationFn: async ({ saleId, saleData }: { saleId: number, saleData: SaleUpdateValues }) => {
@@ -69,10 +89,11 @@ export function useSaleMutations() {
 
     return {
         createSale: (saleData: SaleCreateValues) => createSale.mutateAsync(saleData),
+        createSaleWithAutoAdjust: (saleData: SaleCreateValues) => createSaleWithAutoAdjust.mutateAsync(saleData),
         updateSale: (saleId: number, saleData: SaleUpdateValues) =>
             updateSale.mutateAsync({ saleId, saleData }),
         deleteSale: (saleId: number) => deleteSale.mutateAsync(saleId),
-        isCreating: createSale.isPending,
+        isCreating: createSale.isPending || createSaleWithAutoAdjust.isPending,
         isUpdating: updateSale.isPending,
         isDeleting: deleteSale.isPending
     };

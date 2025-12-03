@@ -44,6 +44,11 @@ export interface Sale {
         id: number;
         name: string;
     };
+    invoice?: {
+        id: number;
+        uuid?: string;
+        status: string;
+    };
 }
 
 // Schema para crear un item de venta

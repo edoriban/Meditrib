@@ -1,6 +1,6 @@
-from sqlalchemy.orm import Session
-from backend.core.models import Invoice, InvoiceConcept, InvoiceTax, Company, Client, Sale
-from backend.core.schemas import InvoiceCreate, InvoiceUpdate, CompanyCreate
+from sqlalchemy.orm import Session, selectinload
+from backend.core.models import Invoice, InvoiceConcept, InvoiceTax, Company, Client, Sale, SaleItem
+from backend.core.schemas import InvoiceCreate, InvoiceUpdate, CompanyCreate, InvoiceConceptCreate, InvoiceTaxCreate
 from typing import List, Optional
 from datetime import datetime
 import uuid
@@ -163,51 +163,84 @@ def get_companies(db: Session) -> List[Company]:
     return db.query(Company).all()
 
 
-def create_invoice_from_sale(db: Session, sale_id: int, payment_form: str = "01", payment_method: str = "PUE") -> Optional[Invoice]:
-    """Crear factura automáticamente desde una venta"""
-    sale = db.query(Sale).filter(Sale.id == sale_id).first()
+def create_invoice_from_sale(db: Session, sale_id: int, payment_form: str = "01", payment_method: str = "PUE") -> dict:
+    """Crear factura automáticamente desde una venta
+    
+    Retorna:
+        - Invoice si se crea exitosamente
+        - dict con error si hay problemas
+    """
+    sale = db.query(Sale).options(selectinload(Sale.items).selectinload(SaleItem.medicine)).filter(Sale.id == sale_id).first()
     if not sale:
-        return None
+        return {"error": "sale_not_found", "message": "La venta no existe"}
+
+    # Verificar si la venta ya tiene una factura
+    existing_invoice = db.query(Invoice).filter(Invoice.sale_id == sale_id).first()
+    if existing_invoice:
+        return {"error": "already_invoiced", "message": "Esta venta ya tiene una factura asociada"}
 
     # Obtener la primera empresa (por ahora asumimos una sola)
     company = db.query(Company).first()
     if not company:
-        return None
+        return {"error": "no_company", "message": "No hay empresa configurada. Por favor configure los datos de la empresa emisora primero."}
 
-    # Calcular subtotal y total (con IVA 16%)
-    subtotal = sale.total_price
-    iva_rate = 0.16
-    iva_amount = subtotal * iva_rate
-    total = subtotal + iva_amount
+    # Calcular subtotal, IVA y total basado en cada item de la venta
+    subtotal_sin_iva = Decimal("0")
+    total_iva = Decimal("0")
+    
+    # Agrupar por tasa de IVA para los impuestos
+    iva_by_rate = {}  # {rate: {"base": amount, "iva": amount}}
 
-    # Crear conceptos desde la venta
-    concepts = [
-        {
-            "quantity": sale.quantity,
-            "unit": "PIEZA",
-            "description": f"{sale.medicine.name} - {sale.medicine.description or ''}",
-            "unit_price": sale.total_price / sale.quantity,
-            "amount": sale.total_price,
-            "medicine_id": sale.medicine_id
-        }
-    ]
+    # Crear conceptos desde los items de la venta
+    concepts = []
+    for item in sale.items:
+        item_subtotal = Decimal(str(item.subtotal))
+        item_iva_rate = Decimal(str(item.iva_rate)) if item.iva_rate else Decimal("0")
+        item_iva_amount = Decimal(str(item.iva_amount)) if item.iva_amount else Decimal("0")
+        
+        # Calcular base sin IVA para cada concepto
+        # El subtotal del item ya está sin IVA
+        base_sin_iva = item_subtotal
+        
+        subtotal_sin_iva += base_sin_iva
+        total_iva += item_iva_amount
+        
+        # Agrupar IVA por tasa
+        rate_key = float(item_iva_rate)
+        if rate_key not in iva_by_rate:
+            iva_by_rate[rate_key] = {"base": Decimal("0"), "iva": Decimal("0")}
+        iva_by_rate[rate_key]["base"] += base_sin_iva
+        iva_by_rate[rate_key]["iva"] += item_iva_amount
+        
+        concepts.append(InvoiceConceptCreate(
+            quantity=item.quantity,
+            unit="PIEZA",
+            description=f"{item.medicine.name}" + (f" - {item.medicine.description}" if item.medicine.description else ""),
+            unit_price=float(item.unit_price),
+            amount=float(base_sin_iva),
+            discount=float(item.discount) if item.discount else 0.0,
+            medicine_id=item.medicine_id
+        ))
 
-    # Crear impuestos
-    taxes = [
-        {
-            "tax_type": "002",  # IVA
-            "tax_rate": iva_rate,
-            "tax_amount": iva_amount,
-            "tax_base": subtotal
-        }
-    ]
+    # Crear impuestos agrupados por tasa
+    taxes = []
+    for rate, amounts in iva_by_rate.items():
+        if rate > 0:  # Solo agregar impuestos con tasa mayor a 0
+            taxes.append(InvoiceTaxCreate(
+                tax_type="002",  # IVA
+                tax_rate=rate,
+                tax_amount=float(amounts["iva"]),
+                tax_base=float(amounts["base"])
+            ))
+
+    total = subtotal_sin_iva + total_iva
 
     invoice_data = InvoiceCreate(
         payment_form=payment_form,
         payment_method=payment_method,
-        subtotal=subtotal,
-        total=total,
-        total_taxes=iva_amount,
+        subtotal=float(subtotal_sin_iva),
+        total=float(total),
+        total_taxes=float(total_iva),
         company_id=company.id,
         client_id=sale.client_id,
         sale_id=sale_id,
@@ -216,9 +249,5 @@ def create_invoice_from_sale(db: Session, sale_id: int, payment_form: str = "01"
     )
 
     invoice = create_invoice(db, invoice_data)
-
-    # Actualizar la venta con el ID de la factura
-    sale.invoice_id = invoice.id
-    db.commit()
 
     return invoice

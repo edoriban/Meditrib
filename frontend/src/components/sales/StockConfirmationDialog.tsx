@@ -48,7 +48,7 @@ export function StockConfirmationDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[550px]">
+            <DialogContent className="sm:max-w-[650px]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <IconAlertTriangle className="h-5 w-5 text-amber-500" />
@@ -60,7 +60,7 @@ export function StockConfirmationDialog({
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
-                    <Alert variant="destructive" className="border-amber-200 bg-amber-50 text-amber-800">
+                    <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200 [&>svg]:text-amber-600">
                         <IconPackage className="h-4 w-4" />
                         <AlertTitle>Atención</AlertTitle>
                         <AlertDescription>
@@ -71,20 +71,20 @@ export function StockConfirmationDialog({
                         </AlertDescription>
                     </Alert>
 
-                    <div className="rounded-md border">
+                    <div className="rounded-md border max-h-[200px] overflow-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Producto</TableHead>
-                                    <TableHead className="text-center">Solicitado</TableHead>
-                                    <TableHead className="text-center">Disponible</TableHead>
-                                    <TableHead className="text-center">Faltante</TableHead>
+                                    <TableHead className="sticky top-0 bg-background">Producto</TableHead>
+                                    <TableHead className="sticky top-0 bg-background text-center w-[90px]">Solicitado</TableHead>
+                                    <TableHead className="sticky top-0 bg-background text-center w-[90px]">Disponible</TableHead>
+                                    <TableHead className="sticky top-0 bg-background text-center w-[80px]">Faltante</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {stockIssues.map((issue) => (
                                     <TableRow key={issue.medicine_id}>
-                                        <TableCell className="font-medium">
+                                        <TableCell className="font-medium text-sm">
                                             {issue.medicine_name}
                                         </TableCell>
                                         <TableCell className="text-center">

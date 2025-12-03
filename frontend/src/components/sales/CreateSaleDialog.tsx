@@ -57,7 +57,7 @@ const formatCurrency = (amount: number) => {
 };
 
 export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) {
-    const { createSale, isCreating } = useSaleMutations();
+    const { createSale, createSaleWithAutoAdjust, isCreating } = useSaleMutations();
     const [items, setItems] = useState<SaleItemValues[]>([]);
     const [selectedMedicine, setSelectedMedicine] = useState<number>(0);
     const [itemQuantity, setItemQuantity] = useState<number>(1);
@@ -299,8 +299,8 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         if (!pendingSaleData) return;
 
         try {
-            // Crear venta con auto_adjust_stock=true
-            await axios.post(`${BASE_API_URL}/sales/?auto_adjust_stock=true`, pendingSaleData);
+            // Crear venta con auto_adjust_stock=true usando el mutation
+            await createSaleWithAutoAdjust(pendingSaleData);
             setStockDialogOpen(false);
             handleSaleSuccess();
         } catch (error) {
@@ -471,7 +471,9 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                     <TableHead>Medicamento</TableHead>
                                                     <TableHead className="text-center w-[130px]">Cantidad</TableHead>
                                                     <TableHead className="text-right w-[85px]">Precio</TableHead>
-                                                    <TableHead className="text-right w-[45px]">IVA</TableHead>
+                                                    {documentType === "invoice" && (
+                                                        <TableHead className="text-right w-[45px]">IVA</TableHead>
+                                                    )}
                                                     <TableHead className="text-right w-[85px]">Subtotal</TableHead>
                                                     <TableHead className="w-[40px]" />
                                                 </TableRow>
@@ -529,11 +531,13 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                                 originalValue={medicine?.sale_price}
                                                             />
                                                         </TableCell>
-                                                        <TableCell className="text-right">
-                                                            <span className={productIvaRate > 0 ? "text-amber-600" : "text-green-600"}>
-                                                                {(productIvaRate * 100).toFixed(0)}%
-                                                            </span>
-                                                        </TableCell>
+                                                        {documentType === "invoice" && (
+                                                            <TableCell className="text-right">
+                                                                <span className={productIvaRate > 0 ? "text-amber-600" : "text-green-600"}>
+                                                                    {(productIvaRate * 100).toFixed(0)}%
+                                                                </span>
+                                                            </TableCell>
+                                                        )}
                                                         <TableCell className="text-right whitespace-nowrap">{formatCurrency(item.quantity * item.unit_price)}</TableCell>
                                                         <TableCell>
                                                             <Button

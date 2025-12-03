@@ -77,7 +77,19 @@ def generate_invoice_xml(invoice_id: int, db: Session = Depends(get_db)):
 
 @router.post("/from-sale/{sale_id}", response_model=Invoice)
 def create_invoice_from_sale_endpoint(sale_id: int, payment_form: str = "01", payment_method: str = "PUE", db: Session = Depends(get_db)):
-    invoice = create_invoice_from_sale(db, sale_id, payment_form, payment_method)
-    if invoice is None:
+    result = create_invoice_from_sale(db, sale_id, payment_form, payment_method)
+    
+    # Si el resultado es un dict con error, devolver el mensaje apropiado
+    if isinstance(result, dict) and "error" in result:
+        error_codes = {
+            "sale_not_found": 404,
+            "already_invoiced": 400,
+            "no_company": 400
+        }
+        status_code = error_codes.get(result["error"], 400)
+        raise HTTPException(status_code=status_code, detail=result["message"])
+    
+    if result is None:
         raise HTTPException(status_code=400, detail="Cannot create invoice from sale")
-    return invoice
+    
+    return result
