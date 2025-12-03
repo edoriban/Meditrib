@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { BASE_API_URL } from "@/config";
@@ -54,6 +55,19 @@ export function CreateInvoiceDialog({
     const [paymentMethod, setPaymentMethod] = useState("PUE"); // Pago en una sola exhibición
     const [showValidationDialog, setShowValidationDialog] = useState(false);
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+    // Verificar si hay empresa emisora configurada
+    const { data: companies, isLoading: companiesLoading } = useQuery<{ id: number; name: string; rfc: string }[]>({
+        queryKey: ["companies"],
+        queryFn: async () => {
+            const { data } = await axios.get(`${BASE_API_URL}/invoices/companies/`);
+            return data;
+        },
+        enabled: open,
+    });
+
+    const hasCompanyConfigured = companies && companies.length > 0;
+    const company = companies?.[0];
 
     // Obtener ventas que pueden ser facturadas (remisiones e invoices sin invoice_id)
     const { data: sales, isLoading: salesLoading } = useQuery<Sale[]>({
@@ -165,6 +179,44 @@ export function CreateInvoiceDialog({
                     </DialogHeader>
 
                     <div className="space-y-6 py-4">
+                        {/* Estado de configuración de empresa emisora */}
+                        {companiesLoading ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <IconLoader2 className="h-4 w-4 animate-spin" />
+                                Verificando configuración...
+                            </div>
+                        ) : !hasCompanyConfigured ? (
+                            <Alert variant="destructive">
+                                <IconAlertTriangle className="h-4 w-4" />
+                                <AlertTitle>Empresa emisora no configurada</AlertTitle>
+                                <AlertDescription>
+                                    Debes configurar los datos fiscales de tu empresa antes de poder emitir facturas.{" "}
+                                    <Link 
+                                        to="/settings" 
+                                        className="underline font-medium hover:text-destructive-foreground"
+                                        onClick={handleClose}
+                                    >
+                                        Ir a Configuración
+                                    </Link>
+                                </AlertDescription>
+                            </Alert>
+                        ) : (
+                            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg text-sm">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1.5 bg-green-100 text-green-700 rounded-full">
+                                        <IconCheck className="h-3 w-3" />
+                                    </div>
+                                    <div>
+                                        <span className="font-medium">{company?.name}</span>
+                                        <span className="text-muted-foreground ml-2">RFC: {company?.rfc}</span>
+                                    </div>
+                                </div>
+                                <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 text-xs">
+                                    Emisor configurado
+                                </Badge>
+                            </div>
+                        )}
+
                         {/* Selector de venta */}
                         <div className="space-y-2">
                             <Label htmlFor="sale">Seleccionar Venta</Label>
@@ -346,7 +398,7 @@ export function CreateInvoiceDialog({
                         </Button>
                         <Button
                             onClick={handleCreateInvoice}
-                            disabled={!selectedSaleId || createInvoiceMutation.isPending}
+                            disabled={!selectedSaleId || !hasCompanyConfigured || createInvoiceMutation.isPending}
                         >
                             {createInvoiceMutation.isPending ? (
                                 <>
