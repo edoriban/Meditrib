@@ -26,7 +26,7 @@ class Medicine(Base):
     prescription_required = Column(Boolean, default=False)
     iva_rate = Column(Float, default=0.0)  # 0.0 = exento (medicamentos), 0.16 = 16% (material de curación)
     sat_key = Column(String, nullable=True)  # Clave SAT para facturación electrónica
-    image_path = Column(String, nullable=True)  # Ruta de la imagen del medicamento
+
     active_substance = Column(String, nullable=True)  # Sustancia activa del medicamento
     inventory = relationship("Inventory", uselist=False, back_populates="medicine", cascade="all, delete")
     suppliers = relationship("SupplierMedicine", back_populates="medicine", cascade="all, delete")

@@ -1,12 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import pandas as pd
 import os
-import uuid
-import io
-from pathlib import Path
+
 from datetime import datetime
 
 # Importaciones del proyecto
@@ -31,104 +29,7 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-# Directorio para almacenar imágenes
-IMAGES_DIR = Path("uploads/medicine_images")
-IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-
-# Extensiones de imagen permitidas
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-
-
-# ============================================================================
-# ENDPOINTS DE IMÁGENES
-# ============================================================================
-
-@router.post("/{medicine_id}/upload-image")
-async def upload_medicine_image(
-    medicine_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
-    """
-    Sube una imagen para un medicamento.
-    Formatos aceptados: JPG, JPEG, PNG, GIF, WEBP
-    """
-    # Verificar que el medicamento existe
-    db_medicine = crud_medicines.get_medicine(db, medicine_id=medicine_id)
-    if db_medicine is None:
-        raise HTTPException(status_code=404, detail="Medicamento no encontrado")
-    
-    # Validar extensión del archivo
-    file_ext = Path(file.filename).suffix.lower()
-    if file_ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Formato no permitido. Use: {', '.join(ALLOWED_EXTENSIONS)}"
-        )
-    
-    # Generar nombre único para el archivo
-    unique_filename = f"{medicine_id}_{uuid.uuid4().hex}{file_ext}"
-    file_path = IMAGES_DIR / unique_filename
-    
-    # Eliminar imagen anterior si existe
-    if db_medicine.image_path:
-        old_path = Path(db_medicine.image_path)
-        if old_path.exists():
-            old_path.unlink()
-    
-    # Guardar el archivo
-    try:
-        contents = await file.read()
-        with open(file_path, "wb") as f:
-            f.write(contents)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al guardar imagen: {str(e)}")
-    
-    # Actualizar la ruta en la base de datos
-    db_medicine.image_path = str(file_path)
-    db.commit()
-    
-    return {
-        "message": "Imagen subida correctamente",
-        "image_path": str(file_path),
-        "medicine_id": medicine_id
-    }
-
-
-@router.get("/images/{filename}")
-async def get_medicine_image(filename: str):
-    """Obtiene una imagen de medicamento por nombre de archivo"""
-    file_path = IMAGES_DIR / filename
-    
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Imagen no encontrada")
-    
-    return FileResponse(file_path)
-
-
-@router.delete("/{medicine_id}/image")
-async def delete_medicine_image(medicine_id: int, db: Session = Depends(get_db)):
-    """Elimina la imagen de un medicamento"""
-    db_medicine = crud_medicines.get_medicine(db, medicine_id=medicine_id)
-    if db_medicine is None:
-        raise HTTPException(status_code=404, detail="Medicamento no encontrado")
-    
-    if not db_medicine.image_path:
-        raise HTTPException(status_code=404, detail="El medicamento no tiene imagen")
-    
-    # Eliminar archivo
-    try:
-        file_path = Path(db_medicine.image_path)
-        if file_path.exists():
-            file_path.unlink()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al eliminar imagen: {str(e)}")
-    
-    # Limpiar referencia en base de datos
-    db_medicine.image_path = None
-    db.commit()
-    
-    return {"message": "Imagen eliminada correctamente"}
+import io
 
 
 # ============================================================================
