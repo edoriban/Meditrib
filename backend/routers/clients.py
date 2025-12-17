@@ -6,11 +6,13 @@ from pydantic import BaseModel
 from backend.core.dependencies import get_db
 from backend.core import schemas
 from backend.core.crud import crud_client
+from backend.core.security import get_current_user
 
 router = APIRouter(
     prefix="/clients",
     tags=["clients"],
     responses={404: {"description": "Not found"}},
+    dependencies=[Depends(get_current_user)],  # JWT auth required
 )
 
 
