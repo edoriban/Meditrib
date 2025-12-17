@@ -48,4 +48,7 @@ local_settings.py
 Thumbs.db
 
 # App logs
-logs/meditrib.db
+logs/
+
+# SQLite database (legacy, now using Postgres)
+meditrib.db
