@@ -1,12 +1,13 @@
-
 services:
   db:
     image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # Expose to localhost for local development
     environment:
       - POSTGRES_USER=meditrib
-      - POSTGRES_PASSWORD=meditrib_secure_pass
+      - POSTGRES_PASSWORD=c3304125423f0
       - POSTGRES_DB=meditrib_db
     restart: always
 
@@ -15,7 +16,7 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     environment:
-      - DATABASE_URL=postgresql://meditrib:meditrib_secure_pass@db/meditrib_db
+      - DATABASE_URL=postgresql://meditrib:c3304125423f0@db/meditrib_db
       - SECRET_KEY=YOUR_SUPER_SECRET_KEY_CHANGE_ME_IN_PROD
       - BACKEND_CORS_ORIGINS=["http://localhost", "http://127.0.0.1"]
     depends_on:
