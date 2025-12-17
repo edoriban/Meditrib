@@ -6,39 +6,73 @@ description: Gestión de Base de Datos
 
 Guía para mantenimiento, actualizaciones y backups de la base de datos.
 
+## Inicialización de Base de Datos Nueva
+
+Cuando se crea una base de datos Postgres nueva (después de `docker compose down -v`):
+
+```bash
+# 1. Iniciar Postgres
+docker compose up db -d
+
+# 2. Esperar que esté lista
+sleep 3
+
+# 3. Crear tablas
+python -c "from backend.core.database import engine, Base; from backend.core import models; Base.metadata.create_all(bind=engine); print('Tablas creadas')"
+
+# 4. Poblar con datos iniciales (IMPORTANTE)
+python -m backend.seed_data
+```
+
+## Seed Data (Datos Semilla)
+
+### Archivo: `backend/seed_data.py`
+Crea datos esenciales para que el sistema funcione:
+
+| Tipo | Datos creados |
+|------|---------------|
+| 👤 **Usuario Admin** | `admin@meditrib.com` / `admin123` |
+| 🏷️ **Roles** | Administrador |
+| 🏷️ **Tags** | Analgésico, Antibiótico, Antiinflamatorio, Material de curación |
+| 💊 **Medicamentos** | 5 medicamentos de ejemplo con inventario |
+| 📦 **Proveedor** | SEVI |
+| 🧑‍⚕️ **Cliente** | Doctor 1 |
+
+**Ejecutar:** `python -m backend.seed_data`
+
+### Archivo: `backend/init_db.py`
+Script mínimo que solo crea roles (Usuario y Admin).
+**Ejecutar:** `python backend/init_db.py`
+
 ## Esquema Actual
 El esquema se define en `backend/core/models.py` usando SQLAlchemy.
-Actualmente el sistema usa `Base.metadata.create_all(bind=engine)` en el arranque (`main.py`) para crear tablas que no existen.
+El sistema usa `Base.metadata.create_all(bind=engine)` en el arranque para crear tablas nuevas.
 
-**Nota**: Este método NO migra columnas modificadas, solo crea tablas nuevas. Para cambios de estructura en tablas existentes, se requerirá una herramienta de migración como `Alembic` (pendiente de implementar para Fases futuras).
+**Nota**: Este método NO migra columnas modificadas. Para cambios de estructura usar `Alembic`:
+```bash
+alembic revision --autogenerate -m "descripcion_del_cambio"
+alembic upgrade head
+```
 
 ## Backups (Copias de Seguridad)
 
-### SQLite (Desarrollo)
-Simplemente copia el archivo `meditrib.db`.
+### PostgreSQL (Producción / Docker)
+```bash
+# Crear backup
+docker compose exec -t db pg_dump -U meditrib meditrib_db > backup_meditrib_$(date +%F).sql
+
+# Restaurar
+cat backup.sql | docker compose exec -T db psql -U meditrib meditrib_db
+```
+
+### SQLite (Solo desarrollo legacy)
 ```bash
 cp meditrib.db meditrib_backup_$(date +%F).db
 ```
 
-### PostgreSQL (Producción / Docker)
-Para respaldar la base de datos corriendo en Docker:
-
+## Reset Completo (⚠️ Borra todo)
 ```bash
-# Crear dump
-docker compose exec -t db pg_dump -U meditrib meditrib_db > backup_meditrib_$(date +%F).sql
-```
-
-Para restaurar:
-```bash
-# Copiar archivo al contenedor (o usar pipe)
-cat backup.sql | docker compose exec -T db psql -U meditrib meditrib_db
-```
-
-## Reset Completo (Cuidado: Borra todo)
-Si necesitas reiniciar de cero en Docker:
-
-```bash
-docker compose down -v
-# -v borra los volúmenes (datos persistentes)
-docker compose up -d
+docker compose down -v   # Borra contenedor Y volúmenes
+docker compose up db -d
+# Luego ejecutar pasos de inicialización arriba
 ```

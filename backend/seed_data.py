@@ -83,7 +83,7 @@ def seed_database():
         if not supplier:
             supplier = Supplier(
                 name="SEVI",
-                contact="555-123-4567"
+                contact_info="555-123-4567"
             )
             db.add(supplier)
             db.flush()
