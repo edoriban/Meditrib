@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.core.database import engine, Base
 from backend.routers import medicines, suppliers, users, roles, sales,clients,reports as basic_reports,auth, medicine_tags, purchase_order, alerts, invoices, expenses
 from backend.routers import reports as financial_reports
-from backend.routers import backups
 from backend.routers import batches
 from backend.core.middleware import RequestLoggingMiddleware, SystemHealthMiddleware, AuditMiddleware
 from backend.core.logging_config import setup_logging
@@ -45,7 +44,6 @@ app.include_router(sales.router, prefix="/api/v1", tags=["sales"])
 app.include_router(clients.router, prefix="/api/v1", tags=["clients"])
 app.include_router(basic_reports.router, prefix="/api/v1", tags=["reports"])
 app.include_router(financial_reports.router, prefix="/api/v1/financial-reports", tags=["financial-reports"])
-app.include_router(backups.router, prefix="/api/v1/backups", tags=["backups"])
 app.include_router(batches.router, prefix="/api/v1/batches", tags=["batches"])
 app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
 app.include_router(medicine_tags.router, prefix="/api/v1", tags=["medicine-tags"])
