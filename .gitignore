@@ -48,4 +48,4 @@ local_settings.py
 Thumbs.db
 
 # App logs
-logs/
+logs/meditrib.db

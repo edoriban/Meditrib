@@ -1,0 +1,6 @@
+{"timestamp": "2025-12-05T17:28:26.070896Z", "level": "INFO", "logger": "system", "message": "System health: database.connectivity = 1", "module": "logging_config", "function": "log_system_health", "line": 259}
+{"timestamp": "2025-12-05T17:28:26.126539Z", "level": "INFO", "logger": "system", "message": "System health: system.memory_usage_percent = 84.5", "module": "logging_config", "function": "log_system_health", "line": 259}
+{"timestamp": "2025-12-05T17:28:26.126631Z", "level": "INFO", "logger": "system", "message": "System health: system.disk_usage_percent = 12.3", "module": "logging_config", "function": "log_system_health", "line": 259}
+{"timestamp": "2025-12-05T17:30:30.641748Z", "level": "INFO", "logger": "system", "message": "System health: database.connectivity = 1", "module": "logging_config", "function": "log_system_health", "line": 259}
+{"timestamp": "2025-12-05T17:30:30.643518Z", "level": "INFO", "logger": "system", "message": "System health: system.memory_usage_percent = 81.7", "module": "logging_config", "function": "log_system_health", "line": 259}
+{"timestamp": "2025-12-05T17:30:30.643666Z", "level": "INFO", "logger": "system", "message": "System health: system.disk_usage_percent = 12.5", "module": "logging_config", "function": "log_system_health", "line": 259}
