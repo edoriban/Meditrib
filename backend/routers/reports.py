@@ -8,7 +8,10 @@ from backend.core.crud.crud_reports import (
     get_product_profitability,
     get_monthly_trend,
     get_financial_summary,
-    get_daily_sales_trend
+    get_daily_sales_trend,
+    get_top_selling_products,
+    get_fulfillment_stats,
+    get_dashboard_comparison
 )
 
 router = APIRouter()
@@ -56,3 +59,21 @@ def read_daily_trend(
 ):
     """Get daily sales and costs trend for charts"""
     return get_daily_sales_trend(db, days)
+
+
+@router.get("/top-selling")
+def read_top_selling(limit: int = 10, db: Session = Depends(get_db)):
+    """Get top 10 best selling products"""
+    return get_top_selling_products(db, limit)
+
+
+@router.get("/dashboard-comparison")
+def read_dashboard_comparison(timeframe: str = "30d", db: Session = Depends(get_db)):
+    """Get dashboard stats comparison"""
+    return get_dashboard_comparison(db, timeframe)
+
+
+@router.get("/fulfillment-stats")
+def read_fulfillment_stats(db: Session = Depends(get_db)):
+    """Get fulfillment alerts and stats"""
+    return get_fulfillment_stats(db)

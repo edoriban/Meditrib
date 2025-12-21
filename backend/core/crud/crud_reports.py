@@ -231,8 +231,8 @@ def get_financial_summary(db: Session) -> Dict:
 
     # Mes anterior
     today = date.today()
-    last_month_start = date(today.year, today.month - 1, 1) if today.month > 1 else date(today.year - 1, 12, 1)
-    last_month_end = date(today.year, today.month, 1)
+    last_month_start = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+    last_month_end = today.replace(day=1)
     last_month = get_income_statement(db, last_month_start, last_month_end)
 
     # Calcular variaciones
@@ -260,4 +260,120 @@ def get_financial_summary(db: Session) -> Dict:
             "profit_margin": current_month["profit"]["net_margin_percentage"],
             "iva_balance": current_month["taxes"]["iva_balance"]
         }
+    }
+
+
+def get_top_selling_products(db: Session, limit: int = 10) -> List[Dict]:
+    """
+    Obtiene los productos más vendidos por volumen de venta total
+    """
+    query = db.query(
+        Medicine.id,
+        Medicine.name,
+        func.sum(SaleItem.quantity).label('total_sold'),
+        func.sum(SaleItem.subtotal + SaleItem.iva_amount).label('total_revenue')
+    ).join(SaleItem, Medicine.id == SaleItem.medicine_id) \
+     .group_by(Medicine.id, Medicine.name) \
+     .order_by(func.sum(SaleItem.quantity).desc()) \
+     .limit(limit)
+
+    results = []
+    for row in query.all():
+        results.append({
+            "id": row.id,
+            "name": row.name,
+            "total_sold": int(row.total_sold),
+            "total_revenue": float(row.total_revenue)
+        })
+    return results
+
+
+def get_fulfillment_stats(db: Session) -> Dict:
+    """
+    Estadísticas de cumplimiento: entregas pendientes, pagos pendientes, etc.
+    """
+    from backend.core.models import Sale, MedicineBatch
+    
+    # Ventas enviadas pero no entregadas
+    pending_delivery = db.query(Sale).filter(Sale.shipping_status == "shipped").count()
+    
+    # Ventas no pagadas (en un sistema con crédito, pero aquí buscaremos las que no tienen factura si aplica o flag similar)
+    # Por ahora usaremos un placeholder basado en el modelo de negocio "confirmación"
+    pending_payment = db.query(Sale).filter(Sale.payment_status == "pending").count()
+    
+    # Medicamentos por vencer (próximos 30 días)
+    today = date.today()
+    next_month = today + timedelta(days=30)
+    expiring_soon = db.query(MedicineBatch).filter(
+        MedicineBatch.expiration_date >= today,
+        MedicineBatch.expiration_date <= next_month,
+        MedicineBatch.quantity_remaining > 0
+    ).count()
+
+    return {
+        "pending_delivery": pending_delivery,
+        "pending_payment": pending_payment,
+        "shipped_but_not_delivered": pending_delivery, # Alias para el widget
+        "expiring_soon": expiring_soon
+    }
+
+
+def get_dashboard_comparison(db: Session, timeframe: str = "30d") -> Dict:
+    """
+    Compara el periodo actual con el anterior (7d o 30d)
+    """
+    days = 7 if timeframe == "7d" else 30
+    today = date.today()
+    
+    current_start = today - timedelta(days=days)
+    previous_start = current_start - timedelta(days=days)
+    
+    def get_period_stats(start_date, end_date):
+        # Ingresos
+        income = db.query(func.sum(Sale.total)).filter(
+            func.date(Sale.sale_date) >= start_date,
+            func.date(Sale.sale_date) <= end_date
+        ).scalar() or 0
+        
+        # Gastos
+        expenses = db.query(func.sum(Expense.amount)).filter(
+            func.date(Expense.expense_date) >= start_date,
+            func.date(Expense.expense_date) <= end_date
+        ).scalar() or 0
+        
+        # IVA (Balance simplificado)
+        iva_collected = db.query(func.sum(Sale.iva_amount)).filter(
+            func.date(Sale.sale_date) >= start_date,
+            func.date(Sale.sale_date) <= end_date
+        ).scalar() or 0
+        
+        iva_paid = db.query(func.sum(Expense.tax_amount)).filter(
+            func.date(Expense.expense_date) >= start_date,
+            func.date(Expense.expense_date) <= end_date
+        ).scalar() or 0
+        
+        return {
+            "income": float(income),
+            "expenses": float(expenses),
+            "profit": float(income - expenses),
+            "iva_balance": float(iva_collected - iva_paid)
+        }
+
+    current_stats = get_period_stats(current_start, today)
+    previous_stats = get_period_stats(previous_start, current_start - timedelta(days=1))
+    
+    def calc_var(curr, prev):
+        if prev == 0: return 100 if curr > 0 else 0
+        return round(((curr - prev) / abs(prev)) * 100, 1)
+
+    return {
+        "current": current_stats,
+        "previous": previous_stats,
+        "variations": {
+            "income": calc_var(current_stats["income"], previous_stats["income"]),
+            "expenses": calc_var(current_stats["expenses"], previous_stats["expenses"]),
+            "profit": calc_var(current_stats["profit"], previous_stats["profit"]),
+            "iva": calc_var(current_stats["iva_balance"], previous_stats["iva_balance"])
+        },
+        "timeframe": timeframe
     }
