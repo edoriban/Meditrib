@@ -1,3 +1,4 @@
+import React from "react";
 import { IconPackage, IconCash, IconAlertTriangle, IconClock } from "@tabler/icons-react"
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -11,7 +12,7 @@ import { BASE_API_URL } from "@/config";
 import { FulfillmentStats } from "@/types/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function FulfillmentWidgets() {
+export const FulfillmentWidgets = React.memo(function FulfillmentWidgets() {
     const { data: stats, isLoading } = useQuery<FulfillmentStats>({
         queryKey: ["fulfillment-stats"],
         queryFn: async () => {
@@ -71,4 +72,4 @@ export function FulfillmentWidgets() {
             ))}
         </div>
     )
-}
+});

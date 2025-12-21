@@ -1,3 +1,4 @@
+import React from "react";
 import { IconTrendingDown, IconTrendingUp, IconCurrencyDollar, IconShoppingCart, IconWallet } from "@tabler/icons-react"
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -18,7 +19,7 @@ interface DashboardStatsProps {
     timeframe: "7d" | "30d";
 }
 
-export function DashboardStats({ timeframe }: DashboardStatsProps) {
+export const DashboardStats = React.memo(function DashboardStats({ timeframe }: DashboardStatsProps) {
     const { data: comparison, isLoading } = useQuery<DashboardComparison>({
         queryKey: ["dashboard-comparison", timeframe],
         queryFn: async () => {
@@ -111,4 +112,4 @@ export function DashboardStats({ timeframe }: DashboardStatsProps) {
             })}
         </div>
     )
-}
+});

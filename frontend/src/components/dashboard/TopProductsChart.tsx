@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import {
@@ -20,7 +21,7 @@ import {
 import { BASE_API_URL } from "@/config";
 import { TopProduct } from "@/types/dashboard";
 
-export function TopProductsChart() {
+export const TopProductsChart = React.memo(function TopProductsChart() {
     const { data: products = [], isLoading } = useQuery<TopProduct[]>({
         queryKey: ["top-selling-products"],
         queryFn: async () => {
@@ -118,4 +119,4 @@ export function TopProductsChart() {
             </CardContent>
         </Card>
     )
-}
+});
