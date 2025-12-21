@@ -11,7 +11,6 @@ export default function SuppliersPage() {
         queryFn: async () => {
             try {
                 const { data } = await axios.get(`${BASE_API_URL}/suppliers/`);
-                console.log("Proveedores obtenidos:", data);
                 return data;
             } catch (error) {
                 console.error("Error fetching suppliers:", error);

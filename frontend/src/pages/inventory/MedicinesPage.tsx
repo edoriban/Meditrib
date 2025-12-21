@@ -31,7 +31,6 @@ export default function MedicinesPage() {
                     params.append("search", search);
                 }
                 const { data } = await axios.get(`${BASE_API_URL}/medicines/paginated?${params}`)
-                console.log("Medicamentos obtenidos:", data)
                 return data
             } catch (error) {
                 console.error("Error fetching medicines:", error)
@@ -43,17 +42,17 @@ export default function MedicinesPage() {
     const handleExport = async () => {
         try {
             toast.info("Generando archivo Excel...");
-            
+
             // Descargar el archivo Excel del backend
             const response = await axios.get(`${BASE_API_URL}/medicines/export/excel`, {
                 responseType: 'blob'
             });
-            
+
             // Crear URL para descargar
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            
+
             // Obtener nombre del archivo del header o usar uno por defecto
             const contentDisposition = response.headers['content-disposition'];
             let filename = `Catalogo_Medicamentos_${new Date().toISOString().split('T')[0]}.xlsx`;
@@ -63,13 +62,13 @@ export default function MedicinesPage() {
                     filename = filenameMatch[1].replace(/"/g, '');
                 }
             }
-            
+
             link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-            
+
             toast.success("Catálogo exportado correctamente");
         } catch (error) {
             console.error("Error al exportar:", error);
@@ -108,9 +107,9 @@ export default function MedicinesPage() {
                 <MedicineDashboard medicines={data?.items} isLoading={isLoading} error={error} />
             </div>
 
-            <MedicineTable 
-                medicines={data?.items} 
-                isLoading={isLoading} 
+            <MedicineTable
+                medicines={data?.items}
+                isLoading={isLoading}
                 error={error}
                 // Paginación
                 page={page}

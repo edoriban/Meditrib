@@ -96,8 +96,7 @@ export function LoginForm({
 
       // Obtener datos del usuario
       try {
-        const currentUser = await auth.getCurrentUser();
-        console.log("Usuario autenticado:", currentUser);
+        await auth.getCurrentUser();
       } catch (userError) {
         console.error("Error al obtener datos del usuario:", userError);
       }
@@ -116,7 +115,7 @@ export function LoginForm({
   async function handleGoogleLogin() {
     setIsGoogleLoading(true);
     setErrorMessage(null);
-    
+
     try {
       // Por ahora mostrar mensaje de que está en desarrollo
       toast.info('Inicio de sesión con Google estará disponible próximamente.');
@@ -151,9 +150,9 @@ export function LoginForm({
               )}
 
               <div className="flex flex-col gap-4">
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
+                <Button
+                  variant="outline"
+                  className="w-full"
                   type="button"
                   onClick={handleGoogleLogin}
                   disabled={isLoading || isGoogleLoading}

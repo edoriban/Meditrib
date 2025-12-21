@@ -26,14 +26,12 @@ export function ReportsTable({ data }: ReportsTableProps) {
         return <Badge variant={variants[type] || "default"}>{type}</Badge>;
     };
 
-    const handleDownload = (report: Report) => {
+    const handleDownload = (_report: Report) => {
         // TODO: Implement download functionality
-        console.log("Downloading report:", report.id);
     };
 
-    const handleView = (report: Report) => {
+    const handleView = (_report: Report) => {
         // TODO: Implement view functionality
-        console.log("Viewing report:", report.id);
     };
 
     return (

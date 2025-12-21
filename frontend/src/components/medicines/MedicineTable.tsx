@@ -40,8 +40,8 @@ interface MedicineTableProps {
 };
 
 
-const MedicineTable: React.FC<MedicineTableProps> = ({ 
-    medicines, 
+const MedicineTable: React.FC<MedicineTableProps> = ({
+    medicines,
     isLoading,
     // Paginación
     page = 1,
@@ -170,9 +170,8 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
     const treemapData = React.useMemo(() => {
         if (!filteredData) return [];
 
-        // Debugging: registrar cuántos elementos pasan el filtro
+        // Filtrar solo productos con stock
         const itemsWithStock = filteredData.filter(med => (med.inventory?.quantity || 0) > 0);
-        console.log(`Productos con stock: ${itemsWithStock.length}`);
 
         return itemsWithStock
             .map(med => {
@@ -369,9 +368,9 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
 
             <MedicineFilters
                 searchTerm={searchTerm}
-                setSearchTerm={onSearchChange || (() => {})}
+                setSearchTerm={onSearchChange || (() => { })}
                 stockFilter={stockFilter}
-                setStockFilter={onStockFilterChange || (() => {})}
+                setStockFilter={onStockFilterChange || (() => { })}
                 priceRange={priceRange}
                 setPriceRange={setPriceRange}
                 maxPrice={maxPrice}
@@ -387,8 +386,8 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Por página:</span>
-                    <Select 
-                        value={pageSize.toString()} 
+                    <Select
+                        value={pageSize.toString()}
                         onValueChange={(val) => onPageSizeChange?.(parseInt(val))}
                     >
                         <SelectTrigger className="w-[80px] h-8">
@@ -402,36 +401,36 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                         </SelectContent>
                     </Select>
                     <div className="flex items-center gap-1">
-                        <Button 
-                            variant="outline" 
-                            size="icon" 
+                        <Button
+                            variant="outline"
+                            size="icon"
                             className="h-8 w-8"
                             onClick={() => onPageChange?.(1)}
                             disabled={page <= 1}
                         >
                             <IconChevronsLeft className="h-4 w-4" />
                         </Button>
-                        <Button 
-                            variant="outline" 
-                            size="icon" 
+                        <Button
+                            variant="outline"
+                            size="icon"
                             className="h-8 w-8"
                             onClick={() => onPageChange?.(page - 1)}
                             disabled={page <= 1}
                         >
                             <IconChevronLeft className="h-4 w-4" />
                         </Button>
-                        <Button 
-                            variant="outline" 
-                            size="icon" 
+                        <Button
+                            variant="outline"
+                            size="icon"
                             className="h-8 w-8"
                             onClick={() => onPageChange?.(page + 1)}
                             disabled={page >= totalPages}
                         >
                             <IconChevronRight className="h-4 w-4" />
                         </Button>
-                        <Button 
-                            variant="outline" 
-                            size="icon" 
+                        <Button
+                            variant="outline"
+                            size="icon"
                             className="h-8 w-8"
                             onClick={() => onPageChange?.(totalPages)}
                             disabled={page >= totalPages}
@@ -532,13 +531,13 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                                                 <div className="flex items-center">
                                                     <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2" />
                                                     <span>{medicine.inventory?.quantity || 0}</span>
-                                                    
+
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center">
                                                     <div className="w-2 h-2 rounded-full bg-red-500 mr-2" />
                                                     <span>0</span>
-                                                    
+
                                                 </div>
                                             )}
                                         </TableCell>
@@ -598,8 +597,8 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                                                 label={{ value: 'Unidades en inventario', position: 'bottom', dy: 20 }}
                                                 domain={[0, (dataMax: number) => Math.max(100, dataMax * 1.1)]}
                                                 allowDataOverflow={true}
-                                            tickCount={6}
-                                            scale={filteredData.some(med => (med.inventory?.quantity ?? 0) > 200) ? "log" : "linear"}
+                                                tickCount={6}
+                                                scale={filteredData.some(med => (med.inventory?.quantity ?? 0) > 200) ? "log" : "linear"}
                                             />
                                             <YAxis
                                                 type="number"
@@ -965,8 +964,8 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                     Página {page} de {totalPages} ({totalItems} medicamentos)
                 </div>
                 <div className="flex items-center gap-1">
-                    <Button 
-                        variant="outline" 
+                    <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => onPageChange?.(page - 1)}
                         disabled={page <= 1}
@@ -974,8 +973,8 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                         <IconChevronLeft className="h-4 w-4 mr-1" />
                         Anterior
                     </Button>
-                    <Button 
-                        variant="outline" 
+                    <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => onPageChange?.(page + 1)}
                         disabled={page >= totalPages}

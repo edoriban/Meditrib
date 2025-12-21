@@ -15,7 +15,6 @@ export function useMedicineMutations() {
                 tags: medicineData.tags?.map(tag => typeof tag === 'string' ? parseInt(tag, 10) : tag) || []
             };
 
-            console.log("Payload para crear medicamento:", payload);
             const response = await axios.post(`${BASE_API_URL}/medicines/`, payload);
             return response.data;
         },
@@ -39,7 +38,6 @@ export function useMedicineMutations() {
                 ) || []
             };
 
-            console.log("Payload para actualizar medicamento:", payload);
             const response = await axios.put(`${BASE_API_URL}/medicines/${medicineId}`, payload);
             return response.data;
         },
