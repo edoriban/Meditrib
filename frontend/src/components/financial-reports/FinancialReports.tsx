@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { FinancialSummary, ProductProfitability, MonthlyTrend } from "@/types/financial-reports";
@@ -5,7 +6,7 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
-import { DollarSign, PieChart, BarChart3 } from "lucide-react";
+import { DollarSign, PieChart } from "lucide-react";
 import { BASE_API_URL } from "@/config";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -24,7 +25,7 @@ interface FinancialReportsProps {
     hideSummary?: boolean;
 }
 
-export function FinancialReports({ hideSummary = false }: FinancialReportsProps) {
+export const FinancialReports = React.memo(function FinancialReports({ hideSummary = false }: FinancialReportsProps) {
     const { data: summary, isLoading: summaryLoading } = useQuery<FinancialSummary>({
         queryKey: ["financial-summary"],
         queryFn: async () => {
@@ -51,17 +52,45 @@ export function FinancialReports({ hideSummary = false }: FinancialReportsProps)
 
     if (summaryLoading) {
         return (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <BarChart3 className="h-5 w-5" />
-                        Reportes Financieros
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-center py-4">Cargando reportes financieros...</div>
-                </CardContent>
-            </Card>
+            <div className="space-y-6">
+                {/* Summary Cards Skeleton */}
+                {!hideSummary && (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        {[1, 2, 3, 4].map((i) => (
+                            <Card key={i} className="p-4">
+                                <div className="space-y-3">
+                                    <div className="h-4 w-28 bg-muted rounded animate-pulse" />
+                                    <div className="h-8 w-36 bg-muted rounded animate-pulse" />
+                                    <div className="h-3 w-32 bg-muted rounded animate-pulse" />
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+                {/* Chart Skeleton */}
+                <Card>
+                    <CardHeader>
+                        <div className="h-6 w-40 bg-muted rounded animate-pulse" />
+                        <div className="h-4 w-64 bg-muted rounded animate-pulse mt-2" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[300px] bg-muted rounded animate-pulse" />
+                    </CardContent>
+                </Card>
+                {/* Income Statement Skeleton */}
+                <Card>
+                    <CardHeader>
+                        <div className="h-6 w-56 bg-muted rounded animate-pulse" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[1, 2].map((i) => (
+                                <div key={i} className="h-40 bg-muted rounded animate-pulse" />
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         );
     }
 
@@ -342,4 +371,4 @@ export function FinancialReports({ hideSummary = false }: FinancialReportsProps)
             )}
         </div>
     );
-}
+});

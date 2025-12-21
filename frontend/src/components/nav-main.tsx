@@ -8,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { usePrefetch } from "@/hooks/usePrefetch"
 
 export function NavMain({
   items,
@@ -19,6 +20,7 @@ export function NavMain({
   }[]
 }) {
   const location = useLocation()
+  const { prefetch } = usePrefetch()
 
   return (
     <SidebarGroup>
@@ -31,7 +33,10 @@ export function NavMain({
                 tooltip={item.title}
                 isActive={location.pathname === item.url}
               >
-                <Link to={item.url}>
+                <Link
+                  to={item.url}
+                  onMouseEnter={() => prefetch(item.url)}
+                >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>

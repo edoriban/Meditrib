@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { usePrefetch } from "@/hooks/usePrefetch"
 
 export function NavDocuments({
   items,
@@ -25,6 +26,7 @@ export function NavDocuments({
   label?: string
 }) {
   const location = useLocation()
+  const { prefetch } = usePrefetch()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -33,7 +35,10 @@ export function NavDocuments({
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild isActive={location.pathname === item.url}>
-              <Link to={item.url}>
+              <Link
+                to={item.url}
+                onMouseEnter={() => prefetch(item.url)}
+              >
                 <item.icon />
                 <span>{item.name}</span>
               </Link>

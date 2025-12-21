@@ -11,6 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { usePrefetch } from "@/hooks/usePrefetch"
 
 export function NavSecondary({
   items,
@@ -23,6 +24,7 @@ export function NavSecondary({
   }[]
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const location = useLocation()
+  const { prefetch } = usePrefetch()
 
   return (
     <SidebarGroup {...props}>
@@ -31,7 +33,10 @@ export function NavSecondary({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild isActive={location.pathname === item.url}>
-                <Link to={item.url}>
+                <Link
+                  to={item.url}
+                  onMouseEnter={() => prefetch(item.url)}
+                >
                   <item.icon />
                   <span>{item.title}</span>
                 </Link>

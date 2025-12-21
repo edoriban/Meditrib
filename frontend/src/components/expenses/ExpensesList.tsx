@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { Expense, ExpenseCategory, ExpenseSummary } from "@/types/expense";
@@ -17,7 +18,7 @@ interface ExpensesListProps {
     hideSummary?: boolean;
 }
 
-export function ExpensesList({ hideSummary = false }: ExpensesListProps) {
+export const ExpensesList = React.memo(function ExpensesList({ hideSummary = false }: ExpensesListProps) {
     const queryClient = useQueryClient();
 
     const { data: expenses, isLoading: expensesLoading } = useQuery<Expense[]>({
@@ -53,17 +54,48 @@ export function ExpensesList({ hideSummary = false }: ExpensesListProps) {
 
     if (expensesLoading) {
         return (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <DollarSign className="h-5 w-5" />
-                        Control de Gastos
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-center py-4">Cargando gastos...</div>
-                </CardContent>
-            </Card>
+            <div className="space-y-4">
+                {/* Summary Skeletons */}
+                {!hideSummary && (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        {[1, 2, 3].map((i) => (
+                            <Card key={i} className="p-4">
+                                <div className="space-y-3">
+                                    <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                                    <div className="h-8 w-32 bg-muted rounded animate-pulse" />
+                                    <div className="h-3 w-40 bg-muted rounded animate-pulse" />
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+                {/* Categories Skeleton */}
+                <Card>
+                    <CardHeader>
+                        <div className="h-6 w-48 bg-muted rounded animate-pulse" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {[1, 2, 3, 4].map((i) => (
+                                <div key={i} className="h-16 bg-muted rounded animate-pulse" />
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+                {/* Table Skeleton */}
+                <Card>
+                    <CardHeader>
+                        <div className="h-6 w-40 bg-muted rounded animate-pulse" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <div key={i} className="h-10 bg-muted rounded animate-pulse" />
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         );
     }
 
@@ -252,4 +284,4 @@ export function ExpensesList({ hideSummary = false }: ExpensesListProps) {
             </Card>
         </div>
     );
-}
+});
