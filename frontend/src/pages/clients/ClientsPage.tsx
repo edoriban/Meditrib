@@ -29,9 +29,14 @@ export default function ClientsPage() {
     }
 
     return (
-        <div className="container mx-auto py-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Clientes</h1>
+        <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
+                    <p className="text-muted-foreground mt-2">
+                        Gestiona la información de tus clientes.
+                    </p>
+                </div>
                 <Button onClick={() => setIsCreateDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Nuevo Cliente

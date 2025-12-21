@@ -29,9 +29,14 @@ export default function PurchaseOrderPage() {
     }
 
     return (
-        <div className="container mx-auto py-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Órdenes de Compra</h1>
+        <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Órdenes de Compra</h1>
+                    <p className="text-muted-foreground mt-2">
+                        Gestiona tus pedidos a proveedores.
+                    </p>
+                </div>
                 <Button onClick={() => setIsCreateDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva Orden
