@@ -13,7 +13,11 @@ const getCategoryColor = (type: string) => {
     return type === 'fixed' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-green-100 text-green-800 border-green-300';
 };
 
-export function ExpensesList() {
+interface ExpensesListProps {
+    hideSummary?: boolean;
+}
+
+export function ExpensesList({ hideSummary = false }: ExpensesListProps) {
     const queryClient = useQueryClient();
 
     const { data: expenses, isLoading: expensesLoading } = useQuery<Expense[]>({
@@ -66,8 +70,8 @@ export function ExpensesList() {
     return (
         <div className="space-y-4">
             {/* Summary Cards - Same style as SectionCards */}
-            {summary && (
-                <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-3">
+            {summary && !hideSummary && (
+                <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-3">
                     <Card className="@container/card">
                         <CardHeader>
                             <CardDescription>Total Gastos</CardDescription>
@@ -155,25 +159,24 @@ export function ExpensesList() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {categories?.map((category) => (
-                            <div
+                            <Card
                                 key={category.id}
-                                className="p-3 border rounded-lg"
-                                style={{ borderColor: category.color || '#e5e7eb' }}
+                                className="p-3"
                             >
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className={getCategoryColor(category.type)}>
+                                    <Badge variant={category.type === 'fixed' ? 'default' : 'secondary'}>
                                         {category.type === 'fixed' ? 'Fijo' : 'Variable'}
                                     </Badge>
                                 </div>
-                                <h4 className="font-medium text-sm mt-1">{category.name}</h4>
+                                <h4 className="font-medium text-sm mt-2">{category.name}</h4>
                                 {summary?.categories[category.name] && (
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-xs text-muted-foreground mt-1">
                                         ${summary.categories[category.name].total.toFixed(2)}
                                     </p>
                                 )}
-                            </div>
+                            </Card>
                         ))}
                     </div>
                 </CardContent>

@@ -96,7 +96,7 @@ export function ChartAreaInteractive() {
 
   if (isLoading) {
     return (
-      <Card className="@container/card">
+      <Card>
         <CardHeader>
           <CardTitle>Resumen de Ventas y Costos</CardTitle>
           <CardDescription>Cargando datos...</CardDescription>
@@ -109,14 +109,14 @@ export function ChartAreaInteractive() {
   }
 
   return (
-    <Card className="@container/card">
-      <CardHeader>
-        <CardTitle>Resumen de Ventas y Costos</CardTitle>
+    <Card className="@container/card w-full h-full">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl font-bold tracking-tight">Resumen de Ventas y Costos</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
-            Ventas totales vs Costo total de los productos vendidos en el período seleccionado
+            Ventas vs Costo de artículos vendidos
           </span>
-          <span className="@[540px]/card:hidden">Últimos 3 meses</span>
+          <span className="@[540px]/card:hidden">Último período</span>
         </CardDescription>
         <CardAction>
           <ToggleGroup
@@ -153,88 +153,93 @@ export function ChartAreaInteractive() {
           </Select>
         </CardAction>
       </CardHeader>
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6 flex-1">
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
-          <AreaChart data={filteredData}>
-            <defs>
-              <linearGradient id="fillVenta" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-venta)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-venta)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient id="fillCompra" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-compra)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-compra)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString("es-ES", {
-                  month: "short",
-                  day: "numeric",
-                })
-              }}
-            />
-            <ChartTooltip
-              cursor={false}
-              defaultIndex={isMobile ? -1 : 10}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("es-ES", {
-                      month: "short",
-                      day: "numeric",
-                    })
-                  }}
-                  indicator="dot"
-                  formatter={(value, name) => {
-                    const label = chartConfig[name as keyof typeof chartConfig]?.label || name;
-                    const formattedValue = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value as number);
-                    return `${label}: ${formattedValue}`
-                  }}
-                />
-              }
-            />
-            <Area
-              dataKey="compra"
-              type="natural"
-              fill="url(#fillCompra)"
-              stroke="var(--color-compra)"
-              stackId="a"
-            />
-            <Area
-              dataKey="venta"
-              type="natural"
-              fill="url(#fillVenta)"
-              stroke="var(--color-venta)"
-              stackId="a"
-            />
-          </AreaChart>
+          {filteredData.length > 0 ? (
+            <AreaChart data={filteredData}>
+              <defs>
+                <linearGradient id="fillVenta" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-venta)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-venta)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+                <linearGradient id="fillCompra" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-compra)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-compra)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) => {
+                  const date = new Date(value)
+                  return date.toLocaleDateString("es-ES", {
+                    month: "short",
+                    day: "numeric",
+                  })
+                }}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) => {
+                      return new Date(value).toLocaleDateString("es-ES", {
+                        month: "short",
+                        day: "numeric",
+                      })
+                    }}
+                    indicator="dot"
+                    formatter={(value, name) => {
+                      const label = chartConfig[name as keyof typeof chartConfig]?.label || name;
+                      const formattedValue = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value as number);
+                      return `${label}: ${formattedValue}`
+                    }}
+                  />
+                }
+              />
+              <Area
+                dataKey="compra"
+                type="natural"
+                fill="url(#fillCompra)"
+                stroke="var(--color-compra)"
+                stackId="a"
+              />
+              <Area
+                dataKey="venta"
+                type="natural"
+                fill="url(#fillVenta)"
+                stroke="var(--color-venta)"
+                stackId="a"
+              />
+            </AreaChart>
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground italic text-sm">
+              No hay datos para mostrar en este periodo
+            </div>
+          )}
         </ChartContainer>
       </CardContent>
     </Card>

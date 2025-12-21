@@ -20,7 +20,11 @@ const formatPercentage = (percentage: number) => {
     return `${percentage.toFixed(1)}%`;
 };
 
-export function FinancialReports() {
+interface FinancialReportsProps {
+    hideSummary?: boolean;
+}
+
+export function FinancialReports({ hideSummary = false }: FinancialReportsProps) {
     const { data: summary, isLoading: summaryLoading } = useQuery<FinancialSummary>({
         queryKey: ["financial-summary"],
         queryFn: async () => {
@@ -64,8 +68,8 @@ export function FinancialReports() {
     return (
         <div className="space-y-6">
             {/* Financial Summary Cards - Same style as SectionCards */}
-            {summary && (
-                <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+            {summary && !hideSummary && (
+                <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
                     <Card className="@container/card">
                         <CardHeader>
                             <CardDescription>Ingresos Totales</CardDescription>
@@ -172,14 +176,14 @@ export function FinancialReports() {
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={monthlyTrend}>
                                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                                    <XAxis 
-                                        dataKey="month" 
+                                    <XAxis
+                                        dataKey="month"
                                         tickLine={false}
                                         axisLine={false}
                                         tickMargin={8}
                                         className="text-xs"
                                     />
-                                    <YAxis 
+                                    <YAxis
                                         tickLine={false}
                                         axisLine={false}
                                         tickMargin={8}
@@ -197,7 +201,7 @@ export function FinancialReports() {
                                             name === 'sales' ? 'Ventas' : name === 'expenses' ? 'Gastos' : 'Utilidad'
                                         ]}
                                     />
-                                    <Legend 
+                                    <Legend
                                         iconType="circle"
                                         wrapperStyle={{ paddingTop: '20px' }}
                                     />
@@ -219,9 +223,9 @@ export function FinancialReports() {
                         <CardDescription>Resumen de ingresos y gastos del período</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Ingresos */}
-                            <div className="space-y-3 p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900">
+                            <Card className="p-4">
                                 <div className="flex items-center gap-2 mb-3">
                                     <div className="p-2 bg-green-100 text-green-700 rounded-full">
                                         <IconTrendingUp className="size-4" />
@@ -237,15 +241,15 @@ export function FinancialReports() {
                                         <span className="text-muted-foreground">Ventas sin IVA:</span>
                                         <span className="font-medium tabular-nums">{formatCurrency(summary.current_month.income.sales_without_iva)}</span>
                                     </div>
-                                    <div className="flex justify-between items-center border-t border-green-200 dark:border-green-800 pt-2 mt-2">
+                                    <div className="flex justify-between items-center border-t pt-2 mt-2">
                                         <span className="font-semibold">Total Ingresos:</span>
                                         <span className="font-bold text-green-600 tabular-nums">{formatCurrency(summary.current_month.income.total_sales)}</span>
                                     </div>
                                 </div>
-                            </div>
+                            </Card>
 
                             {/* Gastos */}
-                            <div className="space-y-3 p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
+                            <Card className="p-4">
                                 <div className="flex items-center gap-2 mb-3">
                                     <div className="p-2 bg-red-100 text-red-700 rounded-full">
                                         <IconTrendingDown className="size-4" />
@@ -263,22 +267,20 @@ export function FinancialReports() {
                                     ) : (
                                         <div className="text-muted-foreground text-center py-2">Sin gastos registrados</div>
                                     )}
-                                    <div className="flex justify-between items-center border-t border-red-200 dark:border-red-800 pt-2 mt-2">
+                                    <div className="flex justify-between items-center border-t pt-2 mt-2">
                                         <span className="font-semibold">Total Gastos:</span>
                                         <span className="font-bold text-red-600 tabular-nums">{formatCurrency(summary.current_month.expenses.total_expenses)}</span>
                                     </div>
                                 </div>
-                            </div>
+                            </Card>
                         </div>
 
                         {/* Utilidad Neta */}
-                        <div className={`mt-6 p-4 rounded-lg border ${summary.current_month.profit.net_profit >= 0 
-                            ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900' 
-                            : 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900'}`}>
+                        <Card className="mt-4 p-4">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                    <div className={`p-2 rounded-full ${summary.current_month.profit.net_profit >= 0 
-                                        ? 'bg-blue-100 text-blue-700' 
+                                    <div className={`p-2 rounded-full ${summary.current_month.profit.net_profit >= 0
+                                        ? 'bg-blue-100 text-blue-700'
                                         : 'bg-orange-100 text-orange-700'}`}>
                                         <DollarSign className="size-4" />
                                     </div>
@@ -293,7 +295,7 @@ export function FinancialReports() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     </CardContent>
                 </Card>
             )}
