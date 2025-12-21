@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -59,11 +59,6 @@ const formatCurrency = (amount: number) => {
 export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) {
     const { createSale, createSaleWithAutoAdjust, isCreating } = useSaleMutations();
     const [items, setItems] = useState<SaleItemValues[]>([]);
-    const [selectedMedicine, setSelectedMedicine] = useState<number>(0);
-    const [itemQuantity, setItemQuantity] = useState<number>(1);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [showDropdown, setShowDropdown] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Estados para manejo de stock insuficiente
     const [stockDialogOpen, setStockDialogOpen] = useState(false);
@@ -80,16 +75,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         }
     });
 
-    // Cerrar dropdown al hacer clic fuera
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setShowDropdown(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+
 
     // Cargar medicamentos solo los que están en la lista de items (para mostrar nombres)
     const { data: medicines } = useQuery<Medicine[]>({
@@ -97,7 +83,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         queryFn: async () => {
             // Solo cargar medicamentos que están en items
             if (items.length === 0) return [];
-            const promises = items.map(item => 
+            const promises = items.map(item =>
                 axios.get(`${BASE_API_URL}/medicines/${item.medicine_id}`)
             );
             const results = await Promise.all(promises);
@@ -106,24 +92,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         enabled: open && items.length > 0,
     });
 
-    // Búsqueda de medicamentos en servidor para el selector manual
-    const { data: searchResults, isLoading: isSearching } = useQuery<Medicine[]>({
-        queryKey: ["medicine-manual-search", searchQuery],
-        queryFn: async () => {
-            if (!searchQuery || searchQuery.length < 2) return [];
-            // Usar el endpoint paginado que tiene búsqueda case-insensitive
-            const params = new URLSearchParams({
-                page: "1",
-                page_size: "20",
-                search: searchQuery,
-                stock_filter: "all"  // Mostrar todos, el usuario verá el stock disponible
-            });
-            const { data } = await axios.get(`${BASE_API_URL}/medicines/paginated?${params}`);
-            return data.items || [];
-        },
-        enabled: searchQuery.length >= 2,
-        staleTime: 1000,
-    });
+
 
     // Cargar clientes desde la API
     const { data: clients } = useQuery<Client[]>({
@@ -150,37 +119,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         },
     });
 
-    // Agregar un item a la lista
-    const addItem = () => {
-        if (!selectedMedicine || itemQuantity <= 0) return;
 
-        // Buscar en searchResults ya que es lo que alimenta el selector
-        const medicine = searchResults?.find(m => m.id === selectedMedicine);
-        if (!medicine) return;
-
-        // Verificar si ya existe el medicamento
-        const existingIndex = items.findIndex(item => item.medicine_id === selectedMedicine);
-
-        if (existingIndex >= 0) {
-            // Actualizar cantidad si ya existe
-            const updatedItems = [...items];
-            updatedItems[existingIndex].quantity += itemQuantity;
-            setItems(updatedItems);
-        } else {
-            // Agregar nuevo item
-            const newItem: SaleItemValues = {
-                medicine_id: selectedMedicine,
-                quantity: itemQuantity,
-                unit_price: medicine.sale_price,
-                discount: 0,
-            };
-            setItems([...items, newItem]);
-        }
-
-        // Resetear selección
-        setSelectedMedicine(0);
-        setItemQuantity(1);
-    };
 
     // Agregar item desde BarcodeSearchInput
     const addItemFromBarcode = (medicine: Medicine) => {
@@ -225,19 +164,12 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         setItems(updatedItems);
     };
 
-    // Filtrar medicamentos de búsqueda (excluyendo ya agregados)
-    // El filtro de stock ya viene del servidor con stock_filter: "in-stock"
-    const filteredMedicines = (searchResults || []).filter(medicine => {
-        // Excluir medicamentos ya agregados
-        const isAlreadyAdded = items.some(item => item.medicine_id === medicine.id);
-        return !isAlreadyAdded;
-    });
 
-    // Combinar medicamentos de items cargados + resultados de búsqueda para lookups
+
+    // Medicamentos cargados para lookups
     const allMedicinesMap = new Map<number, Medicine>();
     medicines?.forEach(m => allMedicinesMap.set(m.id, m));
-    searchResults?.forEach(m => allMedicinesMap.set(m.id, m));
-    
+
     // Helper para obtener medicamento por ID
     const getMedicineById = (id: number): Medicine | undefined => allMedicinesMap.get(id);
 
@@ -313,7 +245,6 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         onOpenChange(false);
         form.reset();
         setItems([]);
-        setSelectedMedicine(0);
         setPendingSaleData(null);
         setStockIssues([]);
     };
@@ -478,83 +409,83 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                     <TableHead className="w-[40px]" />
                                                 </TableRow>
                                             </TableHeader>
-                                        <TableBody>
-                                            {items.map((item, index) => {
-                                                const medicine = getMedicineById(item.medicine_id);
-                                                const productIvaRate = medicine?.iva_rate || 0;
-                                                const currentStock = medicine?.inventory?.quantity || 0;
-                                                const exceedsStock = item.quantity > currentStock;
-                                                return (
-                                                    <TableRow key={index} className={exceedsStock ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
-                                                        <TableCell className="align-top py-2">
-                                                            <div className="flex flex-col gap-0.5">
-                                                                <span className="text-sm leading-tight">{getMedicineName(item.medicine_id)}</span>
-                                                                <span className={`text-xs ${exceedsStock ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
-                                                                    Stock: {currentStock} {exceedsStock && `(falta ${item.quantity - currentStock})`}
-                                                                </span>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="outline"
-                                                                    size="icon"
-                                                                    className="h-7 w-7 shrink-0"
-                                                                    onClick={() => updateItemQuantity(index, item.quantity - 1)}
-                                                                    disabled={item.quantity <= 1}
-                                                                >
-                                                                    <IconMinus className="h-3 w-3" />
-                                                                </Button>
-                                                                <Input
-                                                                    type="number"
-                                                                    min={1}
-                                                                    value={item.quantity}
-                                                                    onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 1)}
-                                                                    className={`w-12 h-7 text-center text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${exceedsStock ? "border-amber-500" : ""}`}
-                                                                />
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="outline"
-                                                                    size="icon"
-                                                                    className="h-7 w-7 shrink-0"
-                                                                    onClick={() => updateItemQuantity(index, item.quantity + 1)}
-                                                                >
-                                                                    <IconPlus className="h-3 w-3" />
-                                                                </Button>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            <EditablePriceCell
-                                                                value={item.unit_price}
-                                                                onChange={(newPrice) => updateItemPrice(index, newPrice)}
-                                                                originalValue={medicine?.sale_price}
-                                                            />
-                                                        </TableCell>
-                                                        {documentType === "invoice" && (
-                                                            <TableCell className="text-right">
-                                                                <span className={productIvaRate > 0 ? "text-amber-600" : "text-green-600"}>
-                                                                    {(productIvaRate * 100).toFixed(0)}%
-                                                                </span>
+                                            <TableBody>
+                                                {items.map((item, index) => {
+                                                    const medicine = getMedicineById(item.medicine_id);
+                                                    const productIvaRate = medicine?.iva_rate || 0;
+                                                    const currentStock = medicine?.inventory?.quantity || 0;
+                                                    const exceedsStock = item.quantity > currentStock;
+                                                    return (
+                                                        <TableRow key={index} className={exceedsStock ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
+                                                            <TableCell className="align-top py-2">
+                                                                <div className="flex flex-col gap-0.5">
+                                                                    <span className="text-sm leading-tight">{getMedicineName(item.medicine_id)}</span>
+                                                                    <span className={`text-xs ${exceedsStock ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
+                                                                        Stock: {currentStock} {exceedsStock && `(falta ${item.quantity - currentStock})`}
+                                                                    </span>
+                                                                </div>
                                                             </TableCell>
-                                                        )}
-                                                        <TableCell className="text-right whitespace-nowrap">{formatCurrency(item.quantity * item.unit_price)}</TableCell>
-                                                        <TableCell>
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => removeItem(index)}
-                                                                className="h-7 w-7 text-red-600"
-                                                            >
-                                                                <IconTrash className="h-4 w-4" />
-                                                            </Button>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
-                                        </TableBody>
-                                    </Table>
+                                                            <TableCell>
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="icon"
+                                                                        className="h-7 w-7 shrink-0"
+                                                                        onClick={() => updateItemQuantity(index, item.quantity - 1)}
+                                                                        disabled={item.quantity <= 1}
+                                                                    >
+                                                                        <IconMinus className="h-3 w-3" />
+                                                                    </Button>
+                                                                    <Input
+                                                                        type="number"
+                                                                        min={1}
+                                                                        value={item.quantity}
+                                                                        onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 1)}
+                                                                        className={`w-12 h-7 text-center text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${exceedsStock ? "border-amber-500" : ""}`}
+                                                                    />
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="icon"
+                                                                        className="h-7 w-7 shrink-0"
+                                                                        onClick={() => updateItemQuantity(index, item.quantity + 1)}
+                                                                    >
+                                                                        <IconPlus className="h-3 w-3" />
+                                                                    </Button>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-right">
+                                                                <EditablePriceCell
+                                                                    value={item.unit_price}
+                                                                    onChange={(newPrice) => updateItemPrice(index, newPrice)}
+                                                                    originalValue={medicine?.sale_price}
+                                                                />
+                                                            </TableCell>
+                                                            {documentType === "invoice" && (
+                                                                <TableCell className="text-right">
+                                                                    <span className={productIvaRate > 0 ? "text-amber-600" : "text-green-600"}>
+                                                                        {(productIvaRate * 100).toFixed(0)}%
+                                                                    </span>
+                                                                </TableCell>
+                                                            )}
+                                                            <TableCell className="text-right whitespace-nowrap">{formatCurrency(item.quantity * item.unit_price)}</TableCell>
+                                                            <TableCell>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => removeItem(index)}
+                                                                    className="h-7 w-7 text-red-600"
+                                                                >
+                                                                    <IconTrash className="h-4 w-4" />
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
+                                            </TableBody>
+                                        </Table>
                                     </div>
                                 )}
 

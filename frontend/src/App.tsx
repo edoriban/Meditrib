@@ -4,6 +4,11 @@ import { ThemeProvider } from "./hooks/use-theme";
 import axios from "axios";
 import React, { Suspense } from "react";
 
+// Core layout - loaded immediately (used on all protected routes)
+import MainLayout from "./layouts/MainLayout";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+
+// Pages - lazy loaded for code splitting
 const DashboardPage = React.lazy(() => import("./pages/DashboardPage"));
 const LoginPage = React.lazy(() => import("./pages/login/LoginPage"));
 const RegisterPage = React.lazy(() => import("./pages/login/RegisterPage"));
@@ -24,9 +29,6 @@ const ExpensesPage = React.lazy(() => import("./pages/expenses/ExpensesPage"));
 const RolesPage = React.lazy(() => import("./pages/roles/RolesPage"));
 const SettingsPage = React.lazy(() => import("./pages/settings/SettingsPage"));
 const HelpPage = React.lazy(() => import("./pages/help/HelpPage"));
-
-const MainLayout = React.lazy(() => import("./layouts/MainLayout"));
-const ProtectedRoute = React.lazy(() => import("./components/auth/ProtectedRoute"));
 
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 

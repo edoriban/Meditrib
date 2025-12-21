@@ -34,7 +34,7 @@ interface CompanyData {
 export default function SettingsPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
-    
+
     // Configuración local (alertas, impresión, sistema - guardadas en localStorage)
     const [localSettings, setLocalSettings] = useState({
         // Alertas
@@ -185,7 +185,7 @@ export default function SettingsPage() {
     const handleSave = async () => {
         // Guardar configuración local en localStorage
         localStorage.setItem('meditrib_local_settings', JSON.stringify(localSettings));
-        
+
         // Validar datos de empresa antes de guardar
         if (!companyData.rfc || !companyData.name || !companyData.email) {
             toast.error("RFC, Razón Social y Email son campos requeridos");
@@ -200,15 +200,15 @@ export default function SettingsPage() {
             tax_regime: companyData.tax_regime,
             street: companyData.street || "Sin especificar",
             exterior_number: companyData.exterior_number || "S/N",
-            interior_number: companyData.interior_number || null,
+            interior_number: companyData.interior_number || undefined,
             neighborhood: companyData.neighborhood || "Sin especificar",
             city: companyData.city || "Sin especificar",
             state: companyData.state || "Sin especificar",
             country: companyData.country || "México",
             postal_code: companyData.postal_code || "00000",
             email: companyData.email,
-            phone: companyData.phone || null,
-            logo: companyData.logo || null,
+            phone: companyData.phone || undefined,
+            logo: companyData.logo || undefined,
         };
 
         if (companyData.id > 0) {
@@ -262,9 +262,9 @@ export default function SettingsPage() {
                             <div className="flex items-center gap-4">
                                 {companyData.logo ? (
                                     <div className="relative">
-                                        <img 
-                                            src={companyData.logo} 
-                                            alt="Logo de la empresa" 
+                                        <img
+                                            src={companyData.logo}
+                                            alt="Logo de la empresa"
                                             className="h-16 w-auto object-contain border rounded-md p-1"
                                         />
                                         <Button
@@ -301,10 +301,10 @@ export default function SettingsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="business_name">Nombre Comercial</Label>
-                                <Input 
+                                <Input
                                     id="business_name"
                                     value={companyData.business_name}
-                                    onChange={(e) => setCompanyData({...companyData, business_name: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, business_name: e.target.value })}
                                     placeholder="Nombre comercial de la empresa"
                                 />
                                 <p className="text-xs text-muted-foreground">
@@ -313,10 +313,10 @@ export default function SettingsPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="name">Razón Social <span className="text-red-500">*</span></Label>
-                                <Input 
+                                <Input
                                     id="name"
                                     value={companyData.name}
-                                    onChange={(e) => setCompanyData({...companyData, name: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, name: e.target.value })}
                                     placeholder="Razón social (nombre fiscal)"
                                 />
                                 <p className="text-xs text-muted-foreground">
@@ -328,20 +328,20 @@ export default function SettingsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="rfc">RFC <span className="text-red-500">*</span></Label>
-                                <Input 
+                                <Input
                                     id="rfc"
                                     value={companyData.rfc}
-                                    onChange={(e) => setCompanyData({...companyData, rfc: e.target.value.toUpperCase()})}
+                                    onChange={(e) => setCompanyData({ ...companyData, rfc: e.target.value.toUpperCase() })}
                                     placeholder="RFC de la empresa"
                                     maxLength={13}
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="tax_regime">Régimen Fiscal</Label>
-                                <Input 
+                                <Input
                                     id="tax_regime"
                                     value={companyData.tax_regime}
-                                    onChange={(e) => setCompanyData({...companyData, tax_regime: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, tax_regime: e.target.value })}
                                     placeholder="Código de régimen fiscal (ej: 601)"
                                 />
                             </div>
@@ -351,10 +351,10 @@ export default function SettingsPage() {
 
                         <div className="space-y-2">
                             <Label htmlFor="street">Calle</Label>
-                            <Input 
+                            <Input
                                 id="street"
                                 value={companyData.street}
-                                onChange={(e) => setCompanyData({...companyData, street: e.target.value})}
+                                onChange={(e) => setCompanyData({ ...companyData, street: e.target.value })}
                                 placeholder="Nombre de la calle"
                             />
                         </div>
@@ -362,37 +362,37 @@ export default function SettingsPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="exterior_number">Número Exterior</Label>
-                                <Input 
+                                <Input
                                     id="exterior_number"
                                     value={companyData.exterior_number}
-                                    onChange={(e) => setCompanyData({...companyData, exterior_number: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, exterior_number: e.target.value })}
                                     placeholder="# Ext."
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="interior_number">Número Interior</Label>
-                                <Input 
+                                <Input
                                     id="interior_number"
                                     value={companyData.interior_number}
-                                    onChange={(e) => setCompanyData({...companyData, interior_number: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, interior_number: e.target.value })}
                                     placeholder="# Int. (opcional)"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="neighborhood">Colonia</Label>
-                                <Input 
+                                <Input
                                     id="neighborhood"
                                     value={companyData.neighborhood}
-                                    onChange={(e) => setCompanyData({...companyData, neighborhood: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, neighborhood: e.target.value })}
                                     placeholder="Colonia"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="postal_code">Código Postal</Label>
-                                <Input 
+                                <Input
                                     id="postal_code"
                                     value={companyData.postal_code}
-                                    onChange={(e) => setCompanyData({...companyData, postal_code: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, postal_code: e.target.value })}
                                     placeholder="C.P."
                                     maxLength={5}
                                 />
@@ -402,28 +402,28 @@ export default function SettingsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="city">Ciudad</Label>
-                                <Input 
+                                <Input
                                     id="city"
                                     value={companyData.city}
-                                    onChange={(e) => setCompanyData({...companyData, city: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, city: e.target.value })}
                                     placeholder="Ciudad"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="state">Estado</Label>
-                                <Input 
+                                <Input
                                     id="state"
                                     value={companyData.state}
-                                    onChange={(e) => setCompanyData({...companyData, state: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, state: e.target.value })}
                                     placeholder="Estado"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="country">País</Label>
-                                <Input 
+                                <Input
                                     id="country"
                                     value={companyData.country}
-                                    onChange={(e) => setCompanyData({...companyData, country: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, country: e.target.value })}
                                     placeholder="País"
                                 />
                             </div>
@@ -434,20 +434,20 @@ export default function SettingsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Teléfono</Label>
-                                <Input 
+                                <Input
                                     id="phone"
                                     value={companyData.phone}
-                                    onChange={(e) => setCompanyData({...companyData, phone: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, phone: e.target.value })}
                                     placeholder="Teléfono"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                                <Input 
+                                <Input
                                     id="email"
                                     type="email"
                                     value={companyData.email}
-                                    onChange={(e) => setCompanyData({...companyData, email: e.target.value})}
+                                    onChange={(e) => setCompanyData({ ...companyData, email: e.target.value })}
                                     placeholder="Email"
                                 />
                             </div>
@@ -470,11 +470,11 @@ export default function SettingsPage() {
                         <div className="space-y-2">
                             <Label htmlFor="lowStock">Umbral de Stock Bajo</Label>
                             <div className="flex items-center gap-2">
-                                <Input 
+                                <Input
                                     id="lowStock"
                                     type="number"
                                     value={localSettings.lowStockThreshold}
-                                    onChange={(e) => setLocalSettings({...localSettings, lowStockThreshold: parseInt(e.target.value) || 0})}
+                                    onChange={(e) => setLocalSettings({ ...localSettings, lowStockThreshold: parseInt(e.target.value) || 0 })}
                                     className="w-24"
                                 />
                                 <span className="text-sm text-muted-foreground">unidades</span>
@@ -486,11 +486,11 @@ export default function SettingsPage() {
                         <div className="space-y-2">
                             <Label htmlFor="criticalStock">Umbral de Stock Crítico</Label>
                             <div className="flex items-center gap-2">
-                                <Input 
+                                <Input
                                     id="criticalStock"
                                     type="number"
                                     value={localSettings.criticalStockThreshold}
-                                    onChange={(e) => setLocalSettings({...localSettings, criticalStockThreshold: parseInt(e.target.value) || 0})}
+                                    onChange={(e) => setLocalSettings({ ...localSettings, criticalStockThreshold: parseInt(e.target.value) || 0 })}
                                     className="w-24"
                                 />
                                 <span className="text-sm text-muted-foreground">unidades</span>
@@ -500,11 +500,11 @@ export default function SettingsPage() {
                         <div className="space-y-2">
                             <Label htmlFor="expirationDays">Alerta de Caducidad</Label>
                             <div className="flex items-center gap-2">
-                                <Input 
+                                <Input
                                     id="expirationDays"
                                     type="number"
                                     value={localSettings.expirationAlertDays}
-                                    onChange={(e) => setLocalSettings({...localSettings, expirationAlertDays: parseInt(e.target.value) || 0})}
+                                    onChange={(e) => setLocalSettings({ ...localSettings, expirationAlertDays: parseInt(e.target.value) || 0 })}
                                     className="w-24"
                                 />
                                 <span className="text-sm text-muted-foreground">días antes</span>
@@ -518,9 +518,9 @@ export default function SettingsPage() {
                                 <Label>Alertas por Email</Label>
                                 <p className="text-xs text-muted-foreground">Enviar alertas al correo</p>
                             </div>
-                            <Switch 
+                            <Switch
                                 checked={localSettings.enableEmailAlerts}
-                                onCheckedChange={(checked) => setLocalSettings({...localSettings, enableEmailAlerts: checked})}
+                                onCheckedChange={(checked) => setLocalSettings({ ...localSettings, enableEmailAlerts: checked })}
                             />
                         </div>
                     </CardContent>
@@ -543,17 +543,17 @@ export default function SettingsPage() {
                                 <Label>Imprimir ticket al vender</Label>
                                 <p className="text-xs text-muted-foreground">Impresión automática de tickets</p>
                             </div>
-                            <Switch 
+                            <Switch
                                 checked={localSettings.printTicketOnSale}
-                                onCheckedChange={(checked) => setLocalSettings({...localSettings, printTicketOnSale: checked})}
+                                onCheckedChange={(checked) => setLocalSettings({ ...localSettings, printTicketOnSale: checked })}
                             />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="printerName">Nombre de Impresora</Label>
-                            <Input 
+                            <Input
                                 id="printerName"
                                 value={localSettings.printerName}
-                                onChange={(e) => setLocalSettings({...localSettings, printerName: e.target.value})}
+                                onChange={(e) => setLocalSettings({ ...localSettings, printerName: e.target.value })}
                                 placeholder="Nombre de la impresora (opcional)"
                             />
                         </div>
@@ -577,9 +577,9 @@ export default function SettingsPage() {
                                 <Label>Respaldo Automático</Label>
                                 <p className="text-xs text-muted-foreground">Crear respaldos de la base de datos</p>
                             </div>
-                            <Switch 
+                            <Switch
                                 checked={localSettings.autoBackup}
-                                onCheckedChange={(checked) => setLocalSettings({...localSettings, autoBackup: checked})}
+                                onCheckedChange={(checked) => setLocalSettings({ ...localSettings, autoBackup: checked })}
                             />
                         </div>
                         <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">

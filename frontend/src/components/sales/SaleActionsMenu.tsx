@@ -27,7 +27,7 @@ export function SaleActionsMenu({ sale, onEdit, onDelete }: SaleActionsMenuProps
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => generateSalePDF(sale)}>
+                <DropdownMenuItem onClick={async () => await generateSalePDF(sale)}>
                     <IconFileTypePdf className="mr-2 h-4 w-4" />
                     Exportar PDF
                 </DropdownMenuItem>

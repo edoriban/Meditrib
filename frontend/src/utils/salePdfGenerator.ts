@@ -1,5 +1,3 @@
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 import { Sale } from "@/types/sales";
 
 interface CompanySettings {
@@ -43,7 +41,11 @@ const getDocumentTypeLabel = (type: string) => {
     return type === "invoice" ? "FACTURA" : "NOTA DE REMISIÓN";
 };
 
-export function generateSalePDF(sale: Sale): void {
+export async function generateSalePDF(sale: Sale): Promise<void> {
+    // Dynamic imports to reduce bundle size
+    const { jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
+
     // Obtener configuración de la empresa desde localStorage
     const settingsStr = localStorage.getItem('meditrib_settings');
     const settings: CompanySettings = settingsStr ? JSON.parse(settingsStr) : {
@@ -60,7 +62,7 @@ export function generateSalePDF(sale: Sale): void {
 
     // ====== ENCABEZADO CON LOGO ======
     const logoHeight = 25;
-    
+
     if (settings.companyLogo) {
         try {
             doc.addImage(settings.companyLogo, 'PNG', 15, yPosition - 5, 30, logoHeight);
@@ -74,11 +76,11 @@ export function generateSalePDF(sale: Sale): void {
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text(settings.companyName || "Mi Empresa", companyStartX, yPosition);
-    
+
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100);
-    
+
     yPosition += 6;
     if (settings.companyRfc) {
         doc.text(`RFC: ${settings.companyRfc}`, companyStartX, yPosition);
@@ -97,15 +99,15 @@ export function generateSalePDF(sale: Sale): void {
     doc.setTextColor(0);
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    
+
     const documentType = getDocumentTypeLabel(sale.document_type);
     const folio = `#${sale.id.toString().padStart(4, '0')}`;
-    
+
     // Alinear a la derecha
     doc.text(documentType, pageWidth - 15, 20, { align: "right" });
     doc.setFontSize(11);
     doc.text(`Folio: ${folio}`, pageWidth - 15, 27, { align: "right" });
-    
+
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     const saleDate = new Date(sale.sale_date).toLocaleDateString('es-MX', {
@@ -131,16 +133,16 @@ export function generateSalePDF(sale: Sale): void {
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    
+
     // Cliente y vendedor en dos columnas
     doc.text(`Cliente: ${sale.client?.name || 'N/A'}`, 15, yPosition);
     doc.text(`Vendedor: ${sale.user?.name || 'N/A'}`, pageWidth / 2, yPosition);
     yPosition += 5;
-    
+
     doc.text(`Estado de Pago: ${getPaymentStatusLabel(sale.payment_status)}`, 15, yPosition);
     doc.text(`Estado de Envío: ${getShippingStatusLabel(sale.shipping_status)}`, pageWidth / 2, yPosition);
     yPosition += 5;
-    
+
     if (sale.payment_method) {
         const paymentMethods: { [key: string]: string } = {
             cash: "Efectivo",
@@ -156,7 +158,7 @@ export function generateSalePDF(sale: Sale): void {
 
     // ====== TABLA DE PRODUCTOS ======
     const isInvoice = sale.document_type === 'invoice';
-    
+
     // Construir datos de la tabla según el tipo de documento
     const tableData = sale.items?.map((item) => {
         const row = [
@@ -164,31 +166,31 @@ export function generateSalePDF(sale: Sale): void {
             item.quantity.toString(),
             formatCurrency(item.unit_price),
         ];
-        
+
         if (isInvoice) {
             row.push(`${((item.iva_rate || 0) * 100).toFixed(0)}%`);
         }
-        
+
         row.push(formatCurrency(item.subtotal));
         return row;
     }) || [];
 
     // Headers según tipo de documento
-    const tableHeaders = isInvoice 
+    const tableHeaders = isInvoice
         ? [['Producto', 'Cant.', 'Precio Unit.', 'IVA', 'Subtotal']]
         : [['Producto', 'Cant.', 'Precio Unit.', 'Subtotal']];
 
     // Estilos de columnas según tipo de documento
-    const columnStyles = isInvoice 
+    const columnStyles = isInvoice
         ? {
-            0: { cellWidth: 'auto' },
+            0: { cellWidth: 70 },
             1: { cellWidth: 20, halign: 'center' as const },
             2: { cellWidth: 30, halign: 'right' as const },
             3: { cellWidth: 20, halign: 'center' as const },
             4: { cellWidth: 30, halign: 'right' as const },
         }
         : {
-            0: { cellWidth: 'auto' },
+            0: { cellWidth: 75 },
             1: { cellWidth: 25, halign: 'center' as const },
             2: { cellWidth: 35, halign: 'right' as const },
             3: { cellWidth: 35, halign: 'right' as const },
@@ -208,7 +210,7 @@ export function generateSalePDF(sale: Sale): void {
         bodyStyles: {
             fontSize: 9,
         },
-        columnStyles: columnStyles,
+        columnStyles: columnStyles as Record<string, { cellWidth?: number; halign?: 'left' | 'center' | 'right' }>,
         margin: { left: 15, right: 15 },
     });
 
@@ -218,10 +220,10 @@ export function generateSalePDF(sale: Sale): void {
 
     // ====== TOTALES ======
     const totalsStartX = pageWidth - 80;
-    
+
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    
+
     doc.text("Subtotal:", totalsStartX, yPosition);
     doc.text(formatCurrency(sale.subtotal), pageWidth - 15, yPosition, { align: "right" });
     yPosition += 6;
@@ -253,7 +255,7 @@ export function generateSalePDF(sale: Sale): void {
         yPosition += 5;
         doc.setFont("helvetica", "normal");
         doc.setTextColor(80);
-        
+
         // Dividir las notas si son muy largas
         const splitNotes = doc.splitTextToSize(sale.notes, pageWidth - 30);
         doc.text(splitNotes, 15, yPosition);
