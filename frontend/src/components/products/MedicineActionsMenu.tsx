@@ -1,17 +1,17 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { Medicine } from "@/types/medicine";
+import { Product } from "@/types/product";
 import { Button } from "@/components/ui/button";
 import { IconDotsVertical, IconPencil, IconTrash } from "@tabler/icons-react";
-import { DeleteMedicineDialog } from "./DeleteMedicineDialog";
+import { DeleteProductDialog } from "./DeleteProductDialog";
 
-interface MedicineActionsMenuProps {
-    medicine: Medicine;
+interface ProductActionsMenuProps {
+    product: Product;
     onDelete: () => void;
     onEdit: () => void;
 }
 
-export function MedicineActionsMenu({ medicine, onDelete, onEdit }: MedicineActionsMenuProps) {
+export function ProductActionsMenu({ product, onDelete, onEdit }: ProductActionsMenuProps) {
     const [showMenu, setShowMenu] = React.useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
@@ -106,8 +106,8 @@ export function MedicineActionsMenu({ medicine, onDelete, onEdit }: MedicineActi
                     document.body
                 )}
 
-            <DeleteMedicineDialog
-                medicine={medicine}
+            <DeleteProductDialog
+                product={product}
                 open={deleteDialogOpen}
                 onOpenChange={setDeleteDialogOpen}
                 onConfirmDelete={onDelete}

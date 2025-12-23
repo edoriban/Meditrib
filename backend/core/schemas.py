@@ -14,37 +14,37 @@ class InventoryUpdate(InventoryBase):
     pass
 
 class Inventory(InventoryBase):
-    medicine_id: int
+    product_id: int
     
     class Config:
         from_attributes = True
 
 # Tag Schemas
 
-class MedicineTagBase(BaseModel):
+class ProductTagBase(BaseModel):
     name: str
     description: Optional[str] = None
     color: Optional[str] = None
 
 
-class MedicineTagCreate(MedicineTagBase):
+class ProductTagCreate(ProductTagBase):
     pass
 
 
-class MedicineTagUpdate(MedicineTagBase):
+class ProductTagUpdate(ProductTagBase):
     name: str | None = None
 
 
-class MedicineTag(MedicineTagBase):
+class ProductTag(ProductTagBase):
     id: int
     
     class Config:
         from_attributes = True
 
-# Medicine Schemas
+# Product Schemas
 
 
-class MedicineBase(BaseModel):
+class ProductBase(BaseModel):
     name: str
     description: Optional[str] = None
     sale_price: float
@@ -52,37 +52,38 @@ class MedicineBase(BaseModel):
     expiration_date: Optional[date] = None
     batch_number: Optional[str] = None
     barcode: Optional[str] = None
+    # Pharmacy-specific fields (optional for other verticals)
     laboratory: Optional[str] = None
     concentration: Optional[str] = None
     prescription_required: bool = False
-    iva_rate: float = 0.0  # 0.0 = exento (medicamentos), 0.16 = 16% (material de curación)
+    active_substance: Optional[str] = None
+    # Tax and SAT fields
+    iva_rate: float = 0.0  # 0.0 = exento, 0.16 = 16%
     sat_key: Optional[str] = None  # Clave SAT para facturación electrónica
-    image_path: Optional[str] = None  # Ruta de la imagen del medicamento
-    active_substance: Optional[str] = None  # Sustancia activa del medicamento
 
 
-class MedicineCreate(MedicineBase):
+class ProductCreate(ProductBase):
     tags: Optional[List[int]] = []
     inventory: Optional[InventoryCreate] = None
 
 
-class MedicineUpdate(MedicineBase):
+class ProductUpdate(ProductBase):
     tags: Optional[List[int]] = []
     inventory: Optional[InventoryUpdate] = None
 
 
-class Medicine(MedicineBase):
+class Product(ProductBase):
     id: int
-    tags: List[MedicineTag] = []
+    tags: List[ProductTag] = []
     inventory: Optional[Inventory] = None
 
     class Config:
         from_attributes = True
 
 
-class MedicinePaginatedResponse(BaseModel):
-    """Schema para respuesta paginada de medicamentos"""
-    items: List[Medicine]
+class ProductPaginatedResponse(BaseModel):
+    """Schema para respuesta paginada de productos"""
+    items: List[Product]
     total: int
     page: int
     page_size: int
@@ -91,12 +92,12 @@ class MedicinePaginatedResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# Otros esquemas existentes...
+# Supplier Schemas
 
 class SupplierBase(BaseModel):
     name: str
-    contact_info: Optional[str] = None  # Cambiado de 'contact' para coincidir con el schema
-    email: Optional[EmailStr] = None  # Usar EmailStr para validación
+    contact_info: Optional[str] = None
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
 
 class SupplierCreate(SupplierBase):
@@ -157,7 +158,7 @@ class User(UserBase):
 
 # PurchaseOrder Schemas
 class PurchaseOrderItemBase(BaseModel):
-    medicine_id: int
+    product_id: int
     quantity: int
     unit_price: float
 
@@ -170,7 +171,7 @@ class PurchaseOrderItemUpdate(BaseModel):
 
 class PurchaseOrderItem(PurchaseOrderItemBase):
     purchase_order_id: int
-    medicine: Medicine
+    product: Product
 
     class Config:
         from_attributes = True
@@ -251,7 +252,7 @@ class Client(ClientBase):
 # Sale Schemas
 
 class SaleItemBase(BaseModel):
-    medicine_id: int
+    product_id: int
     quantity: int
     unit_price: float
     discount: float = 0.0
@@ -270,7 +271,7 @@ class SaleItem(SaleItemBase):
     subtotal: float
     iva_rate: float = 0.0
     iva_amount: float = 0.0
-    medicine: Medicine
+    product: Product
 
     class Config:
         from_attributes = True
@@ -326,8 +327,8 @@ class SaleWithInvoice(Sale):
 # Report Schemas
 class ReportBase(BaseModel):
     report_type: str
-    date: datetime  # Considerar usar date o datetime de Pydantic/Python
-    data: str  # Considerar usar dict o list si el formato es JSON
+    date: datetime
+    data: str
     generated_by: int
 
 class ReportCreate(ReportBase):
@@ -341,7 +342,7 @@ class ReportUpdate(ReportBase):
 
 class Report(ReportBase):
     id: int
-    user: User  # Incluir el usuario que generó el reporte
+    user: User
 
     class Config:
         from_attributes = True
@@ -350,7 +351,7 @@ class Report(ReportBase):
 class AlertBase(BaseModel):
     type: str
     message: str
-    medicine_id: int
+    product_id: int
     severity: str = "medium"
     is_active: bool = True
 
@@ -368,7 +369,7 @@ class Alert(AlertBase):
     id: int
     created_at: datetime
     resolved_at: Optional[datetime] = None
-    medicine: Medicine
+    product: Product
 
     class Config:
         from_attributes = True
@@ -425,7 +426,7 @@ class InvoiceConceptBase(BaseModel):
     unit_price: float
     amount: float
     discount: float = 0.0
-    medicine_id: Optional[int] = None
+    product_id: Optional[int] = None
 
 class InvoiceConceptCreate(InvoiceConceptBase):
     pass
@@ -433,7 +434,7 @@ class InvoiceConceptCreate(InvoiceConceptBase):
 class InvoiceConcept(InvoiceConceptBase):
     id: int
     invoice_id: int
-    medicine: Optional[Medicine] = None
+    product: Optional[Product] = None
 
     class Config:
         from_attributes = True
@@ -510,8 +511,8 @@ class Expense(ExpenseBase):
         from_attributes = True
 
 # Batch Management Schemas
-class MedicineBatchBase(BaseModel):
-    medicine_id: int
+class ProductBatchBase(BaseModel):
+    product_id: int
     batch_number: str
     expiration_date: date
     quantity_received: int = 0
@@ -521,10 +522,10 @@ class MedicineBatchBase(BaseModel):
     received_date: datetime
     notes: Optional[str] = None
 
-class MedicineBatchCreate(MedicineBatchBase):
+class ProductBatchCreate(ProductBatchBase):
     pass
 
-class MedicineBatchUpdate(BaseModel):
+class ProductBatchUpdate(BaseModel):
     batch_number: Optional[str] = None
     expiration_date: Optional[date] = None
     quantity_received: Optional[int] = None
@@ -533,9 +534,9 @@ class MedicineBatchUpdate(BaseModel):
     supplier_id: Optional[int] = None
     notes: Optional[str] = None
 
-class MedicineBatch(MedicineBatchBase):
+class ProductBatch(ProductBatchBase):
     id: int
-    medicine: Medicine
+    product: Product
     supplier: Optional[Supplier] = None
 
     class Config:
@@ -565,7 +566,7 @@ class BatchStockMovementUpdate(BaseModel):
 
 class BatchStockMovement(BatchStockMovementBase):
     id: int
-    batch: MedicineBatch
+    batch: ProductBatch
     user: User
 
     class Config:
@@ -619,8 +620,6 @@ class Token(BaseModel):
     token_type: str
 
 
-
-
 # Excel Import Schemas
 class ExcelImportItem(BaseModel):
     """Item de importación desde Excel con información de precios y cambios"""
@@ -636,7 +635,7 @@ class ExcelImportItem(BaseModel):
     iva_rate: float
     inventory_to_add: int
     exists: bool
-    medicine_id: Optional[int] = None
+    product_id: Optional[int] = None
     price_range: str
     price_difference: Optional[dict] = None
 
@@ -644,8 +643,8 @@ class ExcelImportPreviewResponse(BaseModel):
     """Respuesta de previsualización de importación Excel"""
     items: List[ExcelImportItem]
     total_items: int
-    new_medicines: int
-    existing_medicines: int
+    new_products: int
+    existing_products: int
     price_changes: int
 
 class ExcelImportConfirmItem(BaseModel):
@@ -659,9 +658,8 @@ class ExcelImportConfirmItem(BaseModel):
     iva_rate: float
     inventory_to_add: int
     exists: bool
-    medicine_id: Optional[int] = None
+    product_id: Optional[int] = None
     sat_key: Optional[str] = None
-    image_path: Optional[str] = None
 
 class ExcelImportResult(BaseModel):
     """Resultado de importación Excel"""
@@ -669,7 +667,8 @@ class ExcelImportResult(BaseModel):
     updated: int
     errors: List[dict]
     total_processed: int
-# Actualizar referencias después de definir todas las clases
+
+# Rebuild models for forward references
 Sale.model_rebuild()
 SaleWithInvoice.model_rebuild()
 Invoice.model_rebuild()

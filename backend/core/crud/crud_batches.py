@@ -2,27 +2,27 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime, date, timedelta
 from typing import List, Optional
-from backend.core.models import MedicineBatch, BatchStockMovement, Medicine
-from backend.core.schemas import MedicineBatchCreate, MedicineBatchUpdate, BatchStockMovementCreate, BatchStockMovementUpdate
+from backend.core.models import ProductBatch, BatchStockMovement, Product
+from backend.core.schemas import ProductBatchCreate, ProductBatchUpdate, BatchStockMovementCreate, BatchStockMovementUpdate
 from backend.core.logging_config import log_user_action
 
 
-def get_medicine_batches(db: Session, medicine_id: Optional[int] = None) -> List[MedicineBatch]:
+def get_product_batches(db: Session, product_id: Optional[int] = None) -> List[ProductBatch]:
     """Obtener lotes de medicamentos, opcionalmente filtrados por medicamento"""
-    query = db.query(MedicineBatch)
-    if medicine_id:
-        query = query.filter(MedicineBatch.medicine_id == medicine_id)
-    return query.order_by(MedicineBatch.expiration_date).all()
+    query = db.query(ProductBatch)
+    if product_id:
+        query = query.filter(ProductBatch.product_id == product_id)
+    return query.order_by(ProductBatch.expiration_date).all()
 
 
-def get_medicine_batch(db: Session, batch_id: int) -> Optional[MedicineBatch]:
+def get_product_batch(db: Session, batch_id: int) -> Optional[ProductBatch]:
     """Obtener un lote específico"""
-    return db.query(MedicineBatch).filter(MedicineBatch.id == batch_id).first()
+    return db.query(ProductBatch).filter(ProductBatch.id == batch_id).first()
 
 
-def create_medicine_batch(db: Session, batch: MedicineBatchCreate, user_id: int) -> MedicineBatch:
+def create_product_batch(db: Session, batch: ProductBatchCreate, user_id: int) -> ProductBatch:
     """Crear un nuevo lote de medicamento"""
-    db_batch = MedicineBatch(**batch.model_dump())
+    db_batch = ProductBatch(**batch.model_dump())
     db.add(db_batch)
     db.commit()
     db.refresh(db_batch)
@@ -47,7 +47,7 @@ def create_medicine_batch(db: Session, batch: MedicineBatchCreate, user_id: int)
         user_id=user_id,
         user_email="",  # Se obtendría del contexto
         action="create",
-        resource="medicine_batch",
+        resource="product_batch",
         resource_id=str(db_batch.id),
         new_values=batch.model_dump()
     )
@@ -55,9 +55,9 @@ def create_medicine_batch(db: Session, batch: MedicineBatchCreate, user_id: int)
     return db_batch
 
 
-def update_medicine_batch(db: Session, batch_id: int, batch_update: MedicineBatchUpdate, user_id: int) -> Optional[MedicineBatch]:
+def update_product_batch(db: Session, batch_id: int, batch_update: ProductBatchUpdate, user_id: int) -> Optional[ProductBatch]:
     """Actualizar un lote de medicamento"""
-    db_batch = db.query(MedicineBatch).filter(MedicineBatch.id == batch_id).first()
+    db_batch = db.query(ProductBatch).filter(ProductBatch.id == batch_id).first()
     if db_batch:
         old_values = {
             "batch_number": db_batch.batch_number,
@@ -77,7 +77,7 @@ def update_medicine_batch(db: Session, batch_id: int, batch_update: MedicineBatc
             user_id=user_id,
             user_email="",
             action="update",
-            resource="medicine_batch",
+            resource="product_batch",
             resource_id=str(batch_id),
             old_values=old_values,
             new_values=update_data
@@ -86,9 +86,9 @@ def update_medicine_batch(db: Session, batch_id: int, batch_update: MedicineBatc
     return db_batch
 
 
-def delete_medicine_batch(db: Session, batch_id: int, user_id: int) -> bool:
+def delete_product_batch(db: Session, batch_id: int, user_id: int) -> bool:
     """Eliminar un lote (solo si no tiene movimientos)"""
-    db_batch = db.query(MedicineBatch).filter(MedicineBatch.id == batch_id).first()
+    db_batch = db.query(ProductBatch).filter(ProductBatch.id == batch_id).first()
     if db_batch:
         # Verificar si tiene movimientos
         movements_count = db.query(BatchStockMovement).filter(BatchStockMovement.batch_id == batch_id).count()
@@ -103,7 +103,7 @@ def delete_medicine_batch(db: Session, batch_id: int, user_id: int) -> bool:
             user_id=user_id,
             user_email="",
             action="delete",
-            resource="medicine_batch",
+            resource="product_batch",
             resource_id=str(batch_id)
         )
 
@@ -126,7 +126,7 @@ def create_batch_movement(db: Session, movement: BatchStockMovementCreate) -> Ba
     db.add(db_movement)
 
     # Actualizar cantidad restante del lote
-    db_batch = db.query(MedicineBatch).filter(MedicineBatch.id == movement.batch_id).first()
+    db_batch = db.query(ProductBatch).filter(ProductBatch.id == movement.batch_id).first()
     if db_batch:
         if movement.movement_type == "in":
             db_batch.quantity_remaining += movement.quantity
@@ -141,29 +141,29 @@ def create_batch_movement(db: Session, movement: BatchStockMovementCreate) -> Ba
 
 
 # Advanced batch operations
-def get_expiring_batches(db: Session, days_ahead: int = 30) -> List[MedicineBatch]:
+def get_expiring_batches(db: Session, days_ahead: int = 30) -> List[ProductBatch]:
     """Obtener lotes próximos a expirar"""
     cutoff_date = date.today() + timedelta(days=days_ahead)
-    return db.query(MedicineBatch).filter(
-        MedicineBatch.expiration_date <= cutoff_date,
-        MedicineBatch.quantity_remaining > 0
-    ).order_by(MedicineBatch.expiration_date).all()
+    return db.query(ProductBatch).filter(
+        ProductBatch.expiration_date <= cutoff_date,
+        ProductBatch.quantity_remaining > 0
+    ).order_by(ProductBatch.expiration_date).all()
 
 
-def get_batches_by_medicine(db: Session, medicine_id: int) -> List[MedicineBatch]:
+def get_batches_by_product(db: Session, product_id: int) -> List[ProductBatch]:
     """Obtener todos los lotes de un medicamento específico"""
-    return db.query(MedicineBatch).filter(
-        MedicineBatch.medicine_id == medicine_id,
-        MedicineBatch.quantity_remaining > 0
-    ).order_by(MedicineBatch.expiration_date).all()
+    return db.query(ProductBatch).filter(
+        ProductBatch.product_id == product_id,
+        ProductBatch.quantity_remaining > 0
+    ).order_by(ProductBatch.expiration_date).all()
 
 
-def allocate_batch_for_sale(db: Session, medicine_id: int, quantity_needed: int, user_id: int) -> List[dict]:
+def allocate_batch_for_sale(db: Session, product_id: int, quantity_needed: int, user_id: int) -> List[dict]:
     """
     Asignar lotes para una venta usando FIFO (First In, First Out)
     Retorna lista de asignaciones: [{"batch_id": id, "quantity": qty}, ...]
     """
-    batches = get_batches_by_medicine(db, medicine_id)
+    batches = get_batches_by_product(db, product_id)
     allocations = []
     remaining_needed = quantity_needed
 
@@ -198,7 +198,7 @@ def allocate_batch_for_sale(db: Session, medicine_id: int, quantity_needed: int,
             remaining_needed -= available_qty
 
     if remaining_needed > 0:
-        raise ValueError(f"Insufficient stock for medicine {medicine_id}. Needed: {quantity_needed}, Available: {quantity_needed - remaining_needed}")
+        raise ValueError(f"Insufficient stock for product {product_id}. Needed: {quantity_needed}, Available: {quantity_needed - remaining_needed}")
 
     return allocations
 
@@ -206,40 +206,40 @@ def allocate_batch_for_sale(db: Session, medicine_id: int, quantity_needed: int,
 def get_batch_inventory_summary(db: Session) -> dict:
     """Obtener resumen de inventario por lotes"""
     # Total de lotes activos
-    total_batches = db.query(MedicineBatch).filter(MedicineBatch.quantity_remaining > 0).count()
+    total_batches = db.query(ProductBatch).filter(ProductBatch.quantity_remaining > 0).count()
 
     # Lotes próximos a expirar (30 días)
     expiring_soon = len(get_expiring_batches(db, 30))
 
     # Valor total del inventario por lotes
-    batches = db.query(MedicineBatch).filter(MedicineBatch.quantity_remaining > 0).all()
+    batches = db.query(ProductBatch).filter(ProductBatch.quantity_remaining > 0).all()
     total_value = sum(batch.quantity_remaining * (batch.unit_cost or 0) for batch in batches)
 
     # Lotes por medicamento
-    medicine_batch_counts = db.query(
-        MedicineBatch.medicine_id,
-        func.count(MedicineBatch.id).label('batch_count'),
-        func.sum(MedicineBatch.quantity_remaining).label('total_quantity')
-    ).filter(MedicineBatch.quantity_remaining > 0).group_by(MedicineBatch.medicine_id).all()
+    product_batch_counts = db.query(
+        ProductBatch.product_id,
+        func.count(ProductBatch.id).label('batch_count'),
+        func.sum(ProductBatch.quantity_remaining).label('total_quantity')
+    ).filter(ProductBatch.quantity_remaining > 0).group_by(ProductBatch.product_id).all()
 
     return {
         "total_active_batches": total_batches,
         "expiring_within_30_days": expiring_soon,
         "total_inventory_value": total_value,
-        "medicines_with_batches": len(medicine_batch_counts),
+        "products_with_batches": len(product_batch_counts),
         "batch_distribution": [
             {
-                "medicine_id": row.medicine_id,
+                "product_id": row.product_id,
                 "batch_count": row.batch_count,
                 "total_quantity": row.total_quantity or 0
-            } for row in medicine_batch_counts
+            } for row in product_batch_counts
         ]
     }
 
 
 def validate_batch_expiration(db: Session, batch_id: int) -> dict:
     """Validar si un lote está expirado o próximo a expirar"""
-    batch = get_medicine_batch(db, batch_id)
+    batch = get_product_batch(db, batch_id)
     if not batch:
         return {"valid": False, "status": "not_found"}
 

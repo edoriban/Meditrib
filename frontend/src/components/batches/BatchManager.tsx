@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { MedicineBatch, ExpiringBatch, BatchInventorySummary } from "@/types/batches";
+import { ProductBatch, ExpiringBatch, BatchInventorySummary } from "@/types/batches";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,8 +22,8 @@ const getExpirationStatus = (expirationDate: string) => {
 };
 
 export function BatchManager() {
-    const { data: batches, isLoading: batchesLoading } = useQuery<MedicineBatch[]>({
-        queryKey: ["medicine-batches"],
+    const { data: batches, isLoading: batchesLoading } = useQuery<ProductBatch[]>({
+        queryKey: ["product-batches"],
         queryFn: async () => {
             const { data } = await axios.get(`${BASE_API_URL}/batches/`);
             return data;
@@ -85,7 +85,7 @@ export function BatchManager() {
                         <CardContent>
                             <div className="text-2xl font-bold">{inventorySummary.total_active_batches}</div>
                             <p className="text-xs text-muted-foreground">
-                                {inventorySummary.medicines_with_batches} medicamentos
+                                {inventorySummary.products_with_batches} medicamentos
                             </p>
                         </CardContent>
                     </Card>
@@ -147,7 +147,7 @@ export function BatchManager() {
                             <div className="mt-2 space-y-1">
                                 {expiringBatches.batches.slice(0, 3).map((batch) => (
                                     <div key={batch.id} className="text-sm">
-                                        • {batch.medicine_name} - Lote {batch.batch_number} ({batch.days_until_expiry} días)
+                                        • {batch.product_name} - Lote {batch.batch_number} ({batch.days_until_expiry} días)
                                     </div>
                                 ))}
                                 {expiringBatches.count > 3 && (
@@ -193,7 +193,7 @@ export function BatchManager() {
                                     return (
                                         <TableRow key={batch.id}>
                                             <TableCell className="font-medium">
-                                                {batch.medicine.name}
+                                                {batch.product.name}
                                             </TableCell>
                                             <TableCell className="font-mono">
                                                 {batch.batch_number}

@@ -4,14 +4,14 @@ import * as z from "zod";
 export interface SaleItem {
     id: number;
     sale_id: number;
-    medicine_id: number;
+    product_id: number;
     quantity: number;
     unit_price: number;
     discount: number;
     iva_rate: number;
     iva_amount: number;
     subtotal: number;
-    medicine: {
+    product: {
         id: number;
         name: string;
         sale_price: number;
@@ -53,7 +53,7 @@ export interface Sale {
 
 // Schema para crear un item de venta
 export const saleItemSchema = z.object({
-    medicine_id: z.number().int().positive("Selecciona un medicamento"),
+    product_id: z.number().int().positive("Selecciona un medicamento"),
     quantity: z.number().int().positive("La cantidad debe ser mayor a 0"),
     unit_price: z.number().positive("El precio debe ser mayor a 0"),
     discount: z.number().min(0),

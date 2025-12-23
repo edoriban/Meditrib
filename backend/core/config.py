@@ -4,11 +4,11 @@ from pydantic import AnyHttpUrl, field_validator
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Meditrib"
+    PROJECT_NAME: str = "VanPOS"
     API_V1_STR: str = "/api/v1"
 
     # DATABASE
-    DATABASE_URL: str = "sqlite:///./meditrib.db"
+    DATABASE_URL: str = "sqlite:///./vanpos.db"
 
     # SECURITY (these map to your existing .env variables)
     SECRET_KEY: str = "YOUR_SUPER_SECRET_KEY_CHANGE_ME_IN_PROD"

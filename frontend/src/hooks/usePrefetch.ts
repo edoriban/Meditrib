@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 // Route module map for prefetching
 const routeModules: Record<string, () => Promise<unknown>> = {
     '/dashboard': () => import('@/pages/DashboardPage'),
-    '/medicines': () => import('@/pages/inventory/MedicinesPage'),
+    '/products': () => import('@/pages/inventory/ProductsPage'),
     '/sales': () => import('@/pages/sales/SalesPage'),
     '/clients': () => import('@/pages/clients/ClientsPage'),
     '/suppliers': () => import('@/pages/suppliers/SuppliersPage'),

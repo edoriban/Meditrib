@@ -4,7 +4,7 @@ Ejecutar desde la raíz del proyecto: python -m backend.seed_data
 """
 
 from backend.core.database import SessionLocal, engine
-from backend.core.models import Base, Medicine, Inventory, Supplier, Client, MedicineTag, User, Role
+from backend.core.models import Base, Product, Inventory, Supplier, Client, ProductTag, User, Role
 from passlib.context import CryptContext
 from datetime import date, timedelta
 
@@ -66,9 +66,9 @@ def seed_database():
         
         tags = {}
         for tag_data in tags_data:
-            existing = db.query(MedicineTag).filter(MedicineTag.name == tag_data["name"]).first()
+            existing = db.query(ProductTag).filter(ProductTag.name == tag_data["name"]).first()
             if not existing:
-                tag = MedicineTag(**tag_data)
+                tag = ProductTag(**tag_data)
                 db.add(tag)
                 db.flush()
                 tags[tag_data["name"]] = tag
@@ -110,7 +110,7 @@ def seed_database():
         # ==================== MEDICAMENTOS ====================
         print("\nCreando medicamentos...")
         
-        medicines_data = [
+        products_data = [
             {
                 "name": "Paracetamol 500mg Tabletas (20)",
                 "description": "Analgésico y antipirético. Caja con 20 tabletas de 500mg.",
@@ -188,27 +188,27 @@ def seed_database():
             },
         ]
 
-        for med_data in medicines_data:
-            existing = db.query(Medicine).filter(Medicine.name == med_data["name"]).first()
+        for med_data in products_data:
+            existing = db.query(Product).filter(Product.name == med_data["name"]).first()
             if not existing:
                 # Extraer datos que no van en el modelo
                 quantity = med_data.pop("quantity")
                 tag_names = med_data.pop("tags")
                 
                 # Crear medicamento
-                medicine = Medicine(**med_data)
+                product = Product(**med_data)
                 
                 # Agregar tags
                 for tag_name in tag_names:
                     if tag_name in tags:
-                        medicine.tags.append(tags[tag_name])
+                        product.tags.append(tags[tag_name])
                 
-                db.add(medicine)
+                db.add(product)
                 db.flush()
                 
                 # Crear inventario
                 inventory = Inventory(
-                    medicine_id=medicine.id,
+                    product_id=product.id,
                     quantity=quantity
                 )
                 db.add(inventory)
@@ -225,10 +225,10 @@ def seed_database():
         
         # Resumen
         print("\n📊 Resumen de datos:")
-        print(f"   - Medicamentos: {db.query(Medicine).count()}")
+        print(f"   - Medicamentos: {db.query(Product).count()}")
         print(f"   - Proveedores: {db.query(Supplier).count()}")
         print(f"   - Clientes: {db.query(Client).count()}")
-        print(f"   - Tags: {db.query(MedicineTag).count()}")
+        print(f"   - Tags: {db.query(ProductTag).count()}")
         print(f"   - Usuarios: {db.query(User).count()}")
         
     except Exception as e:

@@ -349,8 +349,8 @@ export const FinancialReports = React.memo(function FinancialReports({ hideSumma
                             </TableHeader>
                             <TableBody>
                                 {productProfitability.slice(0, 10).map((product) => (
-                                    <TableRow key={product.medicine_id}>
-                                        <TableCell className="font-medium">{product.medicine_name}</TableCell>
+                                    <TableRow key={product.product_id}>
+                                        <TableCell className="font-medium">{product.product_name}</TableCell>
                                         <TableCell>{product.total_quantity}</TableCell>
                                         <TableCell>{formatCurrency(product.total_sales)}</TableCell>
                                         <TableCell>{formatCurrency(product.estimated_cost)}</TableCell>

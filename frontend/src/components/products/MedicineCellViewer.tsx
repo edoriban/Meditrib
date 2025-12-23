@@ -1,8 +1,8 @@
 import { forwardRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Medicine } from "@/types/medicine";
-import { MedicineFormValues, medicineFormSchema } from "@/types/medicine";
+import { Product } from "@/types/product";
+import { ProductFormValues, productFormSchema } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { SubmitHandler } from "react-hook-form";
@@ -16,56 +16,56 @@ import {
     DrawerTrigger,
 } from "@/components/ui/drawer";
 import { toast } from "sonner";
-import { MedicineEditForm } from "./MedicineEditForm";
-import { MedicineEditActions } from "./MedicineEditActions";
-import { useMedicineMutations } from "@/hooks/useMedicineMutations";
+import { ProductEditForm } from "./ProductEditForm";
+import { ProductEditActions } from "./ProductEditActions";
+import { useProductMutations } from "@/hooks/useProductMutations";
 
-interface MedicineCellViewerProps {
-    medicine: Medicine;
-    onUpdate?: (medicineId: number, data: Partial<MedicineFormValues>) => void;
-    onDelete?: (medicineId: number) => void;
+interface ProductCellViewerProps {
+    product: Product;
+    onUpdate?: (productId: number, data: Partial<ProductFormValues>) => void;
+    onDelete?: (productId: number) => void;
 }
 
-export const MedicineCellViewer = forwardRef<HTMLButtonElement, MedicineCellViewerProps>(
-    ({ medicine, onUpdate, onDelete }, ref) => {
+export const ProductCellViewer = forwardRef<HTMLButtonElement, ProductCellViewerProps>(
+    ({ product, onUpdate, onDelete }, ref) => {
         const isMobile = useIsMobile();
         const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-        const { updateMedicine, deleteMedicine, isUpdating, isDeleting } = useMedicineMutations();
+        const { updateProduct, deleteProduct, isUpdating, isDeleting } = useProductMutations();
 
-        const methods = useForm<MedicineFormValues>({
-            resolver: zodResolver(medicineFormSchema),
+        const methods = useForm<ProductFormValues>({
+            resolver: zodResolver(productFormSchema),
             defaultValues: {
-                name: medicine.name,
-                active_substance: medicine.active_substance,
-                sale_price: medicine.sale_price,
-                purchase_price: medicine.purchase_price,
-                tags: medicine.tags ? medicine.tags.map(tag => Number(tag.id)) : [],
+                name: product.name,
+                active_substance: product.active_substance,
+                sale_price: product.sale_price,
+                purchase_price: product.purchase_price,
+                tags: product.tags ? product.tags.map(tag => Number(tag.id)) : [],
                 inventory: {
-                    quantity: medicine.inventory?.quantity || 0
+                    quantity: product.inventory?.quantity || 0
                 }
             }
         });
 
 
-        const handleSubmit: SubmitHandler<MedicineFormValues> = (data) => {
+        const handleSubmit: SubmitHandler<ProductFormValues> = (data) => {
             const updateData = {
                 ...data,
                 tags: data.tags ? data.tags.map(tagId => Number(tagId)) : []
             };
 
             if (onUpdate) {
-                onUpdate(medicine.id, updateData);
+                onUpdate(product.id, updateData);
             } else {
-                updateMedicine(medicine.id, updateData);
+                updateProduct(product.id, updateData);
             }
-            toast.success(`Medicamento ${medicine.name} actualizado correctamente`);
+            toast.success(`Medicamento ${product.name} actualizado correctamente`);
         };
 
-        const handleDeleteMedicine = () => {
+        const handleDeleteProduct = () => {
             if (onDelete) {
-                onDelete(medicine.id);
+                onDelete(product.id);
             } else {
-                deleteMedicine(medicine.id);
+                deleteProduct(product.id);
             }
         };
 
@@ -77,27 +77,27 @@ export const MedicineCellViewer = forwardRef<HTMLButtonElement, MedicineCellView
                         className="p-0 text-left font-medium"
                         ref={ref}
                     >
-                        {medicine.name}
+                        {product.name}
                     </Button>
                 </DrawerTrigger>
                 <DrawerContent className="max-w-md">
                     <DrawerHeader>
                         <DrawerTitle>Editar Medicamento</DrawerTitle>
                         <DrawerDescription>
-                            Actualiza la información del medicamento {medicine.name}
+                            Actualiza la información del medicamento {product.name}
                         </DrawerDescription>
                     </DrawerHeader>
                     <div className="px-4">
                         <FormProvider {...methods}>
                             <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-4">
-                                <MedicineEditForm form={methods} />
+                                <ProductEditForm form={methods} />
 
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Información de stock</label>
                                     <div className="rounded-md border p-3">
                                         <div className="text-sm space-y-2">
-                                            <p>Cantidad actual: <span className="font-medium">{medicine.inventory?.quantity || 0}</span></p>
-                                            {medicine.inventory?.quantity === 0 && (
+                                            <p>Cantidad actual: <span className="font-medium">{product.inventory?.quantity || 0}</span></p>
+                                            {product.inventory?.quantity === 0 && (
                                                 <p className="text-red-500">⚠️ Este producto está sin stock</p>
                                             )}
                                         </div>
@@ -108,12 +108,12 @@ export const MedicineCellViewer = forwardRef<HTMLButtonElement, MedicineCellView
                                     <Button type="submit" className="w-full" disabled={isUpdating}>
                                         {isUpdating ? "Guardando..." : "Guardar cambios"}
                                     </Button>
-                                    <MedicineEditActions
-                                        medicine={medicine}
-                                        onDelete={onDelete ? () => onDelete(medicine.id) : undefined}
+                                    <ProductEditActions
+                                        product={product}
+                                        onDelete={onDelete ? () => onDelete(product.id) : undefined}
                                         isDeleteDialogOpen={isDeleteDialogOpen}
                                         setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-                                        handleDeleteMedicine={handleDeleteMedicine}
+                                        handleDeleteProduct={handleDeleteProduct}
                                         isDeleting={isDeleting}
                                     />
                                 </DrawerFooter>
@@ -126,4 +126,4 @@ export const MedicineCellViewer = forwardRef<HTMLButtonElement, MedicineCellView
     }
 );
 
-MedicineCellViewer.displayName = "MedicineCellViewer";
+ProductCellViewer.displayName = "ProductCellViewer";

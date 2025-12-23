@@ -20,8 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { IconAlertTriangle, IconPackage } from "@tabler/icons-react";
 
 interface StockIssue {
-    medicine_id: number;
-    medicine_name: string;
+    product_id: number;
+    product_name: string;
     requested: number;
     available: number;
     shortage: number;
@@ -83,9 +83,9 @@ export function StockConfirmationDialog({
                             </TableHeader>
                             <TableBody>
                                 {stockIssues.map((issue) => (
-                                    <TableRow key={issue.medicine_id}>
+                                    <TableRow key={issue.product_id}>
                                         <TableCell className="font-medium text-sm">
-                                            {issue.medicine_name}
+                                            {issue.product_name}
                                         </TableCell>
                                         <TableCell className="text-center">
                                             {issue.requested}

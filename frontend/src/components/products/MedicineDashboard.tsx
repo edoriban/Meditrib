@@ -3,7 +3,7 @@ import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } 
 import { Badge } from "@/components/ui/badge";
 import { IconBoxSeam, IconCoinOff, IconCoin, IconAlertTriangle, IconChartLine, IconReceipt, IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
 
-interface Medicine {
+interface Product {
     inventory?: {
         quantity?: number | null;
     } | null;
@@ -11,8 +11,8 @@ interface Medicine {
     sale_price: number;
 }
 
-interface MedicineDashboardProps {
-    medicines: Medicine[] | undefined | null;
+interface ProductDashboardProps {
+    products: Product[] | undefined | null;
     isLoading?: boolean;
     error?: unknown;
 }
@@ -24,16 +24,16 @@ const formatCurrency = (amount: number) => {
     }).format(amount);
 };
 
-const MedicineDashboard: React.FC<MedicineDashboardProps> = ({ medicines }) => {
-    const totalInventoryValue = medicines?.reduce((total, med) => {
+const ProductDashboard: React.FC<ProductDashboardProps> = ({ products }) => {
+    const totalInventoryValue = products?.reduce((total, med) => {
         const quantity = med.inventory?.quantity ?? 0;
         const purchasePrice = med.purchase_price ?? 0;
         return total + quantity * purchasePrice;
     }, 0) ?? 0;
 
-    const outOfStockCount = medicines?.filter(med => (med.inventory?.quantity ?? 0) === 0).length ?? 0;
+    const outOfStockCount = products?.filter(med => (med.inventory?.quantity ?? 0) === 0).length ?? 0;
 
-    const potentialProfit = medicines?.reduce((total, med) => {
+    const potentialProfit = products?.reduce((total, med) => {
         const quantity = med.inventory?.quantity ?? 0;
         const purchasePrice = med.purchase_price ?? 0;
         const salePrice = med.sale_price ?? 0;
@@ -41,28 +41,28 @@ const MedicineDashboard: React.FC<MedicineDashboardProps> = ({ medicines }) => {
         return total + (quantity > 0 && profitPerItem > 0 ? quantity * profitPerItem : 0);
     }, 0) ?? 0;
 
-    const totalMedicines = medicines?.length ?? 0;
+    const totalProducts = products?.length ?? 0;
     
-    const lowStockCount = medicines?.filter(med => {
+    const lowStockCount = products?.filter(med => {
         const quantity = med.inventory?.quantity ?? 0;
         return quantity > 0 && quantity <= 10;
     }).length ?? 0;
 
-    const highProfitCount = medicines?.filter(med => {
+    const highProfitCount = products?.filter(med => {
         const purchasePrice = med.purchase_price ?? 0;
         if (purchasePrice === 0) return false;
         const margin = (med.sale_price - purchasePrice) / purchasePrice * 100;
         return margin > 30;
     }).length ?? 0;
 
-    const totalSaleValue = medicines?.reduce((total, med) => {
+    const totalSaleValue = products?.reduce((total, med) => {
         const quantity = med.inventory?.quantity ?? 0;
         return total + quantity * med.sale_price;
     }, 0) ?? 0;
 
     const roiPercentage = totalInventoryValue > 0 ? ((potentialProfit / totalInventoryValue) * 100).toFixed(1) : "0";
-    const outOfStockPercentage = totalMedicines > 0 ? ((outOfStockCount / totalMedicines) * 100).toFixed(1) : "0";
-    const highProfitPercentage = totalMedicines > 0 ? ((highProfitCount / totalMedicines) * 100).toFixed(1) : "0";
+    const outOfStockPercentage = totalProducts > 0 ? ((outOfStockCount / totalProducts) * 100).toFixed(1) : "0";
+    const highProfitPercentage = totalProducts > 0 ? ((highProfitCount / totalProducts) * 100).toFixed(1) : "0";
 
     return (
         <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-6">
@@ -109,7 +109,7 @@ const MedicineDashboard: React.FC<MedicineDashboardProps> = ({ medicines }) => {
                         Agotados del catálogo <IconTrendingDown className="size-4" />
                     </div>
                     <div className="text-muted-foreground">
-                        De {totalMedicines} medicamentos
+                        De {totalProducts} medicamentos
                     </div>
                 </CardFooter>
             </Card>
@@ -213,4 +213,4 @@ const MedicineDashboard: React.FC<MedicineDashboardProps> = ({ medicines }) => {
     );
 };
 
-export default MedicineDashboard;
+export default ProductDashboard;

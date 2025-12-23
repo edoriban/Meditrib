@@ -10,7 +10,7 @@ from datetime import datetime
 # Importaciones del proyecto
 from backend.core.dependencies import get_db
 from backend.core import models, schemas
-from backend.core.crud import crud_medicines
+from backend.core.crud import crud_products
 from backend.core.schemas import (
     ExcelImportPreviewResponse,
     ExcelImportItem,
@@ -24,8 +24,8 @@ from backend.utils.pricing_formula import (
 )
 
 router = APIRouter(
-    prefix="/medicines",
-    tags=["medicines"],
+    prefix="/products",
+    tags=["products"],
     responses={404: {"description": "Not found"}},
 )
 
@@ -37,7 +37,7 @@ import io
 # ============================================================================
 
 @router.get("/export/excel")
-async def export_medicines_to_excel(
+async def export_products_to_excel(
     db: Session = Depends(get_db)
 ):
     """
@@ -57,11 +57,11 @@ async def export_medicines_to_excel(
     - Cantidad en inventario
     """
     # Obtener todos los medicamentos
-    medicines = db.query(models.Medicine).all()
+    products = db.query(models.Product).all()
     
     # Crear DataFrame con las columnas para clientes
     data = []
-    for med in medicines:
+    for med in products:
         # Determinar texto de IVA
         iva_text = "16%" if med.iva_rate and med.iva_rate > 0 else "Exento"
         
@@ -108,8 +108,8 @@ async def export_medicines_to_excel(
 # ENDPOINTS DE BÚSQUEDA (deben ir antes de los endpoints con parámetros de ruta)
 # ============================================================================
 
-@router.get("/search/barcode/", response_model=List[schemas.Medicine])
-def search_medicines_by_barcode(
+@router.get("/search/barcode/", response_model=List[schemas.Product])
+def search_products_by_barcode(
     barcode: str = Query(..., min_length=1),
     db: Session = Depends(get_db)
 ):
@@ -118,22 +118,22 @@ def search_medicines_by_barcode(
     """
     if len(barcode) < 3:
         # Búsqueda exacta para códigos cortos
-        medicine = crud_medicines.get_medicine_by_barcode(db, barcode=barcode)
-        return [medicine] if medicine else []
+        product = crud_products.get_product_by_barcode(db, barcode=barcode)
+        return [product] if product else []
     else:
         # Búsqueda parcial para códigos largos
-        return crud_medicines.search_medicines_by_barcode(db, barcode=barcode)
+        return crud_products.search_products_by_barcode(db, barcode=barcode)
 
 
-@router.get("/search/", response_model=List[schemas.Medicine])
-def search_medicines(
+@router.get("/search/", response_model=List[schemas.Product])
+def search_products(
     query: str = Query(..., min_length=1),
     db: Session = Depends(get_db)
 ):
     """
     Buscar medicamentos por nombre, código de barras o sustancia activa
     """
-    return crud_medicines.search_medicines(db, query=query)
+    return crud_products.search_products(db, query=query)
 
 
 # ============================================================================
@@ -264,8 +264,8 @@ async def preview_excel_import(
             )
 
         preview_items = []
-        new_medicines = 0
-        existing_medicines = 0
+        new_products = 0
+        existing_products = 0
         price_changes = 0
 
         # Procesar cada fila
@@ -319,8 +319,8 @@ async def preview_excel_import(
                             inventory_to_add = 0
 
                 # Buscar si existe el medicamento por código de barras
-                existing_medicine = db.query(models.Medicine).filter(
-                    models.Medicine.barcode == barcode
+                existing_product = db.query(models.Product).filter(
+                    models.Product.barcode == barcode
                 ).first()
 
                 # Calcular precio sugerido usando nuestra fórmula
@@ -333,10 +333,10 @@ async def preview_excel_import(
                 price_change = "new"
                 price_difference = None
 
-                if existing_medicine:
-                    existing_medicines += 1
+                if existing_product:
+                    existing_products += 1
                     price_difference = calculate_price_difference(
-                        existing_medicine.purchase_price or 0,
+                        existing_product.purchase_price or 0,
                         purchase_price_new
                     )
                     price_change = price_difference["direction"]
@@ -344,7 +344,7 @@ async def preview_excel_import(
                     if price_change in ["up", "down"]:
                         price_changes += 1
                 else:
-                    new_medicines += 1
+                    new_products += 1
 
                 preview_items.append(ExcelImportItem(
                     barcode=barcode,
@@ -352,14 +352,14 @@ async def preview_excel_import(
                     active_substance=active_substance,
                     laboratory=laboratory,
                     purchase_price_new=purchase_price_new,
-                    purchase_price_old=existing_medicine.purchase_price if existing_medicine else None,
+                    purchase_price_old=existing_product.purchase_price if existing_product else None,
                     sale_price_suggested=suggested_price,
-                    sale_price_current=existing_medicine.sale_price if existing_medicine else None,
+                    sale_price_current=existing_product.sale_price if existing_product else None,
                     price_change=price_change,
                     iva_rate=iva_rate,
                     inventory_to_add=inventory_to_add,
-                    exists=existing_medicine is not None,
-                    medicine_id=existing_medicine.id if existing_medicine else None,
+                    exists=existing_product is not None,
+                    product_id=existing_product.id if existing_product else None,
                     price_range=price_range_desc,
                     price_difference=price_difference
                 ))
@@ -372,8 +372,8 @@ async def preview_excel_import(
         return ExcelImportPreviewResponse(
             items=preview_items,
             total_items=len(preview_items),
-            new_medicines=new_medicines,
-            existing_medicines=existing_medicines,
+            new_products=new_products,
+            existing_products=existing_products,
             price_changes=price_changes
         )
 
@@ -411,29 +411,29 @@ async def confirm_excel_import(
     for idx, item in enumerate(items):
         try:
             # SIEMPRE buscar por código de barras como identificador único
-            existing_medicine = db.query(models.Medicine).filter(
-                models.Medicine.barcode == item.barcode
+            existing_product = db.query(models.Product).filter(
+                models.Product.barcode == item.barcode
             ).first()
             
-            if existing_medicine:
+            if existing_product:
                 # Actualizar medicamento existente
-                existing_medicine.name = item.name
-                existing_medicine.purchase_price = item.purchase_price
-                existing_medicine.sale_price = item.sale_price
-                existing_medicine.iva_rate = item.iva_rate
+                existing_product.name = item.name
+                existing_product.purchase_price = item.purchase_price
+                existing_product.sale_price = item.sale_price
+                existing_product.iva_rate = item.iva_rate
 
                 # Actualizar campos opcionales si se proporcionan
                 if item.active_substance:
-                    existing_medicine.active_substance = item.active_substance
+                    existing_product.active_substance = item.active_substance
                 if item.laboratory:
-                    existing_medicine.laboratory = item.laboratory
+                    existing_product.laboratory = item.laboratory
                 if item.sat_key:
-                    existing_medicine.sat_key = item.sat_key
+                    existing_product.sat_key = item.sat_key
 
                 # Solo crear inventario si no existe (con cantidad 0)
-                if not existing_medicine.inventory:
+                if not existing_product.inventory:
                     new_inventory = models.Inventory(
-                        medicine_id=existing_medicine.id,
+                        product_id=existing_product.id,
                         quantity=0
                     )
                     db.add(new_inventory)
@@ -442,7 +442,7 @@ async def confirm_excel_import(
                 results["updated"] += 1
             else:
                 # Crear nuevo medicamento
-                new_medicine = models.Medicine(
+                new_product = models.Product(
                     name=item.name,
                     barcode=item.barcode,
                     purchase_price=item.purchase_price,
@@ -453,12 +453,12 @@ async def confirm_excel_import(
                     sat_key=item.sat_key,
                     prescription_required=False
                 )
-                db.add(new_medicine)
+                db.add(new_product)
                 db.flush()  # Obtener el ID
 
                 # Crear inventario con cantidad 0 (el usuario ajustará manualmente)
                 inventory = models.Inventory(
-                    medicine_id=new_medicine.id,
+                    product_id=new_product.id,
                     quantity=0
                 )
                 db.add(inventory)
@@ -491,8 +491,8 @@ async def confirm_excel_import(
 # ENDPOINTS CRUD BÁSICOS
 # ============================================================================
 
-@router.get("/paginated", response_model=schemas.MedicinePaginatedResponse)
-def read_medicines_paginated(
+@router.get("/paginated", response_model=schemas.ProductPaginatedResponse)
+def read_products_paginated(
     page: int = 1,
     page_size: int = 50,
     search: str = None,
@@ -507,7 +507,7 @@ def read_medicines_paginated(
     - search: Término de búsqueda (busca en nombre, código de barras, laboratorio, sustancia activa)
     - stock_filter: "all", "in-stock", "out-of-stock"
     """
-    result = crud_medicines.get_medicines_paginated(
+    result = crud_products.get_products_paginated(
         db, 
         page=page, 
         page_size=page_size,
@@ -517,76 +517,76 @@ def read_medicines_paginated(
     return result
 
 
-@router.get("/", response_model=List[schemas.Medicine])
-def read_medicines(
+@router.get("/", response_model=List[schemas.Product])
+def read_products(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db)
 ):
     """Obtener lista de medicamentos con paginación"""
-    medicines = crud_medicines.get_medicines(db, skip=skip, limit=limit)
-    return medicines
+    products = crud_products.get_products(db, skip=skip, limit=limit)
+    return products
 
 
-@router.post("/", response_model=schemas.Medicine)
-def create_medicine(
-    medicine: schemas.MedicineCreate,
+@router.post("/", response_model=schemas.Product)
+def create_product(
+    product: schemas.ProductCreate,
     db: Session = Depends(get_db)
 ):
     """Crear un nuevo medicamento"""
     # Verificar si ya existe un medicamento con el mismo código de barras
-    if medicine.barcode:
-        existing = crud_medicines.get_medicine_by_barcode(db, barcode=medicine.barcode)
+    if product.barcode:
+        existing = crud_products.get_product_by_barcode(db, barcode=product.barcode)
         if existing:
             raise HTTPException(
                 status_code=400,
-                detail=f"Ya existe un medicamento con el código de barras: {medicine.barcode}"
+                detail=f"Ya existe un medicamento con el código de barras: {product.barcode}"
             )
-    return crud_medicines.create_medicine(db=db, medicine=medicine)
+    return crud_products.create_product(db=db, product=product)
 
 
-@router.get("/{medicine_id}", response_model=schemas.Medicine)
-def read_medicine(
-    medicine_id: int,
+@router.get("/{product_id}", response_model=schemas.Product)
+def read_product(
+    product_id: int,
     db: Session = Depends(get_db)
 ):
     """Obtener un medicamento por ID"""
-    db_medicine = crud_medicines.get_medicine(db, medicine_id=medicine_id)
-    if db_medicine is None:
+    db_product = crud_products.get_product(db, product_id=product_id)
+    if db_product is None:
         raise HTTPException(status_code=404, detail="Medicamento no encontrado")
-    return db_medicine
+    return db_product
 
 
-@router.put("/{medicine_id}", response_model=schemas.Medicine)
-def update_medicine(
-    medicine_id: int,
-    medicine: schemas.MedicineUpdate,
+@router.put("/{product_id}", response_model=schemas.Product)
+def update_product(
+    product_id: int,
+    product: schemas.ProductUpdate,
     db: Session = Depends(get_db)
 ):
     """Actualizar un medicamento existente"""
-    db_medicine = crud_medicines.get_medicine(db, medicine_id=medicine_id)
-    if db_medicine is None:
+    db_product = crud_products.get_product(db, product_id=product_id)
+    if db_product is None:
         raise HTTPException(status_code=404, detail="Medicamento no encontrado")
 
     # Verificar código de barras duplicado si se está actualizando
-    if medicine.barcode and medicine.barcode != db_medicine.barcode:
-        existing = crud_medicines.get_medicine_by_barcode(db, barcode=medicine.barcode)
-        if existing and existing.id != medicine_id:
+    if product.barcode and product.barcode != db_product.barcode:
+        existing = crud_products.get_product_by_barcode(db, barcode=product.barcode)
+        if existing and existing.id != product_id:
             raise HTTPException(
                 status_code=400,
-                detail=f"Ya existe un medicamento con el código de barras: {medicine.barcode}"
+                detail=f"Ya existe un medicamento con el código de barras: {product.barcode}"
             )
 
-    return crud_medicines.update_medicine(db=db, medicine_id=medicine_id, medicine=medicine)
+    return crud_products.update_product(db=db, product_id=product_id, product=product)
 
 
-@router.delete("/{medicine_id}", response_model=schemas.Medicine)
-def delete_medicine(
-    medicine_id: int,
+@router.delete("/{product_id}", response_model=schemas.Product)
+def delete_product(
+    product_id: int,
     db: Session = Depends(get_db)
 ):
     """Eliminar un medicamento"""
-    db_medicine = crud_medicines.get_medicine(db, medicine_id=medicine_id)
-    if db_medicine is None:
+    db_product = crud_products.get_product(db, product_id=product_id)
+    if db_product is None:
         raise HTTPException(status_code=404, detail="Medicamento no encontrado")
-    return crud_medicines.delete_medicine(db=db, medicine_id=medicine_id)
+    return crud_products.delete_product(db=db, product_id=product_id)

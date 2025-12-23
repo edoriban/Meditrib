@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { SaleCreateValues, SaleItemValues, SaleFormValues, saleFormSchema } from "@/types/sales";
 import { useSaleMutations } from "@/hooks/useSaleMutations";
-import { Medicine } from "@/types/medicine";
+import { Product } from "@/types/product";
 import { Client } from "@/types/clients";
 import { BASE_API_URL } from "@/config";
 import { Button } from "@/components/ui/button";
@@ -31,14 +31,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { IconPlus, IconTrash, IconMinus } from "@tabler/icons-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarcodeSearchInput } from "@/components/medicines/BarcodeSearchInput";
+import { BarcodeSearchInput } from "@/components/products/BarcodeSearchInput";
 import { EditablePriceCell } from "@/components/sales/EditablePriceCell";
 import { StockConfirmationDialog } from "@/components/sales/StockConfirmationDialog";
 
 // Tipo para problemas de stock
 interface StockIssue {
-    medicine_id: number;
-    medicine_name: string;
+    product_id: number;
+    product_name: string;
     requested: number;
     available: number;
     shortage: number;
@@ -78,13 +78,13 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
 
 
     // Cargar medicamentos solo los que están en la lista de items (para mostrar nombres)
-    const { data: medicines } = useQuery<Medicine[]>({
-        queryKey: ["medicines-for-items", items.map(i => i.medicine_id)],
+    const { data: products } = useQuery<Product[]>({
+        queryKey: ["products-for-items", items.map(i => i.product_id)],
         queryFn: async () => {
             // Solo cargar medicamentos que están en items
             if (items.length === 0) return [];
             const promises = items.map(item =>
-                axios.get(`${BASE_API_URL}/medicines/${item.medicine_id}`)
+                axios.get(`${BASE_API_URL}/products/${item.product_id}`)
             );
             const results = await Promise.all(promises);
             return results.map(r => r.data);
@@ -122,8 +122,8 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
 
 
     // Agregar item desde BarcodeSearchInput
-    const addItemFromBarcode = (medicine: Medicine) => {
-        const existingIndex = items.findIndex(item => item.medicine_id === medicine.id);
+    const addItemFromBarcode = (product: Product) => {
+        const existingIndex = items.findIndex(item => item.product_id === product.id);
 
         if (existingIndex >= 0) {
             // Actualizar cantidad si ya existe
@@ -133,9 +133,9 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         } else {
             // Agregar nuevo item
             const newItem: SaleItemValues = {
-                medicine_id: medicine.id,
+                product_id: product.id,
                 quantity: 1,
-                unit_price: medicine.sale_price,
+                unit_price: product.sale_price,
                 discount: 0,
             };
             setItems([...items, newItem]);
@@ -167,11 +167,11 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
 
 
     // Medicamentos cargados para lookups
-    const allMedicinesMap = new Map<number, Medicine>();
-    medicines?.forEach(m => allMedicinesMap.set(m.id, m));
+    const allProductsMap = new Map<number, Product>();
+    products?.forEach(m => allProductsMap.set(m.id, m));
 
     // Helper para obtener medicamento por ID
-    const getMedicineById = (id: number): Medicine | undefined => allMedicinesMap.get(id);
+    const getProductById = (id: number): Product | undefined => allProductsMap.get(id);
 
     // Calcular totales con IVA por producto
     const subtotal = items.reduce((sum, item) => {
@@ -182,9 +182,9 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
     const documentType = form.watch("document_type");
     const ivaAmount = documentType === "invoice"
         ? items.reduce((sum, item) => {
-            const medicine = getMedicineById(item.medicine_id);
+            const product = getProductById(item.product_id);
             const itemSubtotal = (item.quantity * item.unit_price) - item.discount;
-            const productIvaRate = medicine?.iva_rate || 0;
+            const productIvaRate = product?.iva_rate || 0;
             return sum + (itemSubtotal * productIvaRate);
         }, 0)
         : 0;
@@ -249,8 +249,8 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
         setStockIssues([]);
     };
 
-    const getMedicineName = (medicineId: number) => {
-        return getMedicineById(medicineId)?.name || "Desconocido";
+    const getProductName = (productId: number) => {
+        return getProductById(productId)?.name || "Desconocido";
     };
 
     return (
@@ -383,7 +383,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium">Buscar por código de barras o nombre</label>
                                     <BarcodeSearchInput
-                                        onMedicineSelect={addItemFromBarcode}
+                                        onProductSelect={addItemFromBarcode}
                                         placeholder="Escanea código de barras o escribe para buscar..."
                                         excludeIds={[]}
                                         autoFocus
@@ -411,15 +411,15 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                             </TableHeader>
                                             <TableBody>
                                                 {items.map((item, index) => {
-                                                    const medicine = getMedicineById(item.medicine_id);
-                                                    const productIvaRate = medicine?.iva_rate || 0;
-                                                    const currentStock = medicine?.inventory?.quantity || 0;
+                                                    const product = getProductById(item.product_id);
+                                                    const productIvaRate = product?.iva_rate || 0;
+                                                    const currentStock = product?.inventory?.quantity || 0;
                                                     const exceedsStock = item.quantity > currentStock;
                                                     return (
                                                         <TableRow key={index} className={exceedsStock ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
                                                             <TableCell className="align-top py-2">
                                                                 <div className="flex flex-col gap-0.5">
-                                                                    <span className="text-sm leading-tight">{getMedicineName(item.medicine_id)}</span>
+                                                                    <span className="text-sm leading-tight">{getProductName(item.product_id)}</span>
                                                                     <span className={`text-xs ${exceedsStock ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
                                                                         Stock: {currentStock} {exceedsStock && `(falta ${item.quantity - currentStock})`}
                                                                     </span>
@@ -459,7 +459,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                                                 <EditablePriceCell
                                                                     value={item.unit_price}
                                                                     onChange={(newPrice) => updateItemPrice(index, newPrice)}
-                                                                    originalValue={medicine?.sale_price}
+                                                                    originalValue={product?.sale_price}
                                                                 />
                                                             </TableCell>
                                                             {documentType === "invoice" && (

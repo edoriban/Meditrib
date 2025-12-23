@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 
-interface MedicineFiltersProps {
+interface ProductFiltersProps {
     searchTerm: string;
     setSearchTerm: (term: string) => void;
     stockFilter: "all" | "in-stock" | "out-of-stock";
@@ -18,7 +18,7 @@ interface MedicineFiltersProps {
     resultsCount: number;
 }
 
-export function MedicineFilters({
+export function ProductFilters({
     searchTerm,
     setSearchTerm,
     stockFilter,
@@ -27,7 +27,7 @@ export function MedicineFilters({
     setPriceRange,
     maxPrice,
     resultsCount
-}: MedicineFiltersProps) {
+}: ProductFiltersProps) {
     const [showFilters, setShowFilters] = useState(false);
     const [localPriceRange, setLocalPriceRange] = useState<[number, number]>(priceRange);
     const hasActiveFilters = stockFilter !== "all" || priceRange[0] > 0 || priceRange[1] < maxPrice;

@@ -28,30 +28,30 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { MedicineTag, MedicineTagFormValues, medicineTagSchema, MedicineTagWithUIState, CreateMedicineTagDialogProps } from "@/types/medicine";
+import { ProductTag, ProductTagFormValues, productTagSchema, ProductTagWithUIState, CreateProductTagDialogProps } from "@/types/product";
 
 
 
-export function CreateMedicineTagDialog({ onClose }: CreateMedicineTagDialogProps = {}) {
+export function CreateProductTagDialog({ onClose }: CreateProductTagDialogProps = {}) {
     const [open, setOpen] = React.useState(false);
     const [activeTab, setActiveTab] = React.useState("create");
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const [editingTag, setEditingTag] = React.useState<MedicineTag | null>(null);
+    const [editingTag, setEditingTag] = React.useState<ProductTag | null>(null);
     const [color, setColor] = React.useState("#6366f1");
 
     const queryClient = useQueryClient();
 
-    const { data: tags = [], isLoading } = useQuery<MedicineTagWithUIState[]>({
-        queryKey: ["medicineTags"],
+    const { data: tags = [], isLoading } = useQuery<ProductTagWithUIState[]>({
+        queryKey: ["productTags"],
         queryFn: async () => {
-            const { data } = await axios.get(`${BASE_API_URL}/medicine-tags/`);
+            const { data } = await axios.get(`${BASE_API_URL}/product-tags/`);
             return data;
         },
         enabled: open && activeTab === "manage"
     });
 
-    const { control, handleSubmit, formState: { errors }, reset, setValue } = useForm<MedicineTagFormValues>({
-        resolver: zodResolver(medicineTagSchema),
+    const { control, handleSubmit, formState: { errors }, reset, setValue } = useForm<ProductTagFormValues>({
+        resolver: zodResolver(productTagSchema),
         defaultValues: {
             name: "",
             description: "",
@@ -70,15 +70,15 @@ export function CreateMedicineTagDialog({ onClose }: CreateMedicineTagDialogProp
         }
     }, [editingTag, setValue]);
 
-    const onSubmit = async (data: MedicineTagFormValues) => {
+    const onSubmit = async (data: ProductTagFormValues) => {
         setIsSubmitting(true);
 
         try {
             if (editingTag) {
-                await axios.put(`${BASE_API_URL}/medicine-tags/${editingTag.id}`, data);
+                await axios.put(`${BASE_API_URL}/product-tags/${editingTag.id}`, data);
                 toast.success(`Etiqueta "${data.name}" actualizada correctamente`);
 
-                queryClient.setQueryData(['medicineTags'], (oldData: any) => {
+                queryClient.setQueryData(['productTags'], (oldData: any) => {
                     if (!oldData) return [];
                     return oldData.map((tag: any) =>
                         tag.id === editingTag.id
@@ -87,16 +87,16 @@ export function CreateMedicineTagDialog({ onClose }: CreateMedicineTagDialogProp
                     );
                 });
             } else {
-                const response = await axios.post(`${BASE_API_URL}/medicine-tags/`, data);
+                const response = await axios.post(`${BASE_API_URL}/product-tags/`, data);
                 toast.success(`Etiqueta "${data.name}" creada correctamente`);
 
-                queryClient.setQueryData(['medicineTags'], (oldData: any) => {
+                queryClient.setQueryData(['productTags'], (oldData: any) => {
                     if (!oldData) return [response.data];
                     return [...oldData, response.data];
                 });
             }
 
-            queryClient.invalidateQueries({ queryKey: ['medicineTags'] });
+            queryClient.invalidateQueries({ queryKey: ['productTags'] });
             handleResetForm();
             setOpen(false);
         } catch (error) {
@@ -120,17 +120,17 @@ export function CreateMedicineTagDialog({ onClose }: CreateMedicineTagDialogProp
         setOpen(newOpen);
     };
 
-    const handleEditTag = (tag: MedicineTag) => {
+    const handleEditTag = (tag: ProductTag) => {
         setEditingTag(tag);
     };
 
-    const confirmDelete = async (tag: MedicineTag) => {
+    const confirmDelete = async (tag: ProductTag) => {
         if (!tag) return;
 
         try {
-            await axios.delete(`${BASE_API_URL}/medicine-tags/${tag.id}`);
+            await axios.delete(`${BASE_API_URL}/product-tags/${tag.id}`);
             toast.success(`Etiqueta "${tag.name}" eliminada correctamente`);
-            queryClient.invalidateQueries({ queryKey: ['medicineTags'] });
+            queryClient.invalidateQueries({ queryKey: ['productTags'] });
 
             if (editingTag?.id === tag.id) {
                 handleResetForm();
@@ -295,7 +295,7 @@ export function CreateMedicineTagDialog({ onClose }: CreateMedicineTagDialogProp
                                                                         const updatedTags = tags.map(t =>
                                                                             t.id === tag.id ? { ...t, pendingDelete: false } : t
                                                                         );
-                                                                        queryClient.setQueryData(['medicineTags'], updatedTags);
+                                                                        queryClient.setQueryData(['productTags'], updatedTags);
                                                                     }}
                                                                 >
                                                                     No
@@ -319,7 +319,7 @@ export function CreateMedicineTagDialog({ onClose }: CreateMedicineTagDialogProp
                                                                         const updatedTags = tags.map(t =>
                                                                             t.id === tag.id ? { ...t, pendingDelete: true } : t
                                                                         );
-                                                                        queryClient.setQueryData(['medicineTags'], updatedTags);
+                                                                        queryClient.setQueryData(['productTags'], updatedTags);
                                                                     }}
                                                                     title="Eliminar"
                                                                 >
@@ -355,4 +355,4 @@ export function CreateMedicineTagDialog({ onClose }: CreateMedicineTagDialogProp
     );
 }
 
-export default CreateMedicineTagDialog;
+export default CreateProductTagDialog;

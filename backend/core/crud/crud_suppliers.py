@@ -44,8 +44,8 @@ def get_supplier_by_name(db: Session, name: str):
     return db.query(models.Supplier).filter(models.Supplier.name == name).first()
 
 
-def get_supplier_by_medicine(db: Session, medicine_id: int):
-    return db.query(models.SupplierMedicine).filter(models.SupplierMedicine.medicine_id == medicine_id).all()
+def get_supplier_by_product(db: Session, product_id: int):
+    return db.query(models.SupplierProduct).filter(models.SupplierProduct.product_id == product_id).all()
 
 
 # ... otras funciones CRUD ...

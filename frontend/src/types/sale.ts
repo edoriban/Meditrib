@@ -1,6 +1,6 @@
 export interface Sale {
     id: number;
-    medicine_id: number;
+    product_id: number;
     quantity: number;
     subtotal: number;
     client_id: number;
@@ -16,7 +16,7 @@ export interface Sale {
     payment_status: string;
     payment_method?: string;
     invoice_id?: number;
-    medicine: {
+    product: {
         id: number;
         name: string;
         sale_price: number;
@@ -38,7 +38,7 @@ export interface Sale {
 }
 
 export interface SaleCreate {
-    medicine_id: number;
+    product_id: number;
     quantity: number;
     subtotal: number;
     client_id: number;
@@ -53,7 +53,7 @@ export interface SaleCreate {
 }
 
 export interface SaleUpdate {
-    medicine_id?: number;
+    product_id?: number;
     quantity?: number;
     subtotal?: number;
     client_id?: number;

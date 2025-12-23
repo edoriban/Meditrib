@@ -94,7 +94,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
-import { Medicine } from "@/types/medicine"
+import { Product } from "@/types/product"
 
 function DragHandle({ id }: { id: number }) {
   const { attributes, listeners } = useSortable({
@@ -115,7 +115,7 @@ function DragHandle({ id }: { id: number }) {
   )
 }
 
-const columns: ColumnDef<Medicine>[] = [
+const columns: ColumnDef<Product>[] = [
   {
     id: "drag",
     header: () => null,
@@ -311,7 +311,7 @@ const columns: ColumnDef<Medicine>[] = [
 ]
 
 
-function DraggableRow({ row }: { row: Row<Medicine> }) {
+function DraggableRow({ row }: { row: Row<Product> }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
     id: row.original.id,
   })
@@ -339,7 +339,7 @@ function DraggableRow({ row }: { row: Row<Medicine> }) {
 export function DataTable({
   data: initialData,
 }: {
-  data: Medicine[]
+  data: Product[]
 }) {
   const [data, setData] = React.useState(() => initialData)
   const [rowSelection, setRowSelection] = React.useState({})
@@ -628,7 +628,7 @@ export function DataTable({
 }
 
 interface TableCellViewerProps {
-  item: Medicine
+  item: Product
 }
 
 function TableCellViewer({ item }: TableCellViewerProps) {

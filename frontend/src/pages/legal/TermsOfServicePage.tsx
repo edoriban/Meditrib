@@ -6,8 +6,8 @@ export default function TermsOfServicePage() {
     return (
         <div className="min-h-screen bg-background">
             <div className="container max-w-4xl mx-auto py-8 px-4">
-                <Button 
-                    variant="ghost" 
+                <Button
+                    variant="ghost"
                     className="mb-6"
                     onClick={() => window.history.back()}
                 >
@@ -24,8 +24,8 @@ export default function TermsOfServicePage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">1. Aceptación de los Términos</h2>
                             <p className="text-muted-foreground mb-4">
-                                Al acceder y utilizar Meditrib ("el Sistema"), usted acepta estar sujeto a estos 
-                                Términos de Servicio y a todas las leyes y regulaciones aplicables. Si no está 
+                                Al acceder y utilizar VanPOS ("el Sistema"), usted acepta estar sujeto a estos
+                                Términos de Servicio y a todas las leyes y regulaciones aplicables. Si no está
                                 de acuerdo con alguno de estos términos, no utilice el Sistema.
                             </p>
                         </section>
@@ -33,11 +33,11 @@ export default function TermsOfServicePage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">2. Descripción del Servicio</h2>
                             <p className="text-muted-foreground mb-4">
-                                Meditrib es un sistema de gestión y distribución de medicamentos diseñado para 
-                                farmacias y distribuidoras farmacéuticas. El Sistema permite:
+                                VanPOS es un sistema de inventario y punto de venta diseñado para
+                                negocios y distribuidoras. El Sistema permite:
                             </p>
                             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                                <li>Gestión de inventario de medicamentos</li>
+                                <li>Gestión de inventario de productos</li>
                                 <li>Control de lotes y fechas de caducidad</li>
                                 <li>Generación de facturas electrónicas (CFDI)</li>
                                 <li>Administración de proveedores y clientes</li>
@@ -49,7 +49,7 @@ export default function TermsOfServicePage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">3. Registro y Cuenta de Usuario</h2>
                             <p className="text-muted-foreground mb-4">
-                                Para utilizar el Sistema, debe crear una cuenta proporcionando información 
+                                Para utilizar el Sistema, debe crear una cuenta proporcionando información
                                 veraz y completa. Usted es responsable de:
                             </p>
                             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
@@ -63,7 +63,7 @@ export default function TermsOfServicePage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">4. Uso Aceptable</h2>
                             <p className="text-muted-foreground mb-4">
-                                El usuario se compromete a utilizar el Sistema únicamente para fines legales 
+                                El usuario se compromete a utilizar el Sistema únicamente para fines legales
                                 y de acuerdo con estos Términos. Está prohibido:
                             </p>
                             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
@@ -71,16 +71,15 @@ export default function TermsOfServicePage() {
                                 <li>Intentar acceder a cuentas de otros usuarios</li>
                                 <li>Modificar, copiar o distribuir el software sin autorización</li>
                                 <li>Introducir virus o código malicioso</li>
-                                <li>Utilizar el Sistema para vender medicamentos controlados sin las licencias correspondientes</li>
+                                <li>Utilizar el Sistema para vender productos controlados sin las licencias correspondientes</li>
                             </ul>
                         </section>
 
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">5. Cumplimiento Regulatorio</h2>
                             <p className="text-muted-foreground mb-4">
-                                El usuario es responsable de cumplir con todas las leyes y regulaciones 
-                                aplicables a la distribución de medicamentos en México, incluyendo pero 
-                                no limitado a:
+                                El usuario es responsable de cumplir con todas las leyes y regulaciones
+                                aplicables a su industria, incluyendo pero no limitado a:
                             </p>
                             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                                 <li>Ley General de Salud</li>
@@ -94,9 +93,9 @@ export default function TermsOfServicePage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">6. Propiedad Intelectual</h2>
                             <p className="text-muted-foreground mb-4">
-                                El Sistema, incluyendo su código fuente, diseño, logos y contenido, son 
-                                propiedad de Meditrib y están protegidos por leyes de propiedad intelectual. 
-                                Se otorga una licencia limitada y no exclusiva para usar el Sistema según 
+                                El Sistema, incluyendo su código fuente, diseño, logos y contenido, son
+                                propiedad de VanPOS y están protegidos por leyes de propiedad intelectual.
+                                Se otorga una licencia limitada y no exclusiva para usar el Sistema según
                                 estos Términos.
                             </p>
                         </section>
@@ -105,7 +104,7 @@ export default function TermsOfServicePage() {
                             <h2 className="text-xl font-semibold mb-4">7. Privacidad y Datos</h2>
                             <p className="text-muted-foreground mb-4">
                                 El tratamiento de datos personales se rige por nuestra{" "}
-                                <a href="/privacy" className="text-primary underline">Política de Privacidad</a>. 
+                                <a href="/privacy" className="text-primary underline">Política de Privacidad</a>.
                                 Al usar el Sistema, acepta dicha política.
                             </p>
                         </section>
@@ -113,7 +112,7 @@ export default function TermsOfServicePage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">8. Limitación de Responsabilidad</h2>
                             <p className="text-muted-foreground mb-4">
-                                Meditrib no será responsable por:
+                                VanPOS no será responsable por:
                             </p>
                             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                                 <li>Pérdidas derivadas del uso o incapacidad de uso del Sistema</li>
@@ -126,8 +125,8 @@ export default function TermsOfServicePage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">9. Modificaciones</h2>
                             <p className="text-muted-foreground mb-4">
-                                Nos reservamos el derecho de modificar estos Términos en cualquier momento. 
-                                Los cambios serán efectivos al publicarse en el Sistema. El uso continuado 
+                                Nos reservamos el derecho de modificar estos Términos en cualquier momento.
+                                Los cambios serán efectivos al publicarse en el Sistema. El uso continuado
                                 después de las modificaciones constituye aceptación de los nuevos Términos.
                             </p>
                         </section>
@@ -138,7 +137,7 @@ export default function TermsOfServicePage() {
                                 Para preguntas sobre estos Términos de Servicio, contacte a:
                             </p>
                             <p className="text-muted-foreground">
-                                <strong>Email:</strong> soporte@meditrib.com<br />
+                                <strong>Email:</strong> soporte@vanpos.com<br />
                                 <strong>Teléfono:</strong> (55) 1234-5678
                             </p>
                         </section>

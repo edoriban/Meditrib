@@ -35,8 +35,8 @@ export interface IncomeStatement {
 }
 
 export interface ProductProfitability {
-    medicine_id: number;
-    medicine_name: string;
+    product_id: number;
+    product_name: string;
     total_quantity: number;
     total_sales: number;
     estimated_cost: number;

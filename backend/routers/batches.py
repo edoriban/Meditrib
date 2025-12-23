@@ -3,42 +3,42 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date
 from backend.core.database import get_db
-from backend.core.schemas import MedicineBatch, MedicineBatchCreate, MedicineBatchUpdate, BatchStockMovement
+from backend.core.schemas import ProductBatch, ProductBatchCreate, ProductBatchUpdate, BatchStockMovement
 from backend.core.crud.crud_batches import (
-    get_medicine_batches, get_medicine_batch, create_medicine_batch,
-    update_medicine_batch, delete_medicine_batch, get_batch_movements,
-    get_expiring_batches, get_batches_by_medicine, get_batch_inventory_summary,
+    get_product_batches, get_product_batch, create_product_batch,
+    update_product_batch, delete_product_batch, get_batch_movements,
+    get_expiring_batches, get_batches_by_product, get_batch_inventory_summary,
     validate_batch_expiration
 )
 
 router = APIRouter()
 
 
-@router.post("/", response_model=MedicineBatch)
-def create_batch(batch: MedicineBatchCreate, user_id: int = Query(..., description="User ID"), db: Session = Depends(get_db)):
+@router.post("/", response_model=ProductBatch)
+def create_batch(batch: ProductBatchCreate, user_id: int = Query(..., description="User ID"), db: Session = Depends(get_db)):
     """Crear un nuevo lote de medicamento"""
-    return create_medicine_batch(db, batch, user_id)
+    return create_product_batch(db, batch, user_id)
 
 
-@router.get("/", response_model=List[MedicineBatch])
-def read_batches(medicine_id: Optional[int] = None, db: Session = Depends(get_db)):
+@router.get("/", response_model=List[ProductBatch])
+def read_batches(product_id: Optional[int] = None, db: Session = Depends(get_db)):
     """Obtener lotes de medicamentos"""
-    return get_medicine_batches(db, medicine_id)
+    return get_product_batches(db, product_id)
 
 
-@router.get("/{batch_id}", response_model=MedicineBatch)
+@router.get("/{batch_id}", response_model=ProductBatch)
 def read_batch(batch_id: int, db: Session = Depends(get_db)):
     """Obtener un lote específico"""
-    db_batch = get_medicine_batch(db, batch_id)
+    db_batch = get_product_batch(db, batch_id)
     if db_batch is None:
         raise HTTPException(status_code=404, detail="Batch not found")
     return db_batch
 
 
-@router.put("/{batch_id}", response_model=MedicineBatch)
-def update_batch(batch_id: int, batch_update: MedicineBatchUpdate, user_id: int = Query(..., description="User ID"), db: Session = Depends(get_db)):
+@router.put("/{batch_id}", response_model=ProductBatch)
+def update_batch(batch_id: int, batch_update: ProductBatchUpdate, user_id: int = Query(..., description="User ID"), db: Session = Depends(get_db)):
     """Actualizar un lote"""
-    db_batch = update_medicine_batch(db, batch_id, batch_update, user_id)
+    db_batch = update_product_batch(db, batch_id, batch_update, user_id)
     if db_batch is None:
         raise HTTPException(status_code=404, detail="Batch not found")
     return db_batch
@@ -47,7 +47,7 @@ def update_batch(batch_id: int, batch_update: MedicineBatchUpdate, user_id: int 
 @router.delete("/{batch_id}")
 def delete_batch(batch_id: int, user_id: int = Query(..., description="User ID"), db: Session = Depends(get_db)):
     """Eliminar un lote (solo si no tiene movimientos)"""
-    success = delete_medicine_batch(db, batch_id, user_id)
+    success = delete_product_batch(db, batch_id, user_id)
     if not success:
         raise HTTPException(status_code=400, detail="Cannot delete batch with stock movements")
     return {"message": "Batch deleted successfully"}
@@ -62,7 +62,7 @@ def get_expiring_soon_batches(days_ahead: int = Query(30, description="Days ahea
         "batches": [
             {
                 "id": batch.id,
-                "medicine_name": batch.medicine.name,
+                "product_name": batch.product.name,
                 "batch_number": batch.batch_number,
                 "expiration_date": batch.expiration_date.isoformat(),
                 "quantity_remaining": batch.quantity_remaining,
@@ -72,12 +72,12 @@ def get_expiring_soon_batches(days_ahead: int = Query(30, description="Days ahea
     }
 
 
-@router.get("/medicine/{medicine_id}/batches")
-def get_medicine_batches_list(medicine_id: int, db: Session = Depends(get_db)):
+@router.get("/product/{product_id}/batches")
+def get_product_batches_list(product_id: int, db: Session = Depends(get_db)):
     """Obtener lotes disponibles para un medicamento"""
-    batches = get_batches_by_medicine(db, medicine_id)
+    batches = get_batches_by_product(db, product_id)
     return {
-        "medicine_id": medicine_id,
+        "product_id": product_id,
         "total_batches": len(batches),
         "total_quantity": sum(batch.quantity_remaining for batch in batches),
         "batches": [

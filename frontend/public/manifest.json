@@ -1,7 +1,7 @@
 {
-    "name": "Meditrib",
-    "short_name": "Meditrib",
-    "description": "Sistema de gestión para farmacias",
+    "name": "VanPOS",
+    "short_name": "VanPOS",
+    "description": "Sistema de inventario y punto de venta",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",

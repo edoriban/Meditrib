@@ -2,15 +2,15 @@ import * as React from "react";
 import { useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { Skeleton } from "../ui/skeleton"
-import { CreateMedicineDialog } from "@/components/medicines/CreateMedicineDialog";
-import { MedicineFilters } from "@/components/medicines/MedicineFilters";
-import { useMedicineMutations } from "@/hooks/useMedicineMutations";
-import { MedicineActionsMenu } from "@/components/medicines/MedicineActionsMenu";
-import { MedicineCellViewer } from "@/components/medicines/MedicineCellViewer";
+import { CreateProductDialog } from "@/components/products/CreateProductDialog";
+import { ProductFilters } from "@/components/products/ProductFilters";
+import { useProductMutations } from "@/hooks/useProductMutations";
+import { ProductActionsMenu } from "@/components/products/ProductActionsMenu";
+import { ProductCellViewer } from "@/components/products/ProductCellViewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Medicine } from "@/types/medicine";
+import { Product } from "@/types/product";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from "@tabler/icons-react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, XAxis, YAxis, Tooltip, ScatterChart, ZAxis, Scatter, ReferenceLine, Treemap, PieChart, Pie, ComposedChart, Cell, Line, ReferenceArea } from "recharts";
@@ -21,8 +21,8 @@ import {
     type ChartConfig
 } from "@/components/ui/chart";
 
-interface MedicineTableProps {
-    medicines: Medicine[] | undefined | null;
+interface ProductTableProps {
+    products: Product[] | undefined | null;
     isLoading: boolean;
     error: any;
     // Props de paginación
@@ -40,8 +40,8 @@ interface MedicineTableProps {
 };
 
 
-const MedicineTable: React.FC<MedicineTableProps> = ({
-    medicines,
+const ProductTable: React.FC<ProductTableProps> = ({
+    products,
     isLoading,
     // Paginación
     page = 1,
@@ -56,9 +56,9 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
     stockFilter = "all",
     onStockFilterChange,
 }) => {
-    const data = medicines;
+    const data = products;
     const [priceRange, setPriceRange] = React.useState<[number, number]>([0, 10000]);
-    const { updateMedicine, deleteMedicine } = useMedicineMutations();
+    const { updateProduct, deleteProduct } = useProductMutations();
     const editRefs = React.useRef<Record<number, HTMLButtonElement | null>>({});
 
     const scatterConfig = {
@@ -135,24 +135,24 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
         }
     } satisfies ChartConfig;
 
-    const maxPrice = data ? Math.max(...data.map(medicine => medicine.sale_price), 1000) : 1000;
+    const maxPrice = data ? Math.max(...data.map(product => product.sale_price), 1000) : 1000;
 
-    const calculateMargin = useCallback((med: Medicine) => {
+    const calculateMargin = useCallback((med: Product) => {
         if (!med.purchase_price || med.purchase_price <= 0) return 0;
         return Number(((med.sale_price - med.purchase_price) / med.purchase_price * 100).toFixed(2));
     }, []);
 
-    const calculateInventoryValue = useCallback((med: Medicine) => {
+    const calculateInventoryValue = useCallback((med: Product) => {
         const price = med.purchase_price || med.sale_price || 0;
         return (med.inventory?.quantity || 0) * price;
     }, []);
 
     // Los filtros de búsqueda y stock ahora vienen del servidor
     // Solo aplicamos filtro de precio en el cliente (opcional)
-    const filteredData = data?.filter(medicine => {
+    const filteredData = data?.filter(product => {
         const matchesPriceRange =
-            medicine.sale_price >= priceRange[0] &&
-            medicine.sale_price <= priceRange[1];
+            product.sale_price >= priceRange[0] &&
+            product.sale_price <= priceRange[1];
 
         return matchesPriceRange;
     });
@@ -363,10 +363,10 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Medicamentos</h2>
-                <CreateMedicineDialog />
+                <CreateProductDialog />
             </div>
 
-            <MedicineFilters
+            <ProductFilters
                 searchTerm={searchTerm}
                 setSearchTerm={onSearchChange || (() => { })}
                 stockFilter={stockFilter}
@@ -482,34 +482,34 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                                             No hay medicamentos que coincidan con los filtros
                                         </TableCell>
                                     </TableRow>
-                                ) : filteredData?.map((medicine) => (
-                                    <TableRow key={medicine.id}>
+                                ) : filteredData?.map((product) => (
+                                    <TableRow key={product.id}>
                                         <TableCell>
-                                            <MedicineCellViewer
-                                                medicine={medicine}
-                                                onUpdate={(medicineId, data) => updateMedicine(medicineId, data)}
-                                                onDelete={(medicineId) => deleteMedicine(medicineId)}
+                                            <ProductCellViewer
+                                                product={product}
+                                                onUpdate={(productId, data) => updateProduct(productId, data)}
+                                                onDelete={(productId) => deleteProduct(productId)}
                                                 ref={(el) => {
-                                                    editRefs.current[medicine.id] = el;
+                                                    editRefs.current[product.id] = el;
                                                 }}
                                             />
                                         </TableCell>
-                                        <TableCell className="max-w-xs truncate">{medicine.active_substance || "—"}</TableCell>
+                                        <TableCell className="max-w-xs truncate">{product.active_substance || "—"}</TableCell>
                                         <TableCell>
-                                            {typeof medicine.purchase_price === 'number'
-                                                ? `$${medicine.purchase_price.toFixed(2)}`
+                                            {typeof product.purchase_price === 'number'
+                                                ? `$${product.purchase_price.toFixed(2)}`
                                                 : "N/A"}
                                         </TableCell>
-                                        <TableCell>${medicine.sale_price.toFixed(2)}</TableCell>
+                                        <TableCell>${product.sale_price.toFixed(2)}</TableCell>
                                         <TableCell>
-                                            {typeof medicine.sale_price === 'number' && typeof medicine.purchase_price === 'number' ? (
+                                            {typeof product.sale_price === 'number' && typeof product.purchase_price === 'number' ? (
                                                 <div className="flex items-center">
-                                                    <span>${(medicine.sale_price - medicine.purchase_price).toFixed(2)}</span>
-                                                    {((medicine.sale_price - medicine.purchase_price) / medicine.purchase_price * 100) > 30 ? (
+                                                    <span>${(product.sale_price - product.purchase_price).toFixed(2)}</span>
+                                                    {((product.sale_price - product.purchase_price) / product.purchase_price * 100) > 30 ? (
                                                         <Badge className="ml-2 bg-green-100 text-green-800 border-0">
                                                             Alta
                                                         </Badge>
-                                                    ) : ((medicine.sale_price - medicine.purchase_price) / medicine.purchase_price * 100) > 15 ? (
+                                                    ) : ((product.sale_price - product.purchase_price) / product.purchase_price * 100) > 15 ? (
                                                         <Badge className="ml-2 bg-blue-100 text-blue-800 border-0">
                                                             Normal
                                                         </Badge>
@@ -522,15 +522,15 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                                             ) : "N/A"}
                                         </TableCell>
                                         <TableCell className="font-mono">
-                                            {(medicine.inventory?.quantity || 0) > 10 ? (
+                                            {(product.inventory?.quantity || 0) > 10 ? (
                                                 <div className="flex items-center">
                                                     <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                                                    <span>{medicine.inventory?.quantity || 0}</span>
+                                                    <span>{product.inventory?.quantity || 0}</span>
                                                 </div>
-                                            ) : (medicine.inventory?.quantity || 0) > 0 ? (
+                                            ) : (product.inventory?.quantity || 0) > 0 ? (
                                                 <div className="flex items-center">
                                                     <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2" />
-                                                    <span>{medicine.inventory?.quantity || 0}</span>
+                                                    <span>{product.inventory?.quantity || 0}</span>
 
                                                 </div>
                                             ) : (
@@ -543,8 +543,8 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-wrap gap-1">
-                                                {medicine.tags && medicine.tags.length > 0 ? (
-                                                    medicine.tags.map((tag: any) => (
+                                                {product.tags && product.tags.length > 0 ? (
+                                                    product.tags.map((tag: any) => (
                                                         <Badge
                                                             key={tag.id}
                                                             style={{ backgroundColor: tag.color || "#6366f1" }}
@@ -557,12 +557,12 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <MedicineActionsMenu
-                                                medicine={medicine}
-                                                onDelete={() => deleteMedicine(medicine.id)}
+                                            <ProductActionsMenu
+                                                product={product}
+                                                onDelete={() => deleteProduct(product.id)}
                                                 onEdit={() => {
-                                                    if (editRefs.current[medicine.id]) {
-                                                        editRefs.current[medicine.id]?.click();
+                                                    if (editRefs.current[product.id]) {
+                                                        editRefs.current[product.id]?.click();
                                                     }
                                                 }}
                                             />
@@ -988,4 +988,4 @@ const MedicineTable: React.FC<MedicineTableProps> = ({
     )
 }
 
-export default MedicineTable;
+export default ProductTable;

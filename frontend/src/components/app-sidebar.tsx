@@ -65,8 +65,8 @@ const data = {
   ],
   documents: [
     {
-      name: "Medicamentos",
-      url: "/medicines",
+      name: "Productos",
+      url: "/products",
       icon: IconDatabase,
     },
     {
@@ -162,7 +162,7 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <Link to="/dashboard">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Meditrib</span>
+                <span className="text-base font-semibold">VanPOS</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

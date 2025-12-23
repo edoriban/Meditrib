@@ -16,7 +16,7 @@ const ForgotPasswordPage = React.lazy(() => import("./pages/login/ForgotPassword
 const TermsOfServicePage = React.lazy(() => import("./pages/legal/TermsOfServicePage"));
 const PrivacyPolicyPage = React.lazy(() => import("./pages/legal/PrivacyPolicyPage"));
 const UsersPage = React.lazy(() => import("./pages/users/UsersPage"));
-const MedicinesPage = React.lazy(() => import("./pages/inventory/MedicinesPage"));
+const ProductsPage = React.lazy(() => import("./pages/inventory/ProductsPage"));
 const SuppliersPage = React.lazy(() => import("./pages/suppliers/SuppliersPage"));
 const ClientsPage = React.lazy(() => import("./pages/clients/ClientsPage"));
 const SalesPage = React.lazy(() => import("./pages/sales/SalesPage"));
@@ -77,10 +77,10 @@ function App() {
               } />
 
               {/* Inventario - Medicamentos */}
-              <Route path="/medicines" element={
+              <Route path="/products" element={
                 <ProtectedRoute>
                   <MainLayout>
-                    <MedicinesPage />
+                    <ProductsPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />

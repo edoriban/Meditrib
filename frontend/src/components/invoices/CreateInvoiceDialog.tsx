@@ -280,14 +280,14 @@ export function CreateInvoiceDialog({
                                         </div>
                                         {selectedSale.items.map((item) => {
                                             // Calcular el IVA que se agregaría a este item
-                                            const itemIvaRate = item.medicine.iva_rate || 0;
+                                            const itemIvaRate = item.product.iva_rate || 0;
                                             const itemIvaAmount = item.subtotal * itemIvaRate;
                                             const itemTotalWithIva = item.subtotal + itemIvaAmount;
                                             
                                             return (
                                                 <div key={item.id} className="flex justify-between text-sm pl-6 gap-2">
                                                     <span className="text-muted-foreground flex-1 truncate">
-                                                        {item.medicine.name} x{item.quantity}
+                                                        {item.product.name} x{item.quantity}
                                                     </span>
                                                     <div className="flex items-center gap-2 shrink-0">
                                                         <span>{formatCurrency(itemTotalWithIva)}</span>
@@ -307,7 +307,7 @@ export function CreateInvoiceDialog({
                                                 // Calcular totales para la factura
                                                 const invoiceSubtotal = selectedSale.subtotal;
                                                 const invoiceIva = selectedSale.items.reduce((sum, item) => {
-                                                    const itemIvaRate = item.medicine.iva_rate || 0;
+                                                    const itemIvaRate = item.product.iva_rate || 0;
                                                     return sum + (item.subtotal * itemIvaRate);
                                                 }, 0);
                                                 const invoiceTotal = invoiceSubtotal + invoiceIva;

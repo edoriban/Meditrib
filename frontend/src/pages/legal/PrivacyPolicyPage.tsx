@@ -6,8 +6,8 @@ export default function PrivacyPolicyPage() {
     return (
         <div className="min-h-screen bg-background">
             <div className="container max-w-4xl mx-auto py-8 px-4">
-                <Button 
-                    variant="ghost" 
+                <Button
+                    variant="ghost"
                     className="mb-6"
                     onClick={() => window.history.back()}
                 >
@@ -24,10 +24,10 @@ export default function PrivacyPolicyPage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">1. Introducción</h2>
                             <p className="text-muted-foreground mb-4">
-                                En Meditrib, nos comprometemos a proteger la privacidad de nuestros usuarios. 
-                                Esta Política de Privacidad describe cómo recopilamos, usamos, almacenamos y 
-                                protegemos su información personal cuando utiliza nuestro sistema de gestión 
-                                de medicamentos.
+                                En VanPOS, nos comprometemos a proteger la privacidad de nuestros usuarios.
+                                Esta Política de Privacidad describe cómo recopilamos, usamos, almacenamos y
+                                protegemos su información personal cuando utiliza nuestro sistema de
+                                inventario y punto de venta.
                             </p>
                         </section>
 
@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
                             <p className="text-muted-foreground mb-4">
                                 Recopilamos los siguientes tipos de información:
                             </p>
-                            
+
                             <h3 className="text-lg font-medium mb-2">2.1 Información de Cuenta</h3>
                             <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                                 <li>Nombre completo</li>
@@ -50,7 +50,7 @@ export default function PrivacyPolicyPage() {
                                 <li>Datos de clientes y proveedores</li>
                                 <li>Información fiscal (RFC, régimen fiscal, dirección fiscal)</li>
                                 <li>Historial de ventas y compras</li>
-                                <li>Inventario de medicamentos</li>
+                                <li>Inventario de productos</li>
                             </ul>
 
                             <h3 className="text-lg font-medium mb-2">2.3 Información Técnica</h3>
@@ -126,7 +126,7 @@ export default function PrivacyPolicyPage() {
                             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                                 <li><strong>Datos de cuenta:</strong> Mientras mantenga su cuenta activa</li>
                                 <li><strong>Facturas y registros fiscales:</strong> 5 años (obligación legal SAT)</li>
-                                <li><strong>Registros de medicamentos:</strong> Según normativa COFEPRIS</li>
+                                <li><strong>Registros de productos:</strong> Según normativa aplicable</li>
                                 <li><strong>Logs del sistema:</strong> 1 año para seguridad</li>
                             </ul>
                         </section>
@@ -143,7 +143,7 @@ export default function PrivacyPolicyPage() {
                                 <li><strong>Oposición:</strong> Oponerse al tratamiento de sus datos</li>
                             </ul>
                             <p className="text-muted-foreground mt-4">
-                                Para ejercer estos derechos, envíe un correo a: <strong>privacidad@meditrib.com</strong>
+                                Para ejercer estos derechos, envíe un correo a: <strong>privacidad@vanpos.com</strong>
                             </p>
                         </section>
 
@@ -162,7 +162,7 @@ export default function PrivacyPolicyPage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">10. Menores de Edad</h2>
                             <p className="text-muted-foreground mb-4">
-                                El Sistema está diseñado para uso comercial y no está dirigido a menores de 18 años. 
+                                El Sistema está diseñado para uso comercial y no está dirigido a menores de 18 años.
                                 No recopilamos intencionalmente información de menores.
                             </p>
                         </section>
@@ -170,7 +170,7 @@ export default function PrivacyPolicyPage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold mb-4">11. Cambios a esta Política</h2>
                             <p className="text-muted-foreground mb-4">
-                                Podemos actualizar esta Política de Privacidad periódicamente. Los cambios 
+                                Podemos actualizar esta Política de Privacidad periódicamente. Los cambios
                                 significativos serán notificados a través del Sistema o por correo electrónico.
                             </p>
                         </section>
@@ -181,9 +181,9 @@ export default function PrivacyPolicyPage() {
                                 Para preguntas sobre esta Política de Privacidad o el tratamiento de sus datos:
                             </p>
                             <p className="text-muted-foreground">
-                                <strong>Email:</strong> privacidad@meditrib.com<br />
+                                <strong>Email:</strong> privacidad@vanpos.com<br />
                                 <strong>Teléfono:</strong> (55) 1234-5678<br />
-                                <strong>Responsable:</strong> Oficial de Protección de Datos de Meditrib
+                                <strong>Responsable:</strong> Oficial de Protección de Datos de VanPOS
                             </p>
                         </section>
                     </CardContent>

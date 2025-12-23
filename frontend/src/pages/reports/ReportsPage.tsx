@@ -44,8 +44,8 @@ interface MonthlyTrend {
 }
 
 interface ProductProfitability {
-    medicine_id: number;
-    medicine_name: string;
+    product_id: number;
+    product_name: string;
     total_quantity: number;
     total_sales: number;
     estimated_cost: number;
@@ -287,8 +287,8 @@ export default function ReportsPage() {
                             </TableHeader>
                             <TableBody>
                                 {profitability.slice(0, 10).map((product) => (
-                                    <TableRow key={product.medicine_id}>
-                                        <TableCell className="font-medium">{product.medicine_name}</TableCell>
+                                    <TableRow key={product.product_id}>
+                                        <TableCell className="font-medium">{product.product_name}</TableCell>
                                         <TableCell className="text-right">{product.total_quantity || 0}</TableCell>
                                         <TableCell className="text-right">{formatCurrency(product.total_sales || 0)}</TableCell>
                                         <TableCell className="text-right text-muted-foreground">{formatCurrency(product.estimated_cost || 0)}</TableCell>

@@ -116,7 +116,7 @@ export function SaleCellViewer({ sale }: SaleCellViewerProps) {
                             <TableBody>
                                 {sale.items?.map((item, idx) => (
                                     <TableRow key={idx}>
-                                        <TableCell>{item.medicine?.name || 'Producto'}</TableCell>
+                                        <TableCell>{item.product?.name || 'Producto'}</TableCell>
                                         <TableCell className="text-right">{item.quantity}</TableCell>
                                         <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
                                         <TableCell className="text-right">

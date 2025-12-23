@@ -1,24 +1,24 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { DrawerClose } from "@/components/ui/drawer";
-import DeleteMedicineDialog from "./DeleteMedicineDialog";
-import { Medicine } from "@/types/medicine";
+import DeleteProductDialog from "./DeleteProductDialog";
+import { Product } from "@/types/product";
 
-interface MedicineEditActionsProps {
-    medicine: Medicine;
+interface ProductEditActionsProps {
+    product: Product;
     onDelete?: () => void;
     isDeleteDialogOpen: boolean;
     setIsDeleteDialogOpen: (open: boolean) => void;
-    handleDeleteMedicine: () => void;
+    handleDeleteProduct: () => void;
     isDeleting: boolean;
 }
 
-export const MedicineEditActions: React.FC<MedicineEditActionsProps> = ({
-    medicine,
+export const ProductEditActions: React.FC<ProductEditActionsProps> = ({
+    product,
     onDelete,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
-    handleDeleteMedicine,
+    handleDeleteProduct,
     isDeleting
 }) => (
     <div className="flex flex-col gap-2 w-full">
@@ -33,11 +33,11 @@ export const MedicineEditActions: React.FC<MedicineEditActionsProps> = ({
                 >
                     Eliminar medicamento
                 </Button>
-                <DeleteMedicineDialog
-                    medicine={medicine}
+                <DeleteProductDialog
+                    product={product}
                     open={isDeleteDialogOpen}
                     onOpenChange={setIsDeleteDialogOpen}
-                    onConfirmDelete={handleDeleteMedicine}
+                    onConfirmDelete={handleDeleteProduct}
                     isDeleting={isDeleting}
                 />
             </>

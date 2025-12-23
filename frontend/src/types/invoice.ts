@@ -24,8 +24,8 @@ export interface InvoiceConcept {
     unit_price: number;
     amount: number;
     discount: number;
-    medicine_id?: number;
-    medicine?: {
+    product_id?: number;
+    product?: {
         id: number;
         name: string;
     };
@@ -100,7 +100,7 @@ export interface InvoiceCreate {
         unit_price: number;
         amount: number;
         discount?: number;
-        medicine_id?: number;
+        product_id?: number;
     }[];
     taxes: {
         tax_type: string;

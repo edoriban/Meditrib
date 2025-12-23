@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from backend.core.dependencies import get_db
 from backend.core import schemas
 
-from backend.core.crud import crud_sale, crud_medicines, crud_client
+from backend.core.crud import crud_sale, crud_products, crud_client
 
 router = APIRouter(
     prefix="/sales",
@@ -21,8 +21,8 @@ router = APIRouter(
 
 class StockIssue(BaseModel):
     """Problema de stock para un item"""
-    medicine_id: int
-    medicine_name: str
+    product_id: int
+    product_name: str
     requested: int
     available: int
     shortage: int
@@ -83,16 +83,16 @@ def create_sale(
     
     # Validar existencia de medicamentos
     for item in sale.items:
-        db_medicine = crud_medicines.get_medicine(db, medicine_id=item.medicine_id)
-        if not db_medicine:
-            raise HTTPException(status_code=404, detail=f"Medicine with id {item.medicine_id} not found")
+        db_product = crud_products.get_product(db, product_id=item.product_id)
+        if not db_product:
+            raise HTTPException(status_code=404, detail=f"Product with id {item.product_id} not found")
     
     # Verificar stock si no se permite ajuste automático
     if not auto_adjust_stock:
         stock_check = crud_sale.check_stock_availability(db, sale.items)
         if stock_check["has_issues"]:
             issues_detail = ", ".join([
-                f"{issue['medicine_name']}: solicitado {issue['requested']}, disponible {issue['available']}"
+                f"{issue['product_name']}: solicitado {issue['requested']}, disponible {issue['available']}"
                 for issue in stock_check["issues"]
             ])
             raise HTTPException(
@@ -135,9 +135,9 @@ def update_sale(sale_id: int, sale: schemas.SaleUpdate, db: Session = Depends(ge
     # Validar items si se actualizan
     if sale.items:
         for item in sale.items:
-            db_medicine = crud_medicines.get_medicine(db, medicine_id=item.medicine_id)
-            if not db_medicine:
-                raise HTTPException(status_code=404, detail=f"Medicine with id {item.medicine_id} not found")
+            db_product = crud_products.get_product(db, product_id=item.product_id)
+            if not db_product:
+                raise HTTPException(status_code=404, detail=f"Product with id {item.product_id} not found")
     
     return crud_sale.update_sale(db=db, sale_id=sale_id, sale_update=sale)
 
@@ -158,8 +158,8 @@ def read_sales_by_client(client_id: int, skip: int = 0, limit: int = 100, db: Se
     return sales
 
 
-@router.get("/medicine/{medicine_id}", response_model=List[schemas.Sale])
-def read_sales_by_medicine(medicine_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+@router.get("/product/{product_id}", response_model=List[schemas.Sale])
+def read_sales_by_product(product_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """Obtener todas las ventas que contienen un medicamento específico"""
-    sales = crud_sale.get_sales_by_medicine(db, medicine_id=medicine_id, skip=skip, limit=limit)
+    sales = crud_sale.get_sales_by_product(db, product_id=product_id, skip=skip, limit=limit)
     return sales

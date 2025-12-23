@@ -162,7 +162,7 @@ export async function generateSalePDF(sale: Sale): Promise<void> {
     // Construir datos de la tabla según el tipo de documento
     const tableData = sale.items?.map((item) => {
         const row = [
-            item.medicine?.name || 'Producto',
+            item.product?.name || 'Producto',
             item.quantity.toString(),
             formatCurrency(item.unit_price),
         ];

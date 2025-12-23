@@ -7,23 +7,23 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Medicine } from "@/types/medicine";
+import { Product } from "@/types/product";
 
-interface DeleteMedicineDialogProps {
-    medicine: Medicine;
+interface DeleteProductDialogProps {
+    product: Product;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onConfirmDelete: () => void;
     isDeleting?: boolean;
 }
 
-export function DeleteMedicineDialog({
-    medicine,
+export function DeleteProductDialog({
+    product,
     open,
     onOpenChange,
     onConfirmDelete,
     isDeleting = false
-}: DeleteMedicineDialogProps) {
+}: DeleteProductDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
@@ -35,11 +35,11 @@ export function DeleteMedicineDialog({
                 </DialogHeader>
                 <div className="py-4">
                     <p>
-                        ¿Estás seguro que deseas eliminar el medicamento <strong>{medicine.name}</strong>?
+                        ¿Estás seguro que deseas eliminar el medicamento <strong>{product.name}</strong>?
                     </p>
-                    {medicine.inventory && medicine.inventory.quantity > 0 && (
+                    {product.inventory && product.inventory.quantity > 0 && (
                         <p className="mt-2 text-amber-600">
-                            ⚠️ Este medicamento tiene {medicine.inventory.quantity} unidades en inventario.
+                            ⚠️ Este medicamento tiene {product.inventory.quantity} unidades en inventario.
                             Al eliminarlo, también se eliminará su registro de inventario.
                         </p>
                     )}
@@ -65,4 +65,4 @@ export function DeleteMedicineDialog({
     );
 }
 
-export default DeleteMedicineDialog;
+export default DeleteProductDialog;

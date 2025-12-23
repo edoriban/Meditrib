@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Sale, SaleItemValues, saleFormSchema, SaleFormValues } from "@/types/sales";
 import { useSaleMutations } from "@/hooks/useSaleMutations";
-import { Medicine } from "@/types/medicine";
+import { Product } from "@/types/product";
 import { Client } from "@/types/clients";
 import { BASE_API_URL } from "@/config";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,7 @@ const canEditProducts = (sale: Sale): { canEdit: boolean; reason: string } => {
 export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps) {
     const { updateSale } = useSaleMutations();
     const [items, setItems] = useState<SaleItemValues[]>([]);
-    const [selectedMedicine, setSelectedMedicine] = useState<number>(0);
+    const [selectedProduct, setSelectedProduct] = useState<number>(0);
     const [itemQuantity, setItemQuantity] = useState<number>(1);
     const [searchQuery, setSearchQuery] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
@@ -96,13 +96,13 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
     }, []);
 
     // Cargar medicamentos solo los que están en la lista de items (para mostrar nombres)
-    const { data: medicines } = useQuery<Medicine[]>({
-        queryKey: ["medicines-for-items", items.map(i => i.medicine_id)],
+    const { data: products } = useQuery<Product[]>({
+        queryKey: ["products-for-items", items.map(i => i.product_id)],
         queryFn: async () => {
             // Solo cargar medicamentos que están en items
             if (items.length === 0) return [];
             const promises = items.map(item => 
-                axios.get(`${BASE_API_URL}/medicines/${item.medicine_id}`)
+                axios.get(`${BASE_API_URL}/products/${item.product_id}`)
             );
             const results = await Promise.all(promises);
             return results.map(r => r.data);
@@ -111,8 +111,8 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
     });
 
     // Búsqueda de medicamentos en servidor para el selector manual
-    const { data: searchResults, isLoading: isSearching } = useQuery<Medicine[]>({
-        queryKey: ["medicine-manual-search", searchQuery],
+    const { data: searchResults, isLoading: isSearching } = useQuery<Product[]>({
+        queryKey: ["product-manual-search", searchQuery],
         queryFn: async () => {
             if (!searchQuery || searchQuery.length < 2) return [];
             // Usar el endpoint paginado que tiene búsqueda case-insensitive
@@ -122,7 +122,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                 search: searchQuery,
                 stock_filter: "all"  // Mostrar todos, el usuario verá el stock disponible
             });
-            const { data } = await axios.get(`${BASE_API_URL}/medicines/paginated?${params}`);
+            const { data } = await axios.get(`${BASE_API_URL}/products/paginated?${params}`);
             return data.items || [];
         },
         enabled: searchQuery.length >= 2,
@@ -158,7 +158,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
     useEffect(() => {
         if (open && sale.items) {
             const saleItems: SaleItemValues[] = sale.items.map(item => ({
-                medicine_id: item.medicine_id,
+                product_id: item.product_id,
                 quantity: item.quantity,
                 unit_price: item.unit_price,
                 discount: item.discount,
@@ -182,13 +182,13 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
 
     // Agregar un item a la lista
     const addItem = () => {
-        if (!selectedMedicine || itemQuantity <= 0 || !productEditability.canEdit) return;
+        if (!selectedProduct || itemQuantity <= 0 || !productEditability.canEdit) return;
         
         // Buscar en searchResults ya que es lo que alimenta el selector
-        const medicine = searchResults?.find(m => m.id === selectedMedicine);
-        if (!medicine) return;
+        const product = searchResults?.find(m => m.id === selectedProduct);
+        if (!product) return;
 
-        const existingIndex = items.findIndex(item => item.medicine_id === selectedMedicine);
+        const existingIndex = items.findIndex(item => item.product_id === selectedProduct);
         
         if (existingIndex >= 0) {
             const updatedItems = [...items];
@@ -196,15 +196,15 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
             setItems(updatedItems);
         } else {
             const newItem: SaleItemValues = {
-                medicine_id: selectedMedicine,
+                product_id: selectedProduct,
                 quantity: itemQuantity,
-                unit_price: medicine.sale_price,
+                unit_price: product.sale_price,
                 discount: 0,
             };
             setItems([...items, newItem]);
         }
 
-        setSelectedMedicine(0);
+        setSelectedProduct(0);
         setItemQuantity(1);
     };
 
@@ -215,19 +215,19 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
     };
 
     // Combinar medicamentos de items cargados + resultados de búsqueda para lookups
-    const allMedicinesMap = new Map<number, Medicine>();
-    medicines?.forEach(m => allMedicinesMap.set(m.id, m));
-    searchResults?.forEach(m => allMedicinesMap.set(m.id, m));
+    const allProductsMap = new Map<number, Product>();
+    products?.forEach(m => allProductsMap.set(m.id, m));
+    searchResults?.forEach(m => allProductsMap.set(m.id, m));
     
     // Helper para obtener medicamento por ID
-    const getMedicineById = (id: number): Medicine | undefined => allMedicinesMap.get(id);
+    const getProductById = (id: number): Product | undefined => allProductsMap.get(id);
 
     // Actualizar cantidad de un item
     const updateItemQuantity = (index: number, newQuantity: number) => {
         if (!productEditability.canEdit) return;
         const item = items[index];
-        const medicine = getMedicineById(item.medicine_id);
-        const maxStock = medicine?.inventory?.quantity || 999;
+        const product = getProductById(item.product_id);
+        const maxStock = product?.inventory?.quantity || 999;
         
         // Validar cantidad entre 1 y el stock disponible
         const validQuantity = Math.max(1, Math.min(newQuantity, maxStock));
@@ -239,9 +239,9 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
 
     // Filtrar medicamentos de búsqueda (excluyendo ya agregados)
     // El filtro de stock ya viene del servidor con stock_filter: "in-stock"
-    const filteredMedicines = (searchResults || []).filter(medicine => {
+    const filteredProducts = (searchResults || []).filter(product => {
         // Excluir medicamentos ya agregados
-        const isAlreadyAdded = items.some(item => item.medicine_id === medicine.id);
+        const isAlreadyAdded = items.some(item => item.product_id === product.id);
         return !isAlreadyAdded;
     });
 
@@ -253,9 +253,9 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
     const documentType = form.watch("document_type");
     const ivaAmount = documentType === "invoice" 
         ? items.reduce((sum, item) => {
-            const medicine = getMedicineById(item.medicine_id);
+            const product = getProductById(item.product_id);
             const itemSubtotal = (item.quantity * item.unit_price) - item.discount;
-            const productIvaRate = medicine?.iva_rate || 0;
+            const productIvaRate = product?.iva_rate || 0;
             return sum + (itemSubtotal * productIvaRate);
         }, 0)
         : 0;
@@ -278,8 +278,8 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
         onOpenChange(false);
     };
 
-    const getMedicineName = (medicineId: number) => {
-        return getMedicineById(medicineId)?.name || "Desconocido";
+    const getProductName = (productId: number) => {
+        return getProductById(productId)?.name || "Desconocido";
     };
 
     // Handler de cierre con limpieza de pointer-events
@@ -501,7 +501,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                                         setSearchQuery(e.target.value);
                                                         setShowDropdown(true);
                                                         if (!e.target.value) {
-                                                            setSelectedMedicine(0);
+                                                            setSelectedProduct(0);
                                                         }
                                                     }}
                                                     onFocus={() => setShowDropdown(true)}
@@ -515,26 +515,26 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                                             <div className="py-4 px-3 text-center text-sm text-muted-foreground">
                                                                 Buscando...
                                                             </div>
-                                                        ) : filteredMedicines.length === 0 ? (
+                                                        ) : filteredProducts.length === 0 ? (
                                                             <div className="py-4 px-3 text-center text-sm text-muted-foreground">
                                                                 {searchQuery.length < 2 ? "Escribe al menos 2 caracteres" : "No se encontraron medicamentos"}
                                                             </div>
                                                         ) : (
-                                                            filteredMedicines.map((medicine) => (
+                                                            filteredProducts.map((product) => (
                                                                 <div
-                                                                    key={medicine.id}
+                                                                    key={product.id}
                                                                     onClick={() => {
-                                                                        setSelectedMedicine(medicine.id);
-                                                                        setSearchQuery(medicine.name);
+                                                                        setSelectedProduct(product.id);
+                                                                        setSearchQuery(product.name);
                                                                         setShowDropdown(false);
                                                                     }}
                                                                     className={`flex flex-col px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground ${
-                                                                        selectedMedicine === medicine.id ? "bg-accent" : ""
+                                                                        selectedProduct === product.id ? "bg-accent" : ""
                                                                     }`}
                                                                 >
-                                                                    <span className="font-medium">{medicine.name}</span>
+                                                                    <span className="font-medium">{product.name}</span>
                                                                     <span className="text-xs text-muted-foreground">
-                                                                        {formatCurrency(medicine.sale_price)} · Stock: {medicine.inventory?.quantity || 0}
+                                                                        {formatCurrency(product.sale_price)} · Stock: {product.inventory?.quantity || 0}
                                                                     </span>
                                                                 </div>
                                                             ))
@@ -548,7 +548,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                             <Input 
                                                 type="number" 
                                                 min="1"
-                                                max={searchResults?.find(m => m.id === selectedMedicine)?.inventory?.quantity || 999}
+                                                max={searchResults?.find(m => m.id === selectedProduct)?.inventory?.quantity || 999}
                                                 value={itemQuantity}
                                                 onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
                                                 onFocus={() => setShowDropdown(false)}
@@ -558,7 +558,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                             addItem();
                                             setSearchQuery("");
                                             setShowDropdown(false);
-                                        }} disabled={!selectedMedicine}>
+                                        }} disabled={!selectedProduct}>
                                             <IconPlus className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -582,15 +582,15 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                             </TableHeader>
                                         <TableBody>
                                             {items.map((item, index) => {
-                                                const medicine = getMedicineById(item.medicine_id);
-                                                const productIvaRate = medicine?.iva_rate || 0;
+                                                const product = getProductById(item.product_id);
+                                                const productIvaRate = product?.iva_rate || 0;
                                                 return (
                                                     <TableRow key={index}>
                                                         <TableCell className="align-top py-2">
                                                             <div className="flex flex-col gap-0.5">
-                                                                <span className="text-sm leading-tight">{getMedicineName(item.medicine_id)}</span>
+                                                                <span className="text-sm leading-tight">{getProductName(item.product_id)}</span>
                                                                 <span className="text-xs text-muted-foreground">
-                                                                    Stock disponible: {medicine?.inventory?.quantity || 0}
+                                                                    Stock disponible: {product?.inventory?.quantity || 0}
                                                                 </span>
                                                             </div>
                                                         </TableCell>
@@ -610,7 +610,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                                                     <Input
                                                                         type="number"
                                                                         min={1}
-                                                                        max={medicine?.inventory?.quantity || 999}
+                                                                        max={product?.inventory?.quantity || 999}
                                                                         value={item.quantity}
                                                                         onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 1)}
                                                                         className="w-14 h-7 text-center text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -621,7 +621,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                                                         size="icon"
                                                                         className="h-7 w-7"
                                                                         onClick={() => updateItemQuantity(index, item.quantity + 1)}
-                                                                        disabled={item.quantity >= (medicine?.inventory?.quantity || 999)}
+                                                                        disabled={item.quantity >= (product?.inventory?.quantity || 999)}
                                                                     >
                                                                         <IconPlus className="h-3 w-3" />
                                                                     </Button>

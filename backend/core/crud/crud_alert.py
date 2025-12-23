@@ -49,19 +49,19 @@ def resolve_alert(db: Session, alert_id: int) -> Optional[Alert]:
 
 def check_and_create_alerts(db: Session):
     """Check inventory and expiration dates to create alerts"""
-    from backend.core.models import Medicine, Inventory
+    from backend.core.models import Product, Inventory
     from datetime import date, timedelta
 
-    # Get all medicines with inventory
-    medicines = db.query(Medicine).join(Inventory).all()
+    # Get all products with inventory
+    products = db.query(Product).join(Inventory).all()
 
-    for medicine in medicines:
-        inventory_qty = medicine.inventory.quantity if medicine.inventory else 0
+    for product in products:
+        inventory_qty = product.inventory.quantity if product.inventory else 0
 
         # Check low stock (less than 10 units)
         if inventory_qty < 10 and inventory_qty > 0:
             existing_alert = db.query(Alert).filter(
-                Alert.medicine_id == medicine.id,
+                Alert.product_id == product.id,
                 Alert.type == "low_stock",
                 Alert.is_active == True
             ).first()
@@ -69,15 +69,15 @@ def check_and_create_alerts(db: Session):
             if not existing_alert:
                 create_alert(db, AlertCreate(
                     type="low_stock",
-                    message=f"Stock bajo: {medicine.name} tiene solo {inventory_qty} unidades",
-                    medicine_id=medicine.id,
+                    message=f"Stock bajo: {product.name} tiene solo {inventory_qty} unidades",
+                    product_id=product.id,
                     severity="medium"
                 ))
 
         # Check critical stock (0 units)
         elif inventory_qty == 0:
             existing_alert = db.query(Alert).filter(
-                Alert.medicine_id == medicine.id,
+                Alert.product_id == product.id,
                 Alert.type == "critical_stock",
                 Alert.is_active == True
             ).first()
@@ -85,18 +85,18 @@ def check_and_create_alerts(db: Session):
             if not existing_alert:
                 create_alert(db, AlertCreate(
                     type="critical_stock",
-                    message=f"Sin stock: {medicine.name} está agotado",
-                    medicine_id=medicine.id,
+                    message=f"Sin stock: {product.name} está agotado",
+                    product_id=product.id,
                     severity="high"
                 ))
 
-        # Check expiring medicines (within 30 days)
-        if medicine.expiration_date:
-            days_until_expiry = (medicine.expiration_date - date.today()).days
+        # Check expiring products (within 30 days)
+        if product.expiration_date:
+            days_until_expiry = (product.expiration_date - date.today()).days
 
             if days_until_expiry <= 30 and days_until_expiry > 0:
                 existing_alert = db.query(Alert).filter(
-                    Alert.medicine_id == medicine.id,
+                    Alert.product_id == product.id,
                     Alert.type == "expiring",
                     Alert.is_active == True
                 ).first()
@@ -105,15 +105,15 @@ def check_and_create_alerts(db: Session):
                     severity = "high" if days_until_expiry <= 7 else "medium"
                     create_alert(db, AlertCreate(
                         type="expiring",
-                        message=f"Caduca pronto: {medicine.name} expira en {days_until_expiry} días",
-                        medicine_id=medicine.id,
+                        message=f"Caduca pronto: {product.name} expira en {days_until_expiry} días",
+                        product_id=product.id,
                         severity=severity
                     ))
 
-            # Check expired medicines
+            # Check expired products
             elif days_until_expiry <= 0:
                 existing_alert = db.query(Alert).filter(
-                    Alert.medicine_id == medicine.id,
+                    Alert.product_id == product.id,
                     Alert.type == "expired",
                     Alert.is_active == True
                 ).first()
@@ -121,7 +121,7 @@ def check_and_create_alerts(db: Session):
                 if not existing_alert:
                     create_alert(db, AlertCreate(
                         type="expired",
-                        message=f"Expirado: {medicine.name} caducó hace {-days_until_expiry} días",
-                        medicine_id=medicine.id,
+                        message=f"Expirado: {product.name} caducó hace {-days_until_expiry} días",
+                        product_id=product.id,
                         severity="critical"
                     ))

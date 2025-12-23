@@ -48,7 +48,7 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
         // Buscar en ID
         if (sale.id.toString().includes(searchTerm)) return true;
         // Buscar en nombres de medicamentos de los items
-        if (sale.items?.some(item => item.medicine?.name?.toLowerCase().includes(searchLower))) return true;
+        if (sale.items?.some(item => item.product?.name?.toLowerCase().includes(searchLower))) return true;
         return false;
     });
 
@@ -114,7 +114,7 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
     const getItemsSummary = (sale: Sale) => {
         if (!sale.items || sale.items.length === 0) return "Sin productos";
         if (sale.items.length === 1) {
-            return `${sale.items[0].medicine?.name || 'Producto'} (${sale.items[0].quantity})`;
+            return `${sale.items[0].product?.name || 'Producto'} (${sale.items[0].quantity})`;
         }
         return `${sale.items.length} productos`;
     };
@@ -187,7 +187,7 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
                                                     <div className="space-y-1">
                                                         {sale.items?.map((item, idx) => (
                                                             <div key={idx} className="flex justify-between gap-4 text-sm">
-                                                                <span>{item.medicine?.name}</span>
+                                                                <span>{item.product?.name}</span>
                                                                 <span className="text-muted-foreground">x{item.quantity}</span>
                                                             </div>
                                                         ))}

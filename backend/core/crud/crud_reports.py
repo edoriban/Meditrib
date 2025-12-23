@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional
-from backend.core.models import Sale, SaleItem, Medicine, Expense, ExpenseCategory
+from backend.core.models import Sale, SaleItem, Product, Expense, ExpenseCategory
 
 
 def get_income_statement(db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None) -> Dict:
@@ -104,7 +104,7 @@ def get_product_profitability(db: Session, start_date: Optional[date] = None, en
 
     # Obtener ventas por medicamento usando SaleItem
     sales_query = db.query(
-        SaleItem.medicine_id,
+        SaleItem.product_id,
         func.sum(SaleItem.quantity).label('total_quantity'),
         func.sum(SaleItem.subtotal).label('total_subtotal'),
         func.sum(SaleItem.iva_amount).label('total_iva'),
@@ -112,12 +112,12 @@ def get_product_profitability(db: Session, start_date: Optional[date] = None, en
     ).join(Sale).filter(
         func.date(Sale.sale_date) >= start_date,
         func.date(Sale.sale_date) <= end_date
-    ).group_by(SaleItem.medicine_id)
+    ).group_by(SaleItem.product_id)
 
     products = []
     for row in sales_query.all():
-        medicine = db.query(Medicine).filter(Medicine.id == row.medicine_id).first()
-        if not medicine:
+        product = db.query(Product).filter(Product.id == row.product_id).first()
+        if not product:
             continue
             
         total_quantity = row.total_quantity or 0
@@ -125,13 +125,13 @@ def get_product_profitability(db: Session, start_date: Optional[date] = None, en
         total_sales = row.total_sales or 0
 
         # Calcular costo estimado (purchase_price * quantity)
-        estimated_cost = medicine.purchase_price * total_quantity if medicine.purchase_price else 0
+        estimated_cost = product.purchase_price * total_quantity if product.purchase_price else 0
         profit = total_subtotal - estimated_cost
         margin = (profit / total_subtotal * 100) if total_subtotal > 0 else 0
 
         products.append({
-            "medicine_id": row.medicine_id,
-            "medicine_name": medicine.name,
+            "product_id": row.product_id,
+            "product_name": product.name,
             "total_quantity": total_quantity,
             "total_sales": total_sales,
             "estimated_cost": estimated_cost,
@@ -268,12 +268,12 @@ def get_top_selling_products(db: Session, limit: int = 10) -> List[Dict]:
     Obtiene los productos más vendidos por volumen de venta total
     """
     query = db.query(
-        Medicine.id,
-        Medicine.name,
+        Product.id,
+        Product.name,
         func.sum(SaleItem.quantity).label('total_sold'),
         func.sum(SaleItem.subtotal + SaleItem.iva_amount).label('total_revenue')
-    ).join(SaleItem, Medicine.id == SaleItem.medicine_id) \
-     .group_by(Medicine.id, Medicine.name) \
+    ).join(SaleItem, Product.id == SaleItem.product_id) \
+     .group_by(Product.id, Product.name) \
      .order_by(func.sum(SaleItem.quantity).desc()) \
      .limit(limit)
 
@@ -292,7 +292,7 @@ def get_fulfillment_stats(db: Session) -> Dict:
     """
     Estadísticas de cumplimiento: entregas pendientes, pagos pendientes, etc.
     """
-    from backend.core.models import Sale, MedicineBatch
+    from backend.core.models import Sale, ProductBatch
     
     # Ventas enviadas pero no entregadas
     pending_delivery = db.query(Sale).filter(Sale.shipping_status == "shipped").count()
@@ -304,10 +304,10 @@ def get_fulfillment_stats(db: Session) -> Dict:
     # Medicamentos por vencer (próximos 30 días)
     today = date.today()
     next_month = today + timedelta(days=30)
-    expiring_soon = db.query(MedicineBatch).filter(
-        MedicineBatch.expiration_date >= today,
-        MedicineBatch.expiration_date <= next_month,
-        MedicineBatch.quantity_remaining > 0
+    expiring_soon = db.query(ProductBatch).filter(
+        ProductBatch.expiration_date >= today,
+        ProductBatch.expiration_date <= next_month,
+        ProductBatch.quantity_remaining > 0
     ).count()
 
     return {

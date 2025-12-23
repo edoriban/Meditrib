@@ -1,6 +1,6 @@
-export interface MedicineBatch {
+export interface ProductBatch {
     id: number;
-    medicine_id: number;
+    product_id: number;
     batch_number: string;
     expiration_date: string;
     quantity_received: number;
@@ -9,7 +9,7 @@ export interface MedicineBatch {
     supplier_id?: number;
     received_date: string;
     notes?: string;
-    medicine: {
+    product: {
         id: number;
         name: string;
         description?: string;
@@ -31,7 +31,7 @@ export interface BatchStockMovement {
     reference_id?: string;
     movement_date: string;
     user_id: number;
-    batch: MedicineBatch;
+    batch: ProductBatch;
     user: {
         id: number;
         name: string;
@@ -41,7 +41,7 @@ export interface BatchStockMovement {
 
 export interface ExpiringBatch {
     id: number;
-    medicine_name: string;
+    product_name: string;
     batch_number: string;
     expiration_date: string;
     quantity_remaining: number;
@@ -52,9 +52,9 @@ export interface BatchInventorySummary {
     total_active_batches: number;
     expiring_within_30_days: number;
     total_inventory_value: number;
-    medicines_with_batches: number;
+    products_with_batches: number;
     batch_distribution: Array<{
-        medicine_id: number;
+        product_id: number;
         batch_count: number;
         total_quantity: number;
     }>;
@@ -67,8 +67,8 @@ export interface BatchValidation {
     expiration_date?: string;
 }
 
-export interface MedicineBatchCreate {
-    medicine_id: number;
+export interface ProductBatchCreate {
+    product_id: number;
     batch_number: string;
     expiration_date: string;
     quantity_received: number;
@@ -79,7 +79,7 @@ export interface MedicineBatchCreate {
     notes?: string;
 }
 
-export interface MedicineBatchUpdate {
+export interface ProductBatchUpdate {
     batch_number?: string;
     expiration_date?: string;
     quantity_received?: number;

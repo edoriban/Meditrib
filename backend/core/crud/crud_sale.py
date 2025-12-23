@@ -30,14 +30,14 @@ def check_stock_availability(db: Session, items: List[schemas.SaleItemCreate]) -
     stock_issues = []
     
     for item_data in items:
-        medicine = db.query(models.Medicine).filter(
-            models.Medicine.id == item_data.medicine_id
+        product = db.query(models.Product).filter(
+            models.Product.id == item_data.product_id
         ).first()
         
-        if not medicine:
+        if not product:
             stock_issues.append({
-                "medicine_id": item_data.medicine_id,
-                "medicine_name": "Medicamento no encontrado",
+                "product_id": item_data.product_id,
+                "product_name": "Medicamento no encontrado",
                 "requested": item_data.quantity,
                 "available": 0,
                 "shortage": item_data.quantity
@@ -45,15 +45,15 @@ def check_stock_availability(db: Session, items: List[schemas.SaleItemCreate]) -
             continue
         
         inventory = db.query(models.Inventory).filter(
-            models.Inventory.medicine_id == item_data.medicine_id
+            models.Inventory.product_id == item_data.product_id
         ).first()
         
         available = inventory.quantity if inventory else 0
         
         if available < item_data.quantity:
             stock_issues.append({
-                "medicine_id": item_data.medicine_id,
-                "medicine_name": medicine.name,
+                "product_id": item_data.product_id,
+                "product_name": product.name,
                 "requested": item_data.quantity,
                 "available": available,
                 "shortage": item_data.quantity - available
@@ -67,7 +67,7 @@ def check_stock_availability(db: Session, items: List[schemas.SaleItemCreate]) -
 
 def get_sale(db: Session, sale_id: int):
     return db.query(models.Sale).options(
-        joinedload(models.Sale.items).joinedload(models.SaleItem.medicine),
+        joinedload(models.Sale.items).joinedload(models.SaleItem.product),
         joinedload(models.Sale.client),
         joinedload(models.Sale.user)
     ).filter(models.Sale.id == sale_id).first()
@@ -75,7 +75,7 @@ def get_sale(db: Session, sale_id: int):
 
 def get_sales(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Sale).options(
-        joinedload(models.Sale.items).joinedload(models.SaleItem.medicine),
+        joinedload(models.Sale.items).joinedload(models.SaleItem.product),
         joinedload(models.Sale.client),
         joinedload(models.Sale.user)
     ).order_by(models.Sale.sale_date.desc()).offset(skip).limit(limit).all()
@@ -105,17 +105,17 @@ def create_sale(db: Session, sale: schemas.SaleCreate, auto_adjust_stock: bool =
     
     for item_data in sale.items:
         # Obtener el medicamento para saber su tasa de IVA
-        medicine = db.query(models.Medicine).filter(
-            models.Medicine.id == item_data.medicine_id
+        product = db.query(models.Product).filter(
+            models.Product.id == item_data.product_id
         ).first()
         
-        if not medicine:
-            raise ValueError(f"Medicamento con ID {item_data.medicine_id} no encontrado")
+        if not product:
+            raise ValueError(f"Medicamento con ID {item_data.product_id} no encontrado")
         
-        product_iva_rate = medicine.iva_rate if medicine else 0.0
+        product_iva_rate = product.iva_rate if product else 0.0
         
         # Usar el precio del item (puede haber sido editado) o el precio del medicamento
-        unit_price = item_data.unit_price if item_data.unit_price else medicine.sale_price
+        unit_price = item_data.unit_price if item_data.unit_price else product.sale_price
         
         item_subtotal = (item_data.quantity * unit_price) - item_data.discount
         item_iva = item_subtotal * product_iva_rate
@@ -124,7 +124,7 @@ def create_sale(db: Session, sale: schemas.SaleCreate, auto_adjust_stock: bool =
         
         db_item = models.SaleItem(
             sale_id=db_sale.id,
-            medicine_id=item_data.medicine_id,
+            product_id=item_data.product_id,
             quantity=item_data.quantity,
             unit_price=unit_price,
             discount=item_data.discount,
@@ -136,7 +136,7 @@ def create_sale(db: Session, sale: schemas.SaleCreate, auto_adjust_stock: bool =
         
         # Manejar inventario
         inventory = db.query(models.Inventory).filter(
-            models.Inventory.medicine_id == item_data.medicine_id
+            models.Inventory.product_id == item_data.product_id
         ).first()
         
         if inventory:
@@ -153,15 +153,15 @@ def create_sale(db: Session, sale: schemas.SaleCreate, auto_adjust_stock: bool =
         elif auto_adjust_stock:
             # Crear inventario con cantidad 0 (ya se vendió todo)
             new_inventory = models.Inventory(
-                medicine_id=item_data.medicine_id,
+                product_id=item_data.product_id,
                 quantity=0
             )
             db.add(new_inventory)
         
         # Si el precio del item es diferente al precio actual del medicamento,
         # actualizar el precio de venta del medicamento
-        if item_data.unit_price and item_data.unit_price != medicine.sale_price:
-            medicine.sale_price = item_data.unit_price
+        if item_data.unit_price and item_data.unit_price != product.sale_price:
+            product.sale_price = item_data.unit_price
     
     # Calcular totales de la venta
     totals = calculate_sale_totals(items_subtotal, items_iva, sale.document_type)
@@ -189,7 +189,7 @@ def update_sale(db: Session, sale_id: int, sale_update: schemas.SaleUpdate):
         # Revertir inventario de items anteriores
         for old_item in db_sale.items:
             inventory = db.query(models.Inventory).filter(
-                models.Inventory.medicine_id == old_item.medicine_id
+                models.Inventory.product_id == old_item.product_id
             ).first()
             if inventory:
                 inventory.quantity += old_item.quantity
@@ -202,8 +202,8 @@ def update_sale(db: Session, sale_id: int, sale_update: schemas.SaleUpdate):
         items_iva = 0.0
         for item_data in sale_update.items:
             # Obtener el medicamento para saber su tasa de IVA
-            medicine = db.query(models.Medicine).filter(models.Medicine.id == item_data.medicine_id).first()
-            product_iva_rate = medicine.iva_rate if medicine else 0.0
+            product = db.query(models.Product).filter(models.Product.id == item_data.product_id).first()
+            product_iva_rate = product.iva_rate if product else 0.0
             
             item_subtotal = (item_data.quantity * item_data.unit_price) - item_data.discount
             item_iva = item_subtotal * product_iva_rate
@@ -212,7 +212,7 @@ def update_sale(db: Session, sale_id: int, sale_update: schemas.SaleUpdate):
             
             db_item = models.SaleItem(
                 sale_id=sale_id,
-                medicine_id=item_data.medicine_id,
+                product_id=item_data.product_id,
                 quantity=item_data.quantity,
                 unit_price=item_data.unit_price,
                 discount=item_data.discount,
@@ -224,7 +224,7 @@ def update_sale(db: Session, sale_id: int, sale_update: schemas.SaleUpdate):
             
             # Actualizar inventario
             inventory = db.query(models.Inventory).filter(
-                models.Inventory.medicine_id == item_data.medicine_id
+                models.Inventory.product_id == item_data.product_id
             ).first()
             if inventory:
                 inventory.quantity = max(0, inventory.quantity - item_data.quantity)
@@ -245,7 +245,7 @@ def delete_sale(db: Session, sale_id: int):
         # Revertir cambios en inventario
         for item in db_sale.items:
             inventory = db.query(models.Inventory).filter(
-                models.Inventory.medicine_id == item.medicine_id
+                models.Inventory.product_id == item.product_id
             ).first()
             if inventory:
                 inventory.quantity += item.quantity
@@ -257,18 +257,18 @@ def delete_sale(db: Session, sale_id: int):
 
 def get_sales_by_client(db: Session, client_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Sale).options(
-        joinedload(models.Sale.items).joinedload(models.SaleItem.medicine),
+        joinedload(models.Sale.items).joinedload(models.SaleItem.product),
         joinedload(models.Sale.client),
         joinedload(models.Sale.user)
     ).filter(models.Sale.client_id == client_id).order_by(models.Sale.sale_date.desc()).offset(skip).limit(limit).all()
 
 
-def get_sales_by_medicine(db: Session, medicine_id: int, skip: int = 0, limit: int = 100):
+def get_sales_by_product(db: Session, product_id: int, skip: int = 0, limit: int = 100):
     """Obtiene ventas que contienen un medicamento específico"""
     return db.query(models.Sale).options(
-        joinedload(models.Sale.items).joinedload(models.SaleItem.medicine),
+        joinedload(models.Sale.items).joinedload(models.SaleItem.product),
         joinedload(models.Sale.client),
         joinedload(models.Sale.user)
     ).join(models.SaleItem).filter(
-        models.SaleItem.medicine_id == medicine_id
+        models.SaleItem.product_id == product_id
     ).order_by(models.Sale.sale_date.desc()).offset(skip).limit(limit).all()

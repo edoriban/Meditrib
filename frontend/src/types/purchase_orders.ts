@@ -2,10 +2,10 @@ import * as z from "zod";
 
 export interface PurchaseOrderItem {
     purchase_order_id: number;
-    medicine_id: number;
+    product_id: number;
     quantity: number;
     unit_price: number;
-    medicine: {
+    product: {
         id: number;
         name: string;
     };
@@ -33,7 +33,7 @@ export const purchaseOrderFormSchema = z.object({
     status: z.string(),
     total_amount: z.number().positive().optional(),
     items: z.array(z.object({
-        medicine_id: z.number().int().positive(),
+        product_id: z.number().int().positive(),
         quantity: z.number().int().positive(),
         unit_price: z.number().positive(),
     })),

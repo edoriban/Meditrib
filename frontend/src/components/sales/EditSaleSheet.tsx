@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Sale, SaleItemValues, saleFormSchema, SaleFormValues } from "@/types/sales";
 import { useSaleMutations } from "@/hooks/useSaleMutations";
-import { Medicine } from "@/types/medicine";
+import { Product } from "@/types/product";
 import { Client } from "@/types/clients";
 import { BASE_API_URL } from "@/config";
 import { Button } from "@/components/ui/button";
@@ -76,7 +76,7 @@ const canEditProducts = (sale: Sale): { canEdit: boolean; reason: string } => {
 export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) {
     const { updateSale } = useSaleMutations();
     const [items, setItems] = useState<SaleItemValues[]>([]);
-    const [selectedMedicine, setSelectedMedicine] = useState<number>(0);
+    const [selectedProduct, setSelectedProduct] = useState<number>(0);
     const [itemQuantity, setItemQuantity] = useState<number>(1);
     const [searchQuery, setSearchQuery] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
@@ -97,12 +97,12 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
     }, []);
 
     // Cargar medicamentos solo los que están en la lista de items (para mostrar nombres)
-    const { data: medicines } = useQuery<Medicine[]>({
-        queryKey: ["medicines-for-items", items.map(i => i.medicine_id)],
+    const { data: products } = useQuery<Product[]>({
+        queryKey: ["products-for-items", items.map(i => i.product_id)],
         queryFn: async () => {
             if (items.length === 0) return [];
             const promises = items.map(item => 
-                axios.get(`${BASE_API_URL}/medicines/${item.medicine_id}`)
+                axios.get(`${BASE_API_URL}/products/${item.product_id}`)
             );
             const results = await Promise.all(promises);
             return results.map(r => r.data);
@@ -111,8 +111,8 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
     });
 
     // Búsqueda de medicamentos en servidor para el selector manual
-    const { data: searchResults, isLoading: isSearching } = useQuery<Medicine[]>({
-        queryKey: ["medicine-manual-search-sheet", searchQuery],
+    const { data: searchResults, isLoading: isSearching } = useQuery<Product[]>({
+        queryKey: ["product-manual-search-sheet", searchQuery],
         queryFn: async () => {
             if (!searchQuery || searchQuery.length < 2) return [];
             const params = new URLSearchParams({
@@ -121,7 +121,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
                 search: searchQuery,
                 stock_filter: "all"
             });
-            const { data } = await axios.get(`${BASE_API_URL}/medicines/paginated?${params}`);
+            const { data } = await axios.get(`${BASE_API_URL}/products/paginated?${params}`);
             return data.items || [];
         },
         enabled: searchQuery.length >= 2,
@@ -157,7 +157,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
     useEffect(() => {
         if (open && sale?.items) {
             const saleItems: SaleItemValues[] = sale.items.map(item => ({
-                medicine_id: item.medicine_id,
+                product_id: item.product_id,
                 quantity: item.quantity,
                 unit_price: item.unit_price,
                 discount: item.discount,
@@ -182,7 +182,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
     useEffect(() => {
         if (!open) {
             setItems([]);
-            setSelectedMedicine(0);
+            setSelectedProduct(0);
             setItemQuantity(1);
             setSearchQuery("");
             setShowDropdown(false);
@@ -205,12 +205,12 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
 
     // Agregar un item a la lista
     const addItem = () => {
-        if (!selectedMedicine || itemQuantity <= 0 || !productEditability.canEdit) return;
+        if (!selectedProduct || itemQuantity <= 0 || !productEditability.canEdit) return;
         
-        const medicine = searchResults?.find(m => m.id === selectedMedicine);
-        if (!medicine) return;
+        const product = searchResults?.find(m => m.id === selectedProduct);
+        if (!product) return;
 
-        const existingIndex = items.findIndex(item => item.medicine_id === selectedMedicine);
+        const existingIndex = items.findIndex(item => item.product_id === selectedProduct);
         
         if (existingIndex >= 0) {
             const updatedItems = [...items];
@@ -218,15 +218,15 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
             setItems(updatedItems);
         } else {
             const newItem: SaleItemValues = {
-                medicine_id: selectedMedicine,
+                product_id: selectedProduct,
                 quantity: itemQuantity,
-                unit_price: medicine.sale_price,
+                unit_price: product.sale_price,
                 discount: 0,
             };
             setItems([...items, newItem]);
         }
 
-        setSelectedMedicine(0);
+        setSelectedProduct(0);
         setItemQuantity(1);
         setSearchQuery("");
     };
@@ -238,18 +238,18 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
     };
 
     // Combinar medicamentos de items cargados + resultados de búsqueda para lookups
-    const allMedicinesMap = new Map<number, Medicine>();
-    medicines?.forEach(m => allMedicinesMap.set(m.id, m));
-    searchResults?.forEach(m => allMedicinesMap.set(m.id, m));
+    const allProductsMap = new Map<number, Product>();
+    products?.forEach(m => allProductsMap.set(m.id, m));
+    searchResults?.forEach(m => allProductsMap.set(m.id, m));
     
-    const getMedicineById = (id: number): Medicine | undefined => allMedicinesMap.get(id);
+    const getProductById = (id: number): Product | undefined => allProductsMap.get(id);
 
     // Actualizar cantidad de un item
     const updateItemQuantity = (index: number, newQuantity: number) => {
         if (!productEditability.canEdit) return;
         const item = items[index];
-        const medicine = getMedicineById(item.medicine_id);
-        const maxStock = medicine?.inventory?.quantity || 999;
+        const product = getProductById(item.product_id);
+        const maxStock = product?.inventory?.quantity || 999;
         
         const validQuantity = Math.max(1, Math.min(newQuantity, maxStock));
         
@@ -259,8 +259,8 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
     };
 
     // Filtrar medicamentos de búsqueda (excluyendo ya agregados)
-    const filteredMedicines = (searchResults || []).filter(medicine => {
-        const isAlreadyAdded = items.some(item => item.medicine_id === medicine.id);
+    const filteredProducts = (searchResults || []).filter(product => {
+        const isAlreadyAdded = items.some(item => item.product_id === product.id);
         return !isAlreadyAdded;
     });
 
@@ -272,9 +272,9 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
     const documentType = form.watch("document_type");
     const ivaAmount = documentType === "invoice" 
         ? items.reduce((sum, item) => {
-            const medicine = getMedicineById(item.medicine_id);
+            const product = getProductById(item.product_id);
             const itemSubtotal = (item.quantity * item.unit_price) - item.discount;
-            const productIvaRate = medicine?.iva_rate || 0;
+            const productIvaRate = product?.iva_rate || 0;
             return sum + (itemSubtotal * productIvaRate);
         }, 0)
         : 0;
@@ -297,8 +297,8 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
         handleClose(false);
     };
 
-    const getMedicineName = (medicineId: number) => {
-        return getMedicineById(medicineId)?.name || "Cargando...";
+    const getProductName = (productId: number) => {
+        return getProductById(productId)?.name || "Cargando...";
     };
 
     if (!sale) return null;
@@ -512,7 +512,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
                                                                 setSearchQuery(e.target.value);
                                                                 setShowDropdown(true);
                                                                 if (!e.target.value) {
-                                                                    setSelectedMedicine(0);
+                                                                    setSelectedProduct(0);
                                                                 }
                                                             }}
                                                             onFocus={() => setShowDropdown(true)}
@@ -525,26 +525,26 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
                                                                     <div className="py-3 px-3 text-center text-xs text-muted-foreground">
                                                                         Buscando...
                                                                     </div>
-                                                                ) : filteredMedicines.length === 0 ? (
+                                                                ) : filteredProducts.length === 0 ? (
                                                                     <div className="py-3 px-3 text-center text-xs text-muted-foreground">
                                                                         {searchQuery.length < 2 ? "Escribe 2+ caracteres" : "Sin resultados"}
                                                                     </div>
                                                                 ) : (
-                                                                    filteredMedicines.map((medicine) => (
+                                                                    filteredProducts.map((product) => (
                                                                         <div
-                                                                            key={medicine.id}
+                                                                            key={product.id}
                                                                             onClick={() => {
-                                                                                setSelectedMedicine(medicine.id);
-                                                                                setSearchQuery(medicine.name);
+                                                                                setSelectedProduct(product.id);
+                                                                                setSearchQuery(product.name);
                                                                                 setShowDropdown(false);
                                                                             }}
                                                                             className={`flex flex-col px-3 py-1.5 cursor-pointer hover:bg-accent hover:text-accent-foreground ${
-                                                                                selectedMedicine === medicine.id ? "bg-accent" : ""
+                                                                                selectedProduct === product.id ? "bg-accent" : ""
                                                                             }`}
                                                                         >
-                                                                            <span className="text-sm">{medicine.name}</span>
+                                                                            <span className="text-sm">{product.name}</span>
                                                                             <span className="text-xs text-muted-foreground">
-                                                                                {formatCurrency(medicine.sale_price)} · Stock: {medicine.inventory?.quantity || 0}
+                                                                                {formatCurrency(product.sale_price)} · Stock: {product.inventory?.quantity || 0}
                                                                             </span>
                                                                         </div>
                                                                     ))
@@ -571,7 +571,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
                                                         setSearchQuery("");
                                                         setShowDropdown(false);
                                                     }} 
-                                                    disabled={!selectedMedicine}
+                                                    disabled={!selectedProduct}
                                                     size="sm"
                                                     className="h-8"
                                                 >
@@ -595,14 +595,14 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
                                                     </TableHeader>
                                                     <TableBody>
                                                         {items.map((item, index) => {
-                                                            const medicine = getMedicineById(item.medicine_id);
+                                                            const product = getProductById(item.product_id);
                                                             return (
                                                                 <TableRow key={index}>
                                                                     <TableCell className="py-1.5">
                                                                         <div className="flex flex-col">
-                                                                            <span className="text-xs leading-tight">{getMedicineName(item.medicine_id)}</span>
+                                                                            <span className="text-xs leading-tight">{getProductName(item.product_id)}</span>
                                                                             <span className="text-[10px] text-muted-foreground">
-                                                                                Stock: {medicine?.inventory?.quantity || 0}
+                                                                                Stock: {product?.inventory?.quantity || 0}
                                                                             </span>
                                                                         </div>
                                                                     </TableCell>

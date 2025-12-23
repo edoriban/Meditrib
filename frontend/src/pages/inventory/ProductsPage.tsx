@@ -1,25 +1,25 @@
 import { useState } from "react";
-import MedicineTable from "@/components/medicines/MedicineTable";
+import ProductTable from "@/components/products/ProductTable";
 import { Button } from "@/components/ui/button";
 import { IconDownload, IconUpload } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query"
-import { MedicinePaginatedResponse } from "@/types/medicine";
-import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog"
-import MedicineDashboard from "@/components/medicines/MedicineDashboard";
-import { ExcelImportDialog } from "@/components/medicines/ExcelImportDialog";
+import { ProductPaginatedResponse } from "@/types/product";
+import { CreateProductTagDialog } from "@/components/products/CreateProductTagDialog"
+import ProductDashboard from "@/components/products/ProductDashboard";
+import { ExcelImportDialog } from "@/components/products/ExcelImportDialog";
 import axios from "axios"
 import { BASE_API_URL } from "@/config";
 
-export default function MedicinesPage() {
+export default function ProductsPage() {
     const [importDialogOpen, setImportDialogOpen] = useState(false);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(50);
     const [search, setSearch] = useState("");
     const [stockFilter, setStockFilter] = useState<"all" | "in-stock" | "out-of-stock">("all");
 
-    const { data, isLoading, error } = useQuery<MedicinePaginatedResponse>({
-        queryKey: ["medicines", page, pageSize, search, stockFilter],
+    const { data, isLoading, error } = useQuery<ProductPaginatedResponse>({
+        queryKey: ["products", page, pageSize, search, stockFilter],
         queryFn: async () => {
             try {
                 const params = new URLSearchParams({
@@ -30,10 +30,10 @@ export default function MedicinesPage() {
                 if (search) {
                     params.append("search", search);
                 }
-                const { data } = await axios.get(`${BASE_API_URL}/medicines/paginated?${params}`)
+                const { data } = await axios.get(`${BASE_API_URL}/products/paginated?${params}`)
                 return data
             } catch (error) {
-                console.error("Error fetching medicines:", error)
+                console.error("Error fetching products:", error)
                 throw error
             }
         }
@@ -44,7 +44,7 @@ export default function MedicinesPage() {
             toast.info("Generando archivo Excel...");
 
             // Descargar el archivo Excel del backend
-            const response = await axios.get(`${BASE_API_URL}/medicines/export/excel`, {
+            const response = await axios.get(`${BASE_API_URL}/products/export/excel`, {
                 responseType: 'blob'
             });
 
@@ -93,7 +93,7 @@ export default function MedicinesPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <CreateMedicineTagDialog />
+                        <CreateProductTagDialog />
                         <Button variant="outline" size="sm" onClick={handleExport}>
                             <IconDownload className="mr-1 h-4 w-4" />
                             Exportar
@@ -104,11 +104,11 @@ export default function MedicinesPage() {
                         </Button>
                     </div>
                 </div>
-                <MedicineDashboard medicines={data?.items} isLoading={isLoading} error={error} />
+                <ProductDashboard products={data?.items} isLoading={isLoading} error={error} />
             </div>
 
-            <MedicineTable
-                medicines={data?.items}
+            <ProductTable
+                products={data?.items}
                 isLoading={isLoading}
                 error={error}
                 // Paginación

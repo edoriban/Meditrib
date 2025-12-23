@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { MedicineBatch, ExpiringBatch, BatchInventorySummary } from "@/types/batches";
+import { ProductBatch, ExpiringBatch, BatchInventorySummary } from "@/types/batches";
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,8 +32,8 @@ const getExpirationStatus = (expirationDate: string) => {
 };
 
 export default function BatchesPage() {
-    const { data: batches, isLoading: batchesLoading } = useQuery<MedicineBatch[]>({
-        queryKey: ["medicine-batches"],
+    const { data: batches, isLoading: batchesLoading } = useQuery<ProductBatch[]>({
+        queryKey: ["product-batches"],
         queryFn: async () => {
             const { data } = await axios.get(`${BASE_API_URL}/batches/`);
             return data;
@@ -93,7 +93,7 @@ export default function BatchesPage() {
                         </CardHeader>
                         <CardFooter className="flex-col items-start gap-1.5 text-sm">
                             <div className="line-clamp-1 flex gap-2 font-medium">
-                                {inventorySummary.medicines_with_batches} medicamentos <IconTrendingUp className="size-4" />
+                                {inventorySummary.products_with_batches} medicamentos <IconTrendingUp className="size-4" />
                             </div>
                             <div className="text-muted-foreground">
                                 Con lotes registrados
@@ -187,7 +187,7 @@ export default function BatchesPage() {
                                 <div className="mt-2 space-y-1 text-sm text-amber-700 dark:text-amber-300">
                                     {expiringBatches.batches.slice(0, 5).map((batch) => (
                                         <div key={batch.id}>
-                                            • {batch.medicine_name} - Lote {batch.batch_number} ({batch.days_until_expiry} días)
+                                            • {batch.product_name} - Lote {batch.batch_number} ({batch.days_until_expiry} días)
                                         </div>
                                     ))}
                                     {expiringBatches.count > 5 && (
@@ -238,7 +238,7 @@ export default function BatchesPage() {
                                     return (
                                         <TableRow key={batch.id}>
                                             <TableCell className="font-medium">
-                                                {batch.medicine?.name || 'N/A'}
+                                                {batch.product?.name || 'N/A'}
                                             </TableCell>
                                             <TableCell className="font-mono text-sm">
                                                 {batch.batch_number}

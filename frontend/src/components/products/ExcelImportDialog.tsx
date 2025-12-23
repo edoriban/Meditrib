@@ -7,7 +7,7 @@ import {
     ExcelImportPreviewResponse,
     ExcelImportConfirmItem,
     ExcelImportConfirmResponse
-} from "@/types/medicine";
+} from "@/types/product";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -70,7 +70,7 @@ export function ExcelImportDialog({ open, onOpenChange }: ExcelImportDialogProps
             const formData = new FormData();
             formData.append("file", file);
             const response = await axios.post<ExcelImportPreviewResponse>(
-                `${BASE_API_URL}/medicines/import-excel/preview`,
+                `${BASE_API_URL}/products/import-excel/preview`,
                 formData,
                 { headers: { "Content-Type": "multipart/form-data" } }
             );
@@ -89,7 +89,7 @@ export function ExcelImportDialog({ open, onOpenChange }: ExcelImportDialogProps
                 iva_rate: item.iva_rate,
                 inventory_to_add: item.inventory_to_add,
                 exists: item.exists,
-                medicine_id: item.medicine_id,
+                product_id: item.product_id,
                 sat_key: null
             }));
             setEditedItems(items);
@@ -105,7 +105,7 @@ export function ExcelImportDialog({ open, onOpenChange }: ExcelImportDialogProps
     const confirmMutation = useMutation({
         mutationFn: async (items: ExcelImportConfirmItem[]) => {
             const response = await axios.post<ExcelImportConfirmResponse>(
-                `${BASE_API_URL}/medicines/import-excel/confirm`,
+                `${BASE_API_URL}/products/import-excel/confirm`,
                 items
             );
             return response.data;
@@ -113,7 +113,7 @@ export function ExcelImportDialog({ open, onOpenChange }: ExcelImportDialogProps
         onSuccess: (data) => {
             setImportResult(data);
             setStep("result");
-            queryClient.invalidateQueries({ queryKey: ["medicines"] });
+            queryClient.invalidateQueries({ queryKey: ["products"] });
             toast.success(`Importación completada: ${data.created} creados, ${data.updated} actualizados`);
         },
         onError: (error: any) => {
@@ -261,13 +261,13 @@ export function ExcelImportDialog({ open, onOpenChange }: ExcelImportDialogProps
                             </Card>
                             <Card>
                                 <CardContent className="pt-4">
-                                    <div className="text-2xl font-bold text-green-600">{previewData.new_medicines}</div>
+                                    <div className="text-2xl font-bold text-green-600">{previewData.new_products}</div>
                                     <p className="text-xs text-muted-foreground">Nuevos</p>
                                 </CardContent>
                             </Card>
                             <Card>
                                 <CardContent className="pt-4">
-                                    <div className="text-2xl font-bold text-blue-600">{previewData.existing_medicines}</div>
+                                    <div className="text-2xl font-bold text-blue-600">{previewData.existing_products}</div>
                                     <p className="text-xs text-muted-foreground">Existentes</p>
                                 </CardContent>
                             </Card>

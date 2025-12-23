@@ -18,12 +18,12 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMedicineMutations } from "@/hooks/useMedicineMutations";
-import { MedicineCreateValues, MedicineTag, medicineCreateSchema } from "@/types/medicine";
+import { useProductMutations } from "@/hooks/useProductMutations";
+import { ProductCreateValues, ProductTag, productCreateSchema } from "@/types/product";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { BASE_API_URL } from "@/config";
-import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog";
+import { CreateProductTagDialog } from "@/components/products/CreateProductTagDialog";
 import { Badge } from "../ui/badge";
 
 const getRandomColor = () => {
@@ -40,8 +40,8 @@ const getRandomColor = () => {
     return colors[Math.floor(Math.random() * colors.length)];
 };
 
-export function CreateMedicineDialog() {
-    const { createMedicine, isCreating } = useMedicineMutations();
+export function CreateProductDialog() {
+    const { createProduct, isCreating } = useProductMutations();
     const [open, setOpen] = React.useState(false);
     const [createTagDialogOpen, setCreateTagDialogOpen] = React.useState(false);
     const [newTagName, setNewTagName] = React.useState("");
@@ -74,17 +74,17 @@ export function CreateMedicineDialog() {
         }
     };
 
-    const { data: medicineTags = [] } = useQuery({
-        queryKey: ["medicineTags"],
+    const { data: productTags = [] } = useQuery({
+        queryKey: ["productTags"],
         queryFn: async () => {
-            const { data } = await axios.get(`${BASE_API_URL}/medicine-tags/`);
+            const { data } = await axios.get(`${BASE_API_URL}/product-tags/`);
             return data;
         },
         enabled: open
     });
 
-    const form = useForm<MedicineCreateValues>({
-        resolver: zodResolver(medicineCreateSchema),
+    const form = useForm<ProductCreateValues>({
+        resolver: zodResolver(productCreateSchema),
         defaultValues: {
             name: "",
             active_substance: "",
@@ -105,10 +105,10 @@ export function CreateMedicineDialog() {
     });
 
 
-    const onSubmit: SubmitHandler<MedicineCreateValues> = async (data) => {
+    const onSubmit: SubmitHandler<ProductCreateValues> = async (data) => {
         try {
             const newTagsPromises = localTags.map(async tag => {
-                const { data: createdTag } = await axios.post(`${BASE_API_URL}/medicine-tags/`, {
+                const { data: createdTag } = await axios.post(`${BASE_API_URL}/product-tags/`, {
                     name: tag.name,
                     color: tag.color
                 });
@@ -127,7 +127,7 @@ export function CreateMedicineDialog() {
                 tags: finalTags
             };
 
-            await createMedicine(formData);
+            await createProduct(formData);
             setOpen(false);
             form.reset();
             setLocalTags([]);
@@ -422,9 +422,9 @@ export function CreateMedicineDialog() {
                                                 {/* Aquí va el componente de tags */}
                                                 <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-6">
                                                     {/* Tags seleccionados existentes */}
-                                                    {medicineTags.filter((tag: MedicineTag) =>
+                                                    {productTags.filter((tag: ProductTag) =>
                                                         field.value?.includes(tag.id)
-                                                    ).map((tag: MedicineTag) => (
+                                                    ).map((tag: ProductTag) => (
                                                         <Badge
                                                             key={tag.id}
                                                             style={{ backgroundColor: tag.color || "#888888" }}
@@ -494,9 +494,9 @@ export function CreateMedicineDialog() {
                                                 <div className="pt-1">
                                                     <p className="text-xs text-muted-foreground mb-2">Tags disponibles:</p>
                                                     <div className="flex flex-wrap gap-2">
-                                                        {medicineTags.filter((tag: MedicineTag) =>
+                                                        {productTags.filter((tag: ProductTag) =>
                                                             !field.value?.includes(tag.id)
-                                                        ).map((tag: MedicineTag) => (
+                                                        ).map((tag: ProductTag) => (
                                                             <Badge
                                                                 key={tag.id}
                                                                 style={{ backgroundColor: tag.color || "#888888" }}
@@ -551,7 +551,7 @@ export function CreateMedicineDialog() {
                             className="bg-white rounded-lg shadow-lg"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <CreateMedicineTagDialog
+                            <CreateProductTagDialog
                                 onClose={() => setCreateTagDialogOpen(false)}
                             />
                         </div>
@@ -562,4 +562,4 @@ export function CreateMedicineDialog() {
     );
 }
 
-export default CreateMedicineDialog;
+export default CreateProductDialog;

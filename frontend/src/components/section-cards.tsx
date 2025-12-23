@@ -1,6 +1,6 @@
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
 import { useQuery } from "@tanstack/react-query";
-import { Medicine } from "@/types/medicine";
+import { Product } from "@/types/product";
 import axios from "axios";
 import { Badge } from "@/components/ui/badge"
 import {
@@ -13,23 +13,23 @@ import {
 } from "@/components/ui/card"
 
 export function SectionCards() {
-  const { data: medicines } = useQuery<Medicine[]>({
-    queryKey: ["medicines"],
+  const { data: products } = useQuery<Product[]>({
+    queryKey: ["products"],
     queryFn: async () => {
       try {
-        const { data } = await axios.get("/api/v1/medicines/");
+        const { data } = await axios.get("/api/v1/products/");
         return data;
       } catch (error) {
-        console.error("Error fetching medicines:", error);
+        console.error("Error fetching products:", error);
         throw error;
       }
     }
   });
 
-  const totalProducts = medicines?.length || 0;
-  const totalValue = medicines?.reduce((sum, med) => sum + (med.sale_price * (med.inventory?.quantity || 0)), 0) || 0;
-  const lowStock = medicines?.filter(med => (med.inventory?.quantity || 0) < 10).length || 0;
-  const mostExpensive = medicines?.sort((a, b) => b.sale_price - a.sale_price)[0]?.name || "N/A";
+  const totalProducts = products?.length || 0;
+  const totalValue = products?.reduce((sum, med) => sum + (med.sale_price * (med.inventory?.quantity || 0)), 0) || 0;
+  const lowStock = products?.filter(med => (med.inventory?.quantity || 0) < 10).length || 0;
+  const mostExpensive = products?.sort((a, b) => b.sale_price - a.sale_price)[0]?.name || "N/A";
 
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">

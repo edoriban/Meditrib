@@ -4,8 +4,6 @@ trigger: always_on
 
 # Agent Rules & Context
 
-Este archivo sirve como "memoria a corto plazo" y reglas rápidas para cualquier agente de IA que trabaje en este proyecto. Lee esto primero para entender el estado actual y las restricciones.
-
 ## 1. Identidad del Proyecto
 *   **Nombre**: Meditrib
 *   **Propósito**: Punto de Venta (POS) y Gestión de Inventario Farmacéutico.

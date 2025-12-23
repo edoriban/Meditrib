@@ -16,7 +16,7 @@ export function useSaleMutations() {
         onSuccess: () => {
             toast.success("Venta creada correctamente");
             queryClient.invalidateQueries({ queryKey: ["sales"] });
-            queryClient.invalidateQueries({ queryKey: ["medicines"] }); // Actualizar inventario
+            queryClient.invalidateQueries({ queryKey: ["products"] }); // Actualizar inventario
         },
         onError: (error) => {
             if (axios.isAxiosError(error) && error.response?.data?.detail) {
@@ -36,7 +36,7 @@ export function useSaleMutations() {
         onSuccess: () => {
             toast.success("Venta creada correctamente (stock ajustado)");
             queryClient.invalidateQueries({ queryKey: ["sales"] });
-            queryClient.invalidateQueries({ queryKey: ["medicines"] });
+            queryClient.invalidateQueries({ queryKey: ["products"] });
         },
         onError: (error) => {
             if (axios.isAxiosError(error) && error.response?.data?.detail) {
@@ -56,7 +56,7 @@ export function useSaleMutations() {
         onSuccess: () => {
             toast.success("Venta actualizada correctamente");
             queryClient.invalidateQueries({ queryKey: ["sales"] });
-            queryClient.invalidateQueries({ queryKey: ["medicines"] });
+            queryClient.invalidateQueries({ queryKey: ["products"] });
         },
         onError: (error) => {
             if (axios.isAxiosError(error) && error.response?.data?.detail) {
@@ -76,7 +76,7 @@ export function useSaleMutations() {
         onSuccess: () => {
             toast.success("Venta eliminada correctamente");
             queryClient.invalidateQueries({ queryKey: ["sales"] });
-            queryClient.invalidateQueries({ queryKey: ["medicines"] }); // El stock se revierte
+            queryClient.invalidateQueries({ queryKey: ["products"] }); // El stock se revierte
         },
         onError: (error) => {
             if (axios.isAxiosError(error) && error.response?.data?.detail) {

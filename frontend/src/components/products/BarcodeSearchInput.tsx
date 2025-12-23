@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { BASE_API_URL } from "@/config";
-import { Medicine } from "@/types/medicine";
+import { Product } from "@/types/product";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { IconBarcode, IconSearch, IconX, IconLoader2 } from "@tabler/icons-react
 import { cn } from "@/lib/utils";
 
 interface BarcodeSearchInputProps {
-    onMedicineSelect: (medicine: Medicine) => void;
+    onProductSelect: (product: Product) => void;
     placeholder?: string;
     className?: string;
     disabled?: boolean;
@@ -26,7 +26,7 @@ const formatCurrency = (amount: number) => {
 };
 
 export function BarcodeSearchInput({
-    onMedicineSelect,
+    onProductSelect,
     placeholder = "Buscar por código de barras o nombre...",
     className,
     disabled = false,
@@ -51,8 +51,8 @@ export function BarcodeSearchInput({
     }, []);
 
     // Query para búsqueda
-    const { data: searchResults, isLoading, isFetching } = useQuery<Medicine[]>({
-        queryKey: ["medicine-search", searchValue],
+    const { data: searchResults, isLoading, isFetching } = useQuery<Product[]>({
+        queryKey: ["product-search", searchValue],
         queryFn: async () => {
             if (!searchValue || searchValue.length < 2) return [];
 
@@ -63,7 +63,7 @@ export function BarcodeSearchInput({
                 search: searchValue,
                 stock_filter: "all"
             });
-            const { data } = await axios.get(`${BASE_API_URL}/medicines/paginated?${params}`);
+            const { data } = await axios.get(`${BASE_API_URL}/products/paginated?${params}`);
             return data.items || [];
         },
         enabled: searchValue.length >= 2,
@@ -72,7 +72,7 @@ export function BarcodeSearchInput({
 
     // Filtrar resultados excluyendo IDs especificados
     const filteredResults = searchResults?.filter(
-        medicine => !excludeIds.includes(medicine.id)
+        product => !excludeIds.includes(product.id)
     ) || [];
 
     // Manejar cambio de input
@@ -90,8 +90,8 @@ export function BarcodeSearchInput({
     };
 
     // Manejar selección de medicamento
-    const handleSelect = (medicine: Medicine) => {
-        onMedicineSelect(medicine);
+    const handleSelect = (product: Product) => {
+        onProductSelect(product);
         setSearchValue("");
         setShowDropdown(false);
         setIsBarcodeMode(false);
@@ -184,36 +184,36 @@ export function BarcodeSearchInput({
                             No se encontraron medicamentos
                         </div>
                     ) : (
-                        filteredResults.map((medicine) => (
+                        filteredResults.map((product) => (
                             <div
-                                key={medicine.id}
-                                onClick={() => handleSelect(medicine)}
+                                key={product.id}
+                                onClick={() => handleSelect(product)}
                                 className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground"
                             >
                                 <div className="flex flex-col min-w-0 flex-1">
-                                    <span className="font-medium truncate">{medicine.name}</span>
+                                    <span className="font-medium truncate">{product.name}</span>
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        {medicine.barcode && (
+                                        {product.barcode && (
                                             <span className="flex items-center gap-1">
                                                 <IconBarcode className="h-3 w-3" />
-                                                {medicine.barcode}
+                                                {product.barcode}
                                             </span>
                                         )}
-                                        {medicine.laboratory && (
-                                            <span>• {medicine.laboratory} • {medicine.active_substance}</span>
+                                        {product.laboratory && (
+                                            <span>• {product.laboratory} • {product.active_substance}</span>
                                             
                                         )}
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end ml-2">
                                     <span className="font-semibold text-sm">
-                                        {formatCurrency(medicine.sale_price)}
+                                        {formatCurrency(product.sale_price)}
                                     </span>
                                     <Badge
-                                        variant={medicine.inventory?.quantity && medicine.inventory.quantity > 0 ? "secondary" : "destructive"}
+                                        variant={product.inventory?.quantity && product.inventory.quantity > 0 ? "secondary" : "destructive"}
                                         className="text-xs"
                                     >
-                                        Stock: {medicine.inventory?.quantity || 0}
+                                        Stock: {product.inventory?.quantity || 0}
                                     </Badge>
                                 </div>
                             </div>

@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 
-export interface Medicine {
+export interface Product {
     id: number;
     name: string;
     description?: string;
-    tags?: MedicineTag[];
+    tags?: ProductTag[];
     type?: string; // Campo legacy para compatibilidad con DataTable
     sale_price: number;
     purchase_price: number;
@@ -28,11 +28,11 @@ export interface Medicine {
     };
 }
 
-export interface MedicineEditFormProps {
-    form: UseFormReturn<MedicineFormValues>;
+export interface ProductEditFormProps {
+    form: UseFormReturn<ProductFormValues>;
 }
 
-export const medicineFormSchema = z.object({
+export const productFormSchema = z.object({
     name: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
     description: z.string().optional(),
     sale_price: z.number().positive({ message: "El precio de venta debe ser mayor a 0" }),
@@ -56,11 +56,11 @@ export const medicineFormSchema = z.object({
     supplier_id: z.number().int().positive().optional(),
 });
 
-export const medicineCreateSchema = medicineFormSchema;
+export const productCreateSchema = productFormSchema;
 
-export const medicineUpdateSchema = medicineFormSchema.partial();
+export const productUpdateSchema = productFormSchema.partial();
 
-export interface MedicineFormValues {
+export interface ProductFormValues {
     name: string;
     sale_price: number;
     description?: string;
@@ -82,7 +82,7 @@ export interface MedicineFormValues {
     supplier_id?: number;
 }
 
-export type MedicineCreateValues = {
+export type ProductCreateValues = {
     name: string;
     sale_price: number;
     description?: string;
@@ -104,30 +104,30 @@ export type MedicineCreateValues = {
     supplier_id?: number;
 };
 
-export type MedicineUpdateValues = z.infer<typeof medicineUpdateSchema>;
+export type ProductUpdateValues = z.infer<typeof productUpdateSchema>;
 
-export const medicineTagSchema = z.object({
+export const productTagSchema = z.object({
     name: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
     description: z.string().optional(),
     color: z.string().optional(),
 });
 
-export interface MedicineTag {
+export interface ProductTag {
     id: number;
     name: string;
     description?: string;
     color?: string;
 }
 
-export interface MedicineTagWithUIState extends MedicineTag {
+export interface ProductTagWithUIState extends ProductTag {
     pendingDelete?: boolean;
 }
 
-export interface CreateMedicineTagDialogProps {
+export interface CreateProductTagDialogProps {
     onClose?: () => void;
 }
 
-export type MedicineTagFormValues = z.infer<typeof medicineTagSchema>;
+export type ProductTagFormValues = z.infer<typeof productTagSchema>;
 
 // ============================================================================
 // TIPOS PARA IMPORTACIÓN DE EXCEL
@@ -152,7 +152,7 @@ export interface ExcelImportPreviewItem {
     iva_rate: number;
     inventory_to_add: number;
     exists: boolean;
-    medicine_id: number | null;
+    product_id: number | null;
     price_range: string;
     price_difference: PriceDifference | null;
 }
@@ -160,8 +160,8 @@ export interface ExcelImportPreviewItem {
 export interface ExcelImportPreviewResponse {
     items: ExcelImportPreviewItem[];
     total_items: number;
-    new_medicines: number;
-    existing_medicines: number;
+    new_products: number;
+    existing_products: number;
     price_changes: number;
 }
 
@@ -175,7 +175,7 @@ export interface ExcelImportConfirmItem {
     iva_rate: number;
     inventory_to_add: number;
     exists: boolean;
-    medicine_id: number | null;
+    product_id: number | null;
     sat_key?: string | null;
 }
 
@@ -195,8 +195,8 @@ export interface ExcelImportConfirmResponse {
 // TIPOS PARA PAGINACIÓN
 // ============================================================================
 
-export interface MedicinePaginatedResponse {
-    items: Medicine[];
+export interface ProductPaginatedResponse {
+    items: Product[];
     total: number;
     page: number;
     page_size: number;

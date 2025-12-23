@@ -1,24 +1,24 @@
 import React, { useState } from "react";
 import { FormInput } from "@/components/ui/form-input";
-import { MedicineEditFormProps } from "@/types/medicine";
+import { ProductEditFormProps } from "@/types/product";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { BASE_API_URL } from "@/config";
-import { CreateMedicineTagDialog } from "@/components/medicines/CreateMedicineTagDialog";
+import { CreateProductTagDialog } from "@/components/products/CreateProductTagDialog";
 import { Button } from "@/components/ui/button";
-import { TagToggleGroup } from "@/components/medicines/TagToggleGroup";
+import { TagToggleGroup } from "@/components/products/TagToggleGroup";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
+export const ProductEditForm: React.FC<ProductEditFormProps> = ({ form }) => {
     const { control, formState: { errors } } = form;
     const [createTagDialogOpen, setCreateTagDialogOpen] = useState(false);
 
-    const { data: medicineTags = [], isLoading: isLoadingTags } = useQuery({
-        queryKey: ["medicineTags"],
+    const { data: productTags = [], isLoading: isLoadingTags } = useQuery({
+        queryKey: ["productTags"],
         queryFn: async () => {
-            const { data } = await axios.get(`${BASE_API_URL}/medicine-tags/`);
+            const { data } = await axios.get(`${BASE_API_URL}/product-tags/`);
             return data;
         }
     });
@@ -153,11 +153,11 @@ export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
                         <FormControl>
                             {isLoadingTags ? (
                                 <div className="border rounded-md p-3 text-sm text-muted-foreground">Cargando tipos...</div>
-                            ) : medicineTags.length === 0 ? (
+                            ) : productTags.length === 0 ? (
                                 <EmptyTagsContent />
                             ) : (
                                 <TagToggleGroup
-                                    tags={medicineTags}
+                                    tags={productTags}
                                     selectedTags={field.value?.map(tagId => tagId.toString())}
                                     onChange={(selected) => {
                                         const numericTags = selected.map(tagId => Number(tagId));
@@ -214,7 +214,7 @@ export const MedicineEditForm: React.FC<MedicineEditFormProps> = ({ form }) => {
                             className="bg-white rounded-lg shadow-lg"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <CreateMedicineTagDialog
+                            <CreateProductTagDialog
                                 onClose={() => setCreateTagDialogOpen(false)}
                             />
                         </div>
