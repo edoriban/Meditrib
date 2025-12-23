@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 from backend.core import models, schemas
-from backend.core.security import get_password_hash
+from backend.core.password import get_password_hash
+from datetime import datetime, timedelta
+import re
 
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()

@@ -1,27 +1,33 @@
+"""
+Clients router with multi-tenant support.
+"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
 
 from backend.core.dependencies import get_db
-from backend.core import schemas
-from backend.core.crud import crud_client
+from backend.core import schemas, models
 from backend.core.security import get_current_user
 
 router = APIRouter(
     prefix="/clients",
     tags=["clients"],
     responses={404: {"description": "Not found"}},
-    dependencies=[Depends(get_current_user)],  # JWT auth required
 )
 
 
+def get_tenant_id(current_user: models.User = Depends(get_current_user)) -> int:
+    if not current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="User not associated with a tenant")
+    return current_user.tenant_id
+
+
 # ============================================================================
-# SCHEMAS DE VALIDACIÓN FISCAL
+# SCHEMAS
 # ============================================================================
 
 class FiscalValidationResult(BaseModel):
-    """Resultado de validación de datos fiscales"""
     valid: bool
     errors: List[str]
     client_id: int
@@ -30,7 +36,6 @@ class FiscalValidationResult(BaseModel):
 
 
 class ClientFiscalData(BaseModel):
-    """Datos fiscales del cliente"""
     rfc: str | None
     tax_regime: str | None
     cfdi_use: str | None
@@ -45,117 +50,164 @@ class ClientFiscalData(BaseModel):
 
 
 # ============================================================================
-# ENDPOINTS DE VALIDACIÓN FISCAL
+# CRUD ENDPOINTS
+# ============================================================================
+
+@router.get("/", response_model=List[schemas.Client])
+def read_clients(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    return db.query(models.Client).filter(
+        models.Client.tenant_id == tenant_id
+    ).offset(skip).limit(limit).all()
+
+
+@router.post("/", response_model=schemas.Client)
+def create_client(
+    client: schemas.ClientCreate, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    existing = db.query(models.Client).filter(
+        models.Client.tenant_id == tenant_id,
+        models.Client.name == client.name
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Client name already registered")
+    
+    db_client = models.Client(tenant_id=tenant_id, **client.model_dump())
+    db.add(db_client)
+    db.commit()
+    db.refresh(db_client)
+    return db_client
+
+
+@router.get("/{client_id}", response_model=schemas.Client)
+def read_client(
+    client_id: int, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    client = db.query(models.Client).filter(
+        models.Client.id == client_id,
+        models.Client.tenant_id == tenant_id
+    ).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    return client
+
+
+@router.put("/{client_id}", response_model=schemas.Client)
+def update_client(
+    client_id: int, 
+    client_update: schemas.ClientUpdate, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    client = db.query(models.Client).filter(
+        models.Client.id == client_id,
+        models.Client.tenant_id == tenant_id
+    ).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    if client_update.name:
+        existing = db.query(models.Client).filter(
+            models.Client.tenant_id == tenant_id,
+            models.Client.name == client_update.name,
+            models.Client.id != client_id
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Client name already registered")
+    
+    for key, value in client_update.model_dump(exclude_unset=True).items():
+        setattr(client, key, value)
+    db.commit()
+    db.refresh(client)
+    return client
+
+
+@router.delete("/{client_id}", response_model=schemas.Client)
+def delete_client(
+    client_id: int, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    client = db.query(models.Client).filter(
+        models.Client.id == client_id,
+        models.Client.tenant_id == tenant_id
+    ).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    db.delete(client)
+    db.commit()
+    return client
+
+
+# ============================================================================
+# FISCAL VALIDATION
 # ============================================================================
 
 @router.get("/{client_id}/validate-fiscal", response_model=FiscalValidationResult)
-def validate_client_fiscal_data(client_id: int, db: Session = Depends(get_db)):
-    """
-    Valida si un cliente tiene los datos fiscales completos para facturación.
-    Requeridos para CFDI: RFC, régimen fiscal, uso de CFDI, calle y CP.
-    """
-    db_client = crud_client.get_client(db, client_id=client_id)
-    if db_client is None:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+def validate_client_fiscal_data(
+    client_id: int, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    client = db.query(models.Client).filter(
+        models.Client.id == client_id,
+        models.Client.tenant_id == tenant_id
+    ).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
     
     errors = []
-    
-    # Validar RFC (12-13 caracteres)
-    if not db_client.rfc or len(db_client.rfc) < 12:
-        errors.append("RFC inválido o faltante (debe tener 12-13 caracteres)")
-    
-    # Validar régimen fiscal
-    if not db_client.tax_regime:
+    if not client.rfc or len(client.rfc) < 12:
+        errors.append("RFC inválido o faltante")
+    if not client.tax_regime:
         errors.append("Régimen fiscal faltante")
-    
-    # Validar uso de CFDI
-    if not db_client.cfdi_use:
+    if not client.cfdi_use:
         errors.append("Uso de CFDI faltante")
-    
-    # Validar dirección fiscal
-    if not db_client.fiscal_street:
+    if not client.fiscal_street:
         errors.append("Calle fiscal faltante")
-    
-    # Validar código postal (5 dígitos)
-    if not db_client.fiscal_postal_code:
-        errors.append("Código postal fiscal faltante")
-    elif len(db_client.fiscal_postal_code) != 5 or not db_client.fiscal_postal_code.isdigit():
-        errors.append("Código postal debe ser de 5 dígitos")
+    if not client.fiscal_postal_code or len(client.fiscal_postal_code) != 5:
+        errors.append("Código postal inválido")
     
     return FiscalValidationResult(
         valid=len(errors) == 0,
         errors=errors,
         client_id=client_id,
-        client_name=db_client.name,
+        client_name=client.name,
         can_invoice=len(errors) == 0
     )
 
 
 @router.get("/{client_id}/fiscal-data", response_model=ClientFiscalData)
-def get_client_fiscal_data(client_id: int, db: Session = Depends(get_db)):
-    """Obtiene los datos fiscales de un cliente"""
-    db_client = crud_client.get_client(db, client_id=client_id)
-    if db_client is None:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+def get_client_fiscal_data(
+    client_id: int, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    client = db.query(models.Client).filter(
+        models.Client.id == client_id,
+        models.Client.tenant_id == tenant_id
+    ).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
     
     return ClientFiscalData(
-        rfc=db_client.rfc,
-        tax_regime=db_client.tax_regime,
-        cfdi_use=db_client.cfdi_use,
-        fiscal_street=db_client.fiscal_street,
-        fiscal_exterior_number=db_client.fiscal_exterior_number,
-        fiscal_interior_number=db_client.fiscal_interior_number,
-        fiscal_neighborhood=db_client.fiscal_neighborhood,
-        fiscal_city=db_client.fiscal_city,
-        fiscal_state=db_client.fiscal_state,
-        fiscal_postal_code=db_client.fiscal_postal_code,
-        fiscal_country=db_client.fiscal_country or "México"
+        rfc=client.rfc,
+        tax_regime=client.tax_regime,
+        cfdi_use=client.cfdi_use,
+        fiscal_street=client.fiscal_street,
+        fiscal_exterior_number=client.fiscal_exterior_number,
+        fiscal_interior_number=client.fiscal_interior_number,
+        fiscal_neighborhood=client.fiscal_neighborhood,
+        fiscal_city=client.fiscal_city,
+        fiscal_state=client.fiscal_state,
+        fiscal_postal_code=client.fiscal_postal_code,
+        fiscal_country=client.fiscal_country or "México"
     )
-
-
-# ============================================================================
-# ENDPOINTS CRUD BÁSICOS
-# ============================================================================
-
-@router.post("/", response_model=schemas.Client)
-def create_client(client: schemas.ClientCreate, db: Session = Depends(get_db)):
-    db_client = crud_client.get_client_by_name(db, name=client.name)
-    if db_client:
-        raise HTTPException(status_code=400, detail="Client name already registered")
-    return crud_client.create_client(db=db, client=client)
-
-
-@router.get("/", response_model=List[schemas.Client])
-def read_clients(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    clients = crud_client.get_clients(db, skip=skip, limit=limit)
-    return clients
-
-
-@router.get("/{client_id}", response_model=schemas.Client)
-def read_client(client_id: int, db: Session = Depends(get_db)):
-    db_client = crud_client.get_client(db, client_id=client_id)
-    if db_client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
-    return db_client
-
-
-@router.put("/{client_id}", response_model=schemas.Client)
-def update_client(client_id: int, client: schemas.ClientUpdate, db: Session = Depends(get_db)):
-    db_client = crud_client.get_client(db, client_id=client_id)
-    if db_client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
-    # Opcional: Verificar si el nuevo nombre ya existe si se está actualizando
-    if client.name:
-        existing_client = crud_client.get_client_by_name(db, name=client.name)
-        if existing_client and existing_client.id != client_id:
-            raise HTTPException(status_code=400, detail="Client name already registered")
-    return crud_client.update_client(db=db, client_id=client_id, client_update=client)
-
-
-@router.delete("/{client_id}", response_model=schemas.Client)
-def delete_client(client_id: int, db: Session = Depends(get_db)):
-    db_client = crud_client.get_client(db, client_id=client_id)
-    if db_client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
-    # Considerar lógica adicional si el cliente tiene ventas asociadas
-    return crud_client.delete_client(db=db, client_id=client_id)
