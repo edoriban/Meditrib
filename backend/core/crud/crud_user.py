@@ -16,7 +16,25 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = get_password_hash(user.password)
-    role = db.query(models.Role).filter(models.Role.name == "Usuario").first()
+    
+    # Check if this is the first user (will be admin)
+    user_count = db.query(models.User).count()
+    is_first_user = user_count == 0
+    
+    # Get or create the appropriate role
+    role_name = "Admin" if is_first_user else "Usuario"
+    role = db.query(models.Role).filter(models.Role.name == role_name).first()
+    
+    if not role:
+        # Create the role if it doesn't exist
+        role = models.Role(
+            name=role_name, 
+            description="Administrador del sistema" if is_first_user else "Usuario normal del sistema"
+        )
+        db.add(role)
+        db.commit()
+        db.refresh(role)
+    
     db_user = models.User(**user.model_dump(exclude={'password'}), password=hashed_password, role_id=role.id)
     db.add(db_user)
     db.commit()
