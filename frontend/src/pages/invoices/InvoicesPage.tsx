@@ -51,7 +51,7 @@ export default function InvoicesPage() {
     const { data: companies } = useQuery<Company[]>({
         queryKey: ["companies"],
         queryFn: async () => {
-            const { data } = await axios.get(`${BASE_API_URL}/invoices/companies/`);
+            const { data } = await axios.get(`${BASE_API_URL}/companies/`);
             return data;
         },
     });

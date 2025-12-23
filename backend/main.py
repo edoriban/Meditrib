@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.database import engine, Base
-from backend.routers import products, suppliers, users, roles, sales, clients, reports as basic_reports, auth, product_tags, purchase_order, alerts, invoices, expenses, onboarding
+from backend.routers import products, suppliers, users, roles, sales, clients, reports as basic_reports, auth, product_tags, purchase_order, alerts, invoices, expenses, onboarding, companies
 from backend.routers import reports as financial_reports
 from backend.routers import batches
 from backend.core.middleware import RequestLoggingMiddleware, SystemHealthMiddleware, AuditMiddleware
@@ -50,6 +50,7 @@ app.include_router(product_tags.router, prefix="/api/v1", tags=["product-tags"])
 app.include_router(purchase_order.router, prefix="/api/v1", tags=["purchase-orders"])
 app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
 app.include_router(invoices.router, prefix="/api/v1/invoices", tags=["invoices"])
+app.include_router(companies.router, prefix="/api/v1/companies", tags=["companies"])
 app.include_router(expenses.router, prefix="/api/v1/expenses", tags=["expenses"])
 app.include_router(onboarding.router, prefix="/api/v1", tags=["onboarding"])
 

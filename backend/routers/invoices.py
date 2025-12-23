@@ -1,111 +1,162 @@
+"""
+Invoices router with multi-tenant support.
+CFDI electronic invoicing.
+"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from backend.core.database import get_db
-from backend.core.schemas import Invoice, InvoiceCreate, InvoiceUpdate, Company, CompanyCreate, CompanyUpdate
-from backend.core.crud.crud_invoice import (
-    get_invoices, get_invoice, create_invoice, update_invoice,
-    delete_invoice, generate_cfdi_xml, create_company, get_company,
-    get_companies, create_invoice_from_sale, update_company, delete_company
-)
+
+from backend.core.dependencies import get_db
+from backend.core.security import get_current_user
+from backend.core import models
+from backend.core.schemas import Invoice, InvoiceCreate, InvoiceUpdate
 
 router = APIRouter()
 
 
-# Company endpoints
-@router.post("/companies/", response_model=Company)
-def create_new_company(company: CompanyCreate, db: Session = Depends(get_db)):
-    return create_company(db, company)
+def get_tenant_id(current_user: models.User = Depends(get_current_user)) -> int:
+    if not current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="User not associated with a tenant")
+    return current_user.tenant_id
 
 
-@router.get("/companies/", response_model=List[Company])
-def read_companies(db: Session = Depends(get_db)):
-    return get_companies(db)
-
-
-@router.get("/companies/{company_id}", response_model=Company)
-def read_company(company_id: int, db: Session = Depends(get_db)):
-    db_company = get_company(db, company_id=company_id)
-    if db_company is None:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return db_company
-
-
-@router.put("/companies/{company_id}", response_model=Company)
-def update_existing_company(company_id: int, company: CompanyUpdate, db: Session = Depends(get_db)):
-    db_company = update_company(db, company_id=company_id, company_update=company)
-    if db_company is None:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return db_company
-
-
-@router.delete("/companies/{company_id}")
-def delete_existing_company(company_id: int, db: Session = Depends(get_db)):
-    success = delete_company(db, company_id=company_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return {"message": "Company deleted successfully"}
-
-
-# Invoice endpoints
 @router.get("/", response_model=List[Invoice])
-def read_invoices(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    invoices = get_invoices(db, skip=skip, limit=limit)
-    return invoices
-
-
-@router.get("/{invoice_id}", response_model=Invoice)
-def read_invoice(invoice_id: int, db: Session = Depends(get_db)):
-    db_invoice = get_invoice(db, invoice_id=invoice_id)
-    if db_invoice is None:
-        raise HTTPException(status_code=404, detail="Invoice not found")
-    return db_invoice
+def read_invoices(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    return db.query(models.Invoice).filter(
+        models.Invoice.tenant_id == tenant_id
+    ).offset(skip).limit(limit).all()
 
 
 @router.post("/", response_model=Invoice)
-def create_new_invoice(invoice: InvoiceCreate, db: Session = Depends(get_db)):
-    return create_invoice(db, invoice)
-
-
-@router.put("/{invoice_id}", response_model=Invoice)
-def update_existing_invoice(invoice_id: int, invoice: InvoiceUpdate, db: Session = Depends(get_db)):
-    db_invoice = update_invoice(db, invoice_id=invoice_id, invoice_update=invoice)
-    if db_invoice is None:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+def create_invoice(
+    invoice: InvoiceCreate, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    db_invoice = models.Invoice(
+        tenant_id=tenant_id,
+        **invoice.model_dump(exclude={"concepts", "taxes"})
+    )
+    db.add(db_invoice)
+    db.flush()
+    
+    if invoice.concepts:
+        for concept in invoice.concepts:
+            db_concept = models.InvoiceConcept(
+                tenant_id=tenant_id,
+                invoice_id=db_invoice.id,
+                **concept.model_dump()
+            )
+            db.add(db_concept)
+    
+    db.commit()
+    db.refresh(db_invoice)
     return db_invoice
 
 
+@router.get("/{invoice_id}", response_model=Invoice)
+def read_invoice(
+    invoice_id: int, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    invoice = db.query(models.Invoice).filter(
+        models.Invoice.id == invoice_id,
+        models.Invoice.tenant_id == tenant_id
+    ).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    return invoice
+
+
+@router.put("/{invoice_id}", response_model=Invoice)
+def update_invoice(
+    invoice_id: int, 
+    invoice_update: InvoiceUpdate, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    invoice = db.query(models.Invoice).filter(
+        models.Invoice.id == invoice_id,
+        models.Invoice.tenant_id == tenant_id
+    ).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    for key, value in invoice_update.model_dump(exclude_unset=True, exclude={"concepts", "taxes"}).items():
+        setattr(invoice, key, value)
+    db.commit()
+    db.refresh(invoice)
+    return invoice
+
+
 @router.delete("/{invoice_id}")
-def delete_existing_invoice(invoice_id: int, db: Session = Depends(get_db)):
-    success = delete_invoice(db, invoice_id=invoice_id)
-    if not success:
+def delete_invoice(
+    invoice_id: int, 
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    invoice = db.query(models.Invoice).filter(
+        models.Invoice.id == invoice_id,
+        models.Invoice.tenant_id == tenant_id
+    ).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    if invoice.status == "issued":
         raise HTTPException(status_code=400, detail="Cannot delete issued invoice")
-    return {"message": "Invoice deleted successfully"}
-
-
-@router.post("/{invoice_id}/generate-xml")
-def generate_invoice_xml(invoice_id: int, db: Session = Depends(get_db)):
-    xml_content = generate_cfdi_xml(db, invoice_id)
-    if xml_content is None:
-        raise HTTPException(status_code=400, detail="Cannot generate XML for this invoice")
-    return {"xml": xml_content}
+    
+    db.delete(invoice)
+    db.commit()
+    return {"message": "Invoice deleted"}
 
 
 @router.post("/from-sale/{sale_id}", response_model=Invoice)
-def create_invoice_from_sale_endpoint(sale_id: int, payment_form: str = "01", payment_method: str = "PUE", db: Session = Depends(get_db)):
-    result = create_invoice_from_sale(db, sale_id, payment_form, payment_method)
+def create_invoice_from_sale(
+    sale_id: int,
+    payment_form: str = "01",
+    payment_method: str = "PUE",
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_tenant_id)
+):
+    """Create invoice from existing sale"""
+    sale = db.query(models.Sale).filter(
+        models.Sale.id == sale_id,
+        models.Sale.tenant_id == tenant_id
+    ).first()
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
     
-    # Si el resultado es un dict con error, devolver el mensaje apropiado
-    if isinstance(result, dict) and "error" in result:
-        error_codes = {
-            "sale_not_found": 404,
-            "already_invoiced": 400,
-            "no_company": 400
-        }
-        status_code = error_codes.get(result["error"], 400)
-        raise HTTPException(status_code=status_code, detail=result["message"])
+    existing = db.query(models.Invoice).filter(
+        models.Invoice.sale_id == sale_id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Sale already invoiced")
     
-    if result is None:
-        raise HTTPException(status_code=400, detail="Cannot create invoice from sale")
+    company = db.query(models.Company).filter(
+        models.Company.tenant_id == tenant_id
+    ).first()
+    if not company:
+        raise HTTPException(status_code=400, detail="No company configured")
     
-    return result
+    invoice = models.Invoice(
+        tenant_id=tenant_id,
+        sale_id=sale_id,
+        company_id=company.id,
+        client_id=sale.client_id,
+        subtotal=sale.subtotal,
+        total=sale.total,
+        iva_amount=sale.iva_amount,
+        payment_form=payment_form,
+        payment_method=payment_method,
+        status="draft"
+    )
+    db.add(invoice)
+    db.commit()
+    db.refresh(invoice)
+    return invoice

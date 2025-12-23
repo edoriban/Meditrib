@@ -28,6 +28,7 @@ const InvoicesPage = React.lazy(() => import("./pages/invoices/InvoicesPage"));
 const ExpensesPage = React.lazy(() => import("./pages/expenses/ExpensesPage"));
 const RolesPage = React.lazy(() => import("./pages/roles/RolesPage"));
 const SettingsPage = React.lazy(() => import("./pages/settings/SettingsPage"));
+const TeamPage = React.lazy(() => import("./pages/team/TeamPage"));
 const HelpPage = React.lazy(() => import("./pages/help/HelpPage"));
 const SetupWizard = React.lazy(() => import("./components/onboarding/SetupWizard").then(m => ({ default: m.SetupWizard })));
 
@@ -182,6 +183,15 @@ function App() {
                 <ProtectedRoute>
                   <MainLayout>
                     <SettingsPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+
+              {/* Equipo */}
+              <Route path="/team" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <TeamPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />

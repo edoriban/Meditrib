@@ -74,7 +74,7 @@ export default function SettingsPage() {
     const { data: companies, isLoading: isLoadingCompanies } = useQuery<CompanyData[]>({
         queryKey: ["companies"],
         queryFn: async () => {
-            const { data } = await axios.get(`${BASE_API_URL}/invoices/companies/`);
+            const { data } = await axios.get(`${BASE_API_URL}/companies/`);
             return data;
         }
     });
@@ -120,7 +120,7 @@ export default function SettingsPage() {
     // Mutación para crear empresa
     const createCompanyMutation = useMutation({
         mutationFn: async (data: Partial<CompanyData>) => {
-            const response = await axios.post(`${BASE_API_URL}/invoices/companies/`, data);
+            const response = await axios.post(`${BASE_API_URL}/companies/`, data);
             return response.data;
         },
         onSuccess: () => {
@@ -136,7 +136,7 @@ export default function SettingsPage() {
     // Mutación para actualizar empresa
     const updateCompanyMutation = useMutation({
         mutationFn: async ({ id, data }: { id: number; data: Partial<CompanyData> }) => {
-            const response = await axios.put(`${BASE_API_URL}/invoices/companies/${id}`, data);
+            const response = await axios.put(`${BASE_API_URL}/companies/${id}`, data);
             return response.data;
         },
         onSuccess: () => {

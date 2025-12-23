@@ -111,6 +111,11 @@ const data = {
   ],
   navSecondary: [
     {
+      title: "Equipo",
+      url: "/team",
+      icon: IconUsers,
+    },
+    {
       title: "Configuración",
       url: "/settings",
       icon: IconSettings,

@@ -60,7 +60,7 @@ export function CreateInvoiceDialog({
     const { data: companies, isLoading: companiesLoading } = useQuery<{ id: number; name: string; rfc: string }[]>({
         queryKey: ["companies"],
         queryFn: async () => {
-            const { data } = await axios.get(`${BASE_API_URL}/invoices/companies/`);
+            const { data } = await axios.get(`${BASE_API_URL}/companies/`);
             return data;
         },
         enabled: open,
@@ -191,8 +191,8 @@ export function CreateInvoiceDialog({
                                 <AlertTitle>Empresa emisora no configurada</AlertTitle>
                                 <AlertDescription>
                                     Debes configurar los datos fiscales de tu empresa antes de poder emitir facturas.{" "}
-                                    <Link 
-                                        to="/settings" 
+                                    <Link
+                                        to="/settings"
                                         className="underline font-medium hover:text-destructive-foreground"
                                         onClick={handleClose}
                                     >
@@ -283,7 +283,7 @@ export function CreateInvoiceDialog({
                                             const itemIvaRate = item.product.iva_rate || 0;
                                             const itemIvaAmount = item.subtotal * itemIvaRate;
                                             const itemTotalWithIva = item.subtotal + itemIvaAmount;
-                                            
+
                                             return (
                                                 <div key={item.id} className="flex justify-between text-sm pl-6 gap-2">
                                                     <span className="text-muted-foreground flex-1 truncate">
@@ -311,7 +311,7 @@ export function CreateInvoiceDialog({
                                                     return sum + (item.subtotal * itemIvaRate);
                                                 }, 0);
                                                 const invoiceTotal = invoiceSubtotal + invoiceIva;
-                                                
+
                                                 return (
                                                     <>
                                                         <div className="flex justify-between text-sm">
