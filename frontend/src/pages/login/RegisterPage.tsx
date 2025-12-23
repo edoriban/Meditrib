@@ -1,5 +1,5 @@
 import { RegisterForm } from "@/components/register-form";
-import logoSrc from "@/assets/Logo512.png";
+import logoSrc from "@/assets/VanPOS_Logo.png";
 import { LogoPatternBackground } from "@/components/LogoPatternBackground";
 
 export default function RegisterPage() {

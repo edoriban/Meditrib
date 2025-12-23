@@ -7,46 +7,49 @@ export const LogoPatternBackground: React.FC = () => (
             top: 0,
             left: 0,
             zIndex: 0,
-            opacity: 0.05,
+            opacity: 0.06,
             pointerEvents: "none",
         }}
         xmlns="http://www.w3.org/2000/svg"
     >
         <defs>
+            <linearGradient id="vanposGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#3B82F6" />
+                <stop offset="100%" stopColor="#8B5CF6" />
+            </linearGradient>
             <pattern
                 id="logoPattern"
-                width="60"
-                height="60"
+                width="80"
+                height="80"
                 patternUnits="userSpaceOnUse"
             >
-                {/* Hexagon outline */}
-                <polygon
-                    points="30,6 54,18 54,42 30,54 6,42 6,18"
+                {/* Outer rounded square */}
+                <rect
+                    x="8"
+                    y="8"
+                    width="64"
+                    height="64"
+                    rx="12"
                     stroke="#fff"
-                    strokeWidth="4"
+                    strokeWidth="2"
                     fill="none"
                 />
-                {/* Angular inner M shape */}
+                {/* Stylized V shape */}
                 <polyline
-                    points="16,42 16,24 24,24 30,30 36,24 44,24 44,42"
+                    points="20,24 40,56 60,24"
                     stroke="#fff"
-                    strokeWidth="5"
+                    strokeWidth="6"
                     fill="none"
-                    strokeLinejoin="miter"
-                    strokeLinecap="square"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
                 />
-                <line
-                    x1="30"
-                    y1="28"
-                    x2="30"
-                    y2="44"
-                    stroke="#fff"
-                    strokeWidth="5"
-                    strokeLinejoin="miter"
-                    strokeLinecap="square"
-                />
+                {/* Small barcode lines at bottom */}
+                <line x1="28" y1="64" x2="28" y2="56" stroke="#fff" strokeWidth="2" />
+                <line x1="36" y1="64" x2="36" y2="58" stroke="#fff" strokeWidth="2" />
+                <line x1="44" y1="64" x2="44" y2="56" stroke="#fff" strokeWidth="2" />
+                <line x1="52" y1="64" x2="52" y2="58" stroke="#fff" strokeWidth="2" />
             </pattern>
         </defs>
-        <rect width="100%" height="100%" rotate="15" fill="url(#logoPattern)" />
+        <rect width="100%" height="100%" fill="url(#logoPattern)" />
     </svg>
 );
