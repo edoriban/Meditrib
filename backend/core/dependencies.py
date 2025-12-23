@@ -1,11 +1,12 @@
+"""
+Dependencies for FastAPI endpoints.
+"""
 from sqlalchemy.orm import Session
-
-# Actualizar la importación para que sea relativa dentro de 'core'
 from .database import SessionLocal
 
 
-# Dependency
 def get_db():
+    """Get database session"""
     db = SessionLocal()
     try:
         yield db

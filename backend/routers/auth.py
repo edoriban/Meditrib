@@ -21,10 +21,15 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Generar token JWT
+    # Generar token JWT con tenant_id para multi-tenancy
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    token_data = {
+        "sub": user.email,
+        "tenant_id": user.tenant_id,
+        "is_owner": user.is_owner
+    }
     access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
+        data=token_data, expires_delta=access_token_expires
     )
     
     return {"access_token": access_token, "token_type": "bearer"}
