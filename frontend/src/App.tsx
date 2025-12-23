@@ -29,6 +29,7 @@ const ExpensesPage = React.lazy(() => import("./pages/expenses/ExpensesPage"));
 const RolesPage = React.lazy(() => import("./pages/roles/RolesPage"));
 const SettingsPage = React.lazy(() => import("./pages/settings/SettingsPage"));
 const HelpPage = React.lazy(() => import("./pages/help/HelpPage"));
+const SetupWizard = React.lazy(() => import("./components/onboarding/SetupWizard").then(m => ({ default: m.SetupWizard })));
 
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -54,6 +55,7 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/terms" element={<TermsOfServicePage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/setup" element={<SetupWizard />} />
 
               {/* Redirigir raíz a dashboard */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
