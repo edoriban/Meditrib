@@ -27,7 +27,8 @@ product_tag_association = Table(
 class Product(Base):
     __tablename__ = "products"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)  # Sin UNIQUE - el barcode es el identificador único
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
+    name = Column(String, index=True)
     description = Column(String)
     purchase_price = Column(Float)
     sale_price = Column(Float)
@@ -51,7 +52,8 @@ class Product(Base):
 class ProductTag(Base):
     __tablename__ = "product_tags"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
+    name = Column(String, index=True)
     description = Column(String, nullable=True)
     color = Column(String, nullable=True)
 
@@ -79,6 +81,7 @@ class SupplierProduct(Base):
 class Inventory(Base):
     __tablename__ = "inventory"
     product_id = Column(ForeignKey("products.id"), primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     quantity = Column(Integer)
     product = relationship("Product", back_populates="inventory")
 
@@ -108,6 +111,7 @@ class Sale(Base):
     """Venta/Pedido principal - puede contener múltiples productos"""
     __tablename__ = "sales"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     sale_date = Column(DateTime, default=datetime.now)
     shipping_date = Column(Date, nullable=True)
     shipping_status = Column(String, default="pending")
@@ -181,6 +185,7 @@ class Report(Base):
 class PurchaseOrder(Base):
     __tablename__ = "purchase_orders"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     supplier_id = Column(ForeignKey("suppliers.id"))
     order_date = Column(DateTime)
     expected_delivery_date = Column(DateTime, nullable=True)
