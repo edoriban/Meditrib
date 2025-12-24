@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 
 from backend.core.crud import crud_user
-from backend.core.dependencies import get_db
+from backend.core.database import get_db
 
 load_dotenv()
 

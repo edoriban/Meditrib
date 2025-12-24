@@ -14,27 +14,5 @@ services:
       - POSTGRES_DB=vanpos_db
     restart: always
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    environment:
-      - DATABASE_URL=postgresql://vanpos:c3304125423f0@db/vanpos_db
-      - SECRET_KEY=YOUR_SUPER_SECRET_KEY_CHANGE_ME_IN_PROD
-      - BACKEND_CORS_ORIGINS=["http://localhost", "http://127.0.0.1", "http://localhost:5173"]
-    depends_on:
-      - db
-    restart: always
-
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    restart: always
-
 volumes:
   postgres_data:

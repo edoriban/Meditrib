@@ -7,6 +7,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def init_db():
     """Initialize database with default data"""
+    # Create tables if they don't exist
+    models.Base.metadata.create_all(bind=engine)
+    
     db = SessionLocal()
     try:
         # 1. Create default tenant if it doesn't exist
