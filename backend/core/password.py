@@ -4,7 +4,7 @@ Separated from security.py to avoid circular imports.
 """
 from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def get_password_hash(password: str) -> str:

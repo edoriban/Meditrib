@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 from datetime import date, timedelta
 
 # Contexto de password (mismo que en security.py)
-pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
     """Genera un hash de la contraseña"""

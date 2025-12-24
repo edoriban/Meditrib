@@ -58,7 +58,8 @@ class ProductTag(Base):
 class Supplier(Base):
     __tablename__ = "suppliers"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
+    name = Column(String)
     contact_info = Column(String, nullable=True)
     email = Column(String, nullable=True)
     phone = Column(String, nullable=True)
@@ -147,7 +148,8 @@ class SaleItem(Base):
 class Client(Base):
     __tablename__ = "clients"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
+    name = Column(String)
     contact = Column(String)
     address = Column(String, nullable=True)
     email = Column(String, nullable=True)
@@ -258,7 +260,8 @@ class Company(Base):
     """Empresa emisora de facturas"""
     __tablename__ = "companies"
     id = Column(Integer, primary_key=True, index=True)
-    rfc = Column(String, unique=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
+    rfc = Column(String, index=True)
     name = Column(String)
     business_name = Column(String, nullable=True)
     tax_regime = Column(String)
@@ -348,7 +351,8 @@ class ExpenseCategory(Base):
     """Categorías de gastos"""
     __tablename__ = "expense_categories"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
+    name = Column(String)
     description = Column(String, nullable=True)
     type = Column(String, default="variable")
     color = Column(String, nullable=True)
@@ -375,3 +379,14 @@ class Expense(Base):
 
     category = relationship("ExpenseCategory", back_populates="expenses")
     user = relationship("User")
+
+
+class AppSettings(Base):
+    """Configuración de la aplicación por tenant"""
+    __tablename__ = "app_settings"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
+    key = Column(String, index=True)
+    value = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

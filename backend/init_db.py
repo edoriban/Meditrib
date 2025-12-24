@@ -1,12 +1,24 @@
 from backend.core.database import SessionLocal, engine
 from backend.core import models, schemas
 from backend.core.crud import crud_role
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def init_db():
     """Initialize database with default data"""
     db = SessionLocal()
     try:
-        # Create default roles if they don't exist
+        # 1. Create default tenant if it doesn't exist
+        default_tenant = db.query(models.Tenant).first()
+        if not default_tenant:
+            default_tenant = models.Tenant(name="VanPOS Demo", slug="vanpos-demo")
+            db.add(default_tenant)
+            db.commit()
+            db.refresh(default_tenant)
+            print(f"[INIT_DB] Created default tenant: {default_tenant.name}")
+        
+        # 2. Create default roles if they don't exist
         existing_roles = db.query(models.Role).all()
         existing_role_names = [r.name for r in existing_roles]
         
@@ -23,8 +35,37 @@ def init_db():
         db.commit()
         print(f"[INIT_DB] Roles initialized: {[r.name for r in db.query(models.Role).all()]}")
         
+        # 3. Create admin test user if it doesn't exist
+        admin_email = "admin@vanpos.mx"
+        existing_admin = db.query(models.User).filter(models.User.email == admin_email).first()
+        
+        if not existing_admin:
+            admin_role = db.query(models.Role).filter(models.Role.name == "Admin").first()
+            hashed_password = pwd_context.hash("admin123")
+            
+            admin_user = models.User(
+                name="Admin VanPOS",
+                email=admin_email,
+                password=hashed_password,
+                role_id=admin_role.id,
+                tenant_id=default_tenant.id,
+                is_owner=True
+            )
+            db.add(admin_user)
+            db.commit()
+            print(f"[INIT_DB] Created admin user: {admin_email} / admin123")
+        else:
+            # Ensure existing admin has tenant_id and is_owner set
+            if not existing_admin.tenant_id:
+                existing_admin.tenant_id = default_tenant.id
+                existing_admin.is_owner = True
+                db.commit()
+                print(f"[INIT_DB] Updated admin user with tenant_id")
+        
     except Exception as e:
         print(f"[INIT_DB] Error: {e}")
+        import traceback
+        traceback.print_exc()
         db.rollback()
     finally:
         db.close()
