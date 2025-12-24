@@ -4,6 +4,19 @@ from sqlalchemy.orm import relationship
 from datetime import datetime, date
 
 
+# Tenant model MUST be defined first since other models reference it
+class Tenant(Base):
+    __tablename__ = "tenants"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    slug = Column(String, unique=True, nullable=True)
+    subscription_status = Column(String, default="trial")  # trial, active, expired, cancelled
+    subscription_ends_at = Column(DateTime, nullable=True)
+    grace_period_ends_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 product_tag_association = Table(
     "product_tag_association",
     Base.metadata,
@@ -76,7 +89,10 @@ class User(Base):
     email = Column(String, unique=True)
     password = Column(String)
     role_id = Column(ForeignKey("roles.id"))
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
+    is_owner = Column(Boolean, default=False)
     role = relationship("Role", back_populates="users")
+    tenant = relationship("Tenant", backref="users")
 
 
 class Role(Base):
@@ -153,6 +169,7 @@ class Client(Base):
 class Report(Base):
     __tablename__ = "reports"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     report_type = Column(String)
     date = Column(DateTime)
     data = Column(String)
@@ -188,6 +205,7 @@ class ProductBatch(Base):
     """Lotes de productos con fechas de caducidad"""
     __tablename__ = "product_batches"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     product_id = Column(ForeignKey("products.id"))
     batch_number = Column(String, nullable=False)
     expiration_date = Column(Date, nullable=False)
@@ -224,6 +242,7 @@ class BatchStockMovement(Base):
 class Alert(Base):
     __tablename__ = "alerts"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     type = Column(String)
     message = Column(String)
     product_id = Column(ForeignKey("products.id"))
@@ -262,6 +281,7 @@ class Invoice(Base):
     """Factura CFDI"""
     __tablename__ = "invoices"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     uuid = Column(String, unique=True, nullable=True)
     serie = Column(String, default="A")
     folio = Column(String, nullable=True)
@@ -340,6 +360,7 @@ class Expense(Base):
     """Registro de gastos"""
     __tablename__ = "expenses"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     description = Column(String)
     amount = Column(Float)
     expense_date = Column(DateTime, default=datetime.now)

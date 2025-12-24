@@ -1,4 +1,4 @@
-# Meditrib Development Commands
+# VanPOS Development Commands
 # Usage: make backend | make frontend | make dev
 
 .PHONY: backend frontend dev install

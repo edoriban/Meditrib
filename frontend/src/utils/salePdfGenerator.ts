@@ -47,7 +47,7 @@ export async function generateSalePDF(sale: Sale): Promise<void> {
     const { default: autoTable } = await import("jspdf-autotable");
 
     // Obtener configuración de la empresa desde localStorage
-    const settingsStr = localStorage.getItem('meditrib_settings');
+    const settingsStr = localStorage.getItem('vanpos_settings');
     const settings: CompanySettings = settingsStr ? JSON.parse(settingsStr) : {
         companyName: "Mi Empresa",
         companyRfc: "",

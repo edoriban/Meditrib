@@ -123,14 +123,14 @@ export default function HelpPage() {
                             <p className="text-sm text-muted-foreground mb-2">
                                 Para problemas técnicos o errores del sistema.
                             </p>
-                            <p className="text-sm font-medium">soporte@meditrib.com</p>
+                            <p className="text-sm font-medium">soporte@vanpos.mx</p>
                         </div>
                         <div className="flex-1 p-4 rounded-lg border">
                             <h3 className="font-medium mb-2">Capacitación</h3>
                             <p className="text-sm text-muted-foreground mb-2">
                                 Solicita capacitación para tu equipo.
                             </p>
-                            <p className="text-sm font-medium">capacitacion@meditrib.com</p>
+                            <p className="text-sm font-medium">capacitacion@vanpos.mx</p>
                         </div>
                         <div className="flex-1 p-4 rounded-lg border">
                             <h3 className="font-medium mb-2">Ventas</h3>

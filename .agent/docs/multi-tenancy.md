@@ -116,12 +116,6 @@ def get_tenant_id(current_user = Depends(get_current_user)) -> int:
 
 ## Usage
 
-### Fresh Database Setup
-```bash
-rm backend/vanpos.db
-make backend
-```
-
 ### Cleanup Expired Tenants
 ```bash
 # Dry run (preview only)

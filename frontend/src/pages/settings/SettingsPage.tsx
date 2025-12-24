@@ -106,7 +106,7 @@ export default function SettingsPage() {
 
     // Cargar configuración local guardada
     useEffect(() => {
-        const savedSettings = localStorage.getItem('meditrib_local_settings');
+        const savedSettings = localStorage.getItem('vanpos_local_settings');
         if (savedSettings) {
             try {
                 const parsed = JSON.parse(savedSettings);

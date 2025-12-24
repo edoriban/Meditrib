@@ -166,7 +166,7 @@ export function RegisterForm({
                                 control={control}
                                 errors={errors}
                                 label="Correo electrónico"
-                                placeholder="correo@meditrib.com"
+                                placeholder="correo@vanpos.mx"
                                 type="email"
                                 required
                             />
