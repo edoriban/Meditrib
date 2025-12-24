@@ -56,11 +56,33 @@ def init_db():
             print(f"[INIT_DB] Created admin user: {admin_email} / admin123")
         else:
             # Ensure existing admin has tenant_id and is_owner set
+            update_needed = False
             if not existing_admin.tenant_id:
                 existing_admin.tenant_id = default_tenant.id
+                update_needed = True
+            if not existing_admin.is_owner:
                 existing_admin.is_owner = True
+                update_needed = True
+            
+            if update_needed:
                 db.commit()
-                print(f"[INIT_DB] Updated admin user with tenant_id")
+                print(f"[INIT_DB] Updated admin user with tenant_id/is_owner")
+        
+        # 4. Mark setup as completed for the default tenant
+        setup_setting = db.query(models.AppSettings).filter(
+            models.AppSettings.tenant_id == default_tenant.id,
+            models.AppSettings.key == "setup_completed"
+        ).first()
+        
+        if not setup_setting:
+            setup_setting = models.AppSettings(
+                tenant_id=default_tenant.id,
+                key="setup_completed",
+                value="true"
+            )
+            db.add(setup_setting)
+            db.commit()
+            print(f"[INIT_DB] Set setup_completed=true for tenant {default_tenant.name}")
         
     except Exception as e:
         print(f"[INIT_DB] Error: {e}")

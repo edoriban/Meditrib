@@ -34,7 +34,7 @@ class Product(Base):
     sale_price = Column(Float)
     expiration_date = Column(Date, nullable=True)
     batch_number = Column(String, nullable=True)
-    barcode = Column(String, nullable=True, unique=True)
+    barcode = Column(String, nullable=True)
     # Pharmacy-specific fields (optional for other verticals)
     laboratory = Column(String, nullable=True)
     concentration = Column(String, nullable=True)
@@ -71,6 +71,7 @@ class Supplier(Base):
 
 class SupplierProduct(Base):
     __tablename__ = "supplier_product"
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     supplier_id = Column(ForeignKey("suppliers.id"), primary_key=True)
     product_id = Column(ForeignKey("products.id"), primary_key=True)
     supply_price = Column(Float)
@@ -136,6 +137,7 @@ class SaleItem(Base):
     """Items individuales de una venta - cada producto con su cantidad"""
     __tablename__ = "sale_items"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     sale_id = Column(ForeignKey("sales.id"), nullable=False)
     product_id = Column(ForeignKey("products.id"), nullable=False)
     quantity = Column(Integer, nullable=False)
@@ -199,6 +201,7 @@ class PurchaseOrder(Base):
 
 class PurchaseOrderItem(Base):
     __tablename__ = "purchase_order_items"
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     purchase_order_id = Column(ForeignKey("purchase_orders.id"), primary_key=True)
     product_id = Column(ForeignKey("products.id"), primary_key=True)
     quantity = Column(Integer)
@@ -232,6 +235,7 @@ class BatchStockMovement(Base):
     """Movimientos de stock por lote"""
     __tablename__ = "batch_stock_movements"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     batch_id = Column(ForeignKey("product_batches.id"))
     movement_type = Column(String)
     quantity = Column(Integer)
@@ -325,6 +329,7 @@ class InvoiceConcept(Base):
     """Conceptos de la factura (productos/servicios)"""
     __tablename__ = "invoice_concepts"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     invoice_id = Column(ForeignKey("invoices.id"))
     quantity = Column(Float)
     unit = Column(String)
@@ -343,6 +348,7 @@ class InvoiceTax(Base):
     """Impuestos de la factura"""
     __tablename__ = "invoice_taxes"
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     invoice_id = Column(ForeignKey("invoices.id"))
     tax_type = Column(String)
     tax_rate = Column(Float)
