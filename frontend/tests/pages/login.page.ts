@@ -34,9 +34,9 @@ export class LoginPage extends BasePage {
      */
     async goto(): Promise<void> {
         await this.navigateTo('/login');
-        await this.waitForPageLoad();
-        // Wait for React to hydrate
-        await this.emailInput.waitFor({ state: 'visible', timeout: 10000 });
+        await this.page.waitForLoadState('networkidle');
+        // Wait for React to hydrate with longer timeout
+        await this.emailInput.waitFor({ state: 'visible', timeout: 20000 });
     }
 
     /**

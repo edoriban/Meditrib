@@ -42,6 +42,16 @@ export default defineConfig({
   projects: [
     { name: 'setup', testMatch: /.*\.setup\.ts/ },
 
+    // Unauthenticated project - for testing login redirects
+    {
+      name: 'chromium-unauth',
+      testMatch: /.*\.unauth\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        // No storageState - tests run unauthenticated
+      },
+    },
+
     {
       name: 'chromium',
       use: {

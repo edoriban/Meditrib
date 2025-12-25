@@ -1,5 +1,6 @@
 import { test as setup, expect } from '@playwright/test';
 import { LoginPage } from './pages/login.page';
+import * as fs from 'fs';
 
 const authFile = 'playwright/.auth/user.json';
 
@@ -19,6 +20,23 @@ setup('authenticate', async ({ page }) => {
     // Verify we are not on login page anymore
     await expect(page).not.toHaveURL(/\/login/);
 
-    // End of authentication steps.
-    await page.context().storageState({ path: authFile });
+    // Get the token from localStorage to include in storage state
+    const token = await page.evaluate(() => {
+        return localStorage.getItem('token') || sessionStorage.getItem('token');
+    });
+
+    // Save storage state with the token as an origin item
+    // This includes both cookies and localStorage
+    const storageState = await page.context().storageState();
+
+    // Add localStorage to the origins
+    storageState.origins = [{
+        origin: 'http://localhost:5173',
+        localStorage: [
+            { name: 'token', value: token || '' }
+        ]
+    }];
+
+    // Write the modified storage state
+    fs.writeFileSync(authFile, JSON.stringify(storageState, null, 2));
 });
