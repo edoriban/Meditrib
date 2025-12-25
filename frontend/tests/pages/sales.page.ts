@@ -6,7 +6,7 @@ import { BasePage } from './base.page';
  * Handles POS and sales-related interactions
  */
 export class SalesPage extends BasePage {
-    // Locators
+    // Locators - Updated to match actual UI
     readonly pageTitle: Locator;
     readonly newSaleButton: Locator;
     readonly salesTable: Locator;
@@ -18,12 +18,18 @@ export class SalesPage extends BasePage {
 
     constructor(page: Page) {
         super(page);
+        // Title "Ventas" (not "Historial de Ventas")
         this.pageTitle = page.locator('h1:has-text("Ventas")');
+        // Button with Plus icon and "Nueva Venta" text
         this.newSaleButton = page.locator('button:has-text("Nueva Venta")');
-        this.salesTable = page.locator('table, [role="table"]');
-        this.salesTableRows = page.locator('table tbody tr, [role="row"]');
-        this.searchInput = page.locator('input[placeholder*="Buscar"], input[type="search"]');
+        // Table
+        this.salesTable = page.locator('table');
+        this.salesTableRows = page.locator('table tbody tr');
+        // Search input (inside SalesTable component)
+        this.searchInput = page.locator('input[placeholder*="Buscar"]');
+        // Dialog
         this.createSaleDialog = page.locator('[role="dialog"]');
+        // Loading and error states
         this.loadingIndicator = page.locator('text=Cargando ventas');
         this.errorMessage = page.locator('text=Error al cargar ventas');
     }
@@ -34,13 +40,18 @@ export class SalesPage extends BasePage {
     async goto(): Promise<void> {
         await this.navigateTo('/sales');
         await this.waitForPageLoad();
+        // Wait for title or loading to finish
+        await Promise.race([
+            this.pageTitle.waitFor({ state: 'visible', timeout: 10000 }),
+            this.loadingIndicator.waitFor({ state: 'hidden', timeout: 10000 }),
+        ]);
     }
 
     /**
      * Wait for sales data to load
      */
     async waitForSalesLoad(): Promise<void> {
-        // Wait for loading to finish or table to appear
+        // Wait for loading to finish
         try {
             await this.loadingIndicator.waitFor({ state: 'hidden', timeout: 10000 });
         } catch {
@@ -53,17 +64,25 @@ export class SalesPage extends BasePage {
      * Check if page has loaded successfully
      */
     async isLoaded(): Promise<boolean> {
-        const titleVisible = await this.pageTitle.isVisible();
-        const hasError = await this.errorMessage.isVisible().catch(() => false);
-        return titleVisible && !hasError;
+        try {
+            // Either title is visible or loading finished
+            const hasError = await this.errorMessage.isVisible().catch(() => false);
+            if (hasError) return false;
+
+            await this.pageTitle.waitFor({ state: 'visible', timeout: 5000 });
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     /**
      * Open new sale dialog
      */
     async openNewSaleDialog(): Promise<void> {
+        await this.newSaleButton.waitFor({ state: 'visible', timeout: 5000 });
         await this.newSaleButton.click();
-        await this.createSaleDialog.waitFor({ state: 'visible' });
+        await this.createSaleDialog.waitFor({ state: 'visible', timeout: 5000 });
     }
 
     /**
@@ -77,8 +96,8 @@ export class SalesPage extends BasePage {
      * Close new sale dialog
      */
     async closeNewSaleDialog(): Promise<void> {
-        // Press Escape or click outside
         await this.page.keyboard.press('Escape');
+        await this.createSaleDialog.waitFor({ state: 'hidden', timeout: 3000 });
     }
 
     /**
@@ -95,7 +114,6 @@ export class SalesPage extends BasePage {
     async searchSale(term: string): Promise<void> {
         if (await this.searchInput.isVisible()) {
             await this.searchInput.fill(term);
-            // Wait for search results
             await this.page.waitForTimeout(500);
         }
     }
@@ -112,6 +130,18 @@ export class SalesPage extends BasePage {
      * Check if sales table is visible
      */
     async isSalesTableVisible(): Promise<boolean> {
-        return await this.salesTable.isVisible();
+        try {
+            await this.salesTable.waitFor({ state: 'visible', timeout: 5000 });
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Check if new sale button is visible and enabled
+     */
+    async isNewSaleButtonVisible(): Promise<boolean> {
+        return await this.newSaleButton.isVisible();
     }
 }

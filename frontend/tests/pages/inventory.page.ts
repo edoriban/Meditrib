@@ -6,34 +6,41 @@ import { BasePage } from './base.page';
  * Handles product management interactions
  */
 export class InventoryPage extends BasePage {
-    // Locators
+    // Locators - Updated to match actual UI
     readonly pageTitle: Locator;
+    readonly sectionTitle: Locator;
     readonly productsTable: Locator;
     readonly productsTableRows: Locator;
     readonly searchInput: Locator;
     readonly totalProductsText: Locator;
     readonly exportButton: Locator;
     readonly importButton: Locator;
-    readonly createTagButton: Locator;
+    readonly filterButton: Locator;
     readonly loadingIndicator: Locator;
-    readonly errorMessage: Locator;
-    readonly stockFilterDropdown: Locator;
-    readonly productDashboard: Locator;
+    readonly createProductButton: Locator;
+    readonly paginationInfo: Locator;
 
     constructor(page: Page) {
         super(page);
+        // Main page title
         this.pageTitle = page.locator('h1:has-text("Inventario de Medicamentos")');
-        this.productsTable = page.locator('table, [role="table"]');
-        this.productsTableRows = page.locator('table tbody tr, [role="row"]');
-        this.searchInput = page.locator('input[placeholder*="Buscar"], input[type="search"]');
-        this.totalProductsText = page.locator('text=/\\d+ medicamentos/');
+        // Section title within the table component
+        this.sectionTitle = page.locator('h2:has-text("Medicamentos")');
+        // Table selectors
+        this.productsTable = page.locator('table');
+        this.productsTableRows = page.locator('table tbody tr');
+        // Search input with placeholder "Buscar medicamentos..."
+        this.searchInput = page.locator('input[placeholder="Buscar medicamentos..."]');
+        // Total products text pattern (e.g., "50 medicamentos en total")
+        this.totalProductsText = page.locator('span:has-text("medicamentos en total")');
+        // Action buttons
         this.exportButton = page.locator('button:has-text("Exportar")');
-        this.importButton = page.locator('button:has-text("Importar")');
-        this.createTagButton = page.locator('button:has-text("Etiqueta"), button:has-text("Tag")');
-        this.loadingIndicator = page.locator('text=Cargando');
-        this.errorMessage = page.locator('text=Error');
-        this.stockFilterDropdown = page.locator('[data-stock-filter], select');
-        this.productDashboard = page.locator('[class*="dashboard"], [class*="stats"]');
+        this.importButton = page.locator('button:has-text("Importar Excel")');
+        this.filterButton = page.locator('button:has-text("Filtros")');
+        this.createProductButton = page.locator('button:has-text("Agregar"), button:has-text("Nuevo")');
+        // Loading and pagination
+        this.loadingIndicator = page.locator('.animate-pulse, text=Cargando');
+        this.paginationInfo = page.locator('text=/Página \\d+ de \\d+/');
     }
 
     /**
@@ -42,26 +49,34 @@ export class InventoryPage extends BasePage {
     async goto(): Promise<void> {
         await this.navigateTo('/products');
         await this.waitForPageLoad();
+        // Wait for the main title to be visible
+        await this.pageTitle.waitFor({ state: 'visible', timeout: 10000 });
     }
 
     /**
      * Wait for products to load
      */
     async waitForProductsLoad(): Promise<void> {
-        try {
-            await this.loadingIndicator.waitFor({ state: 'hidden', timeout: 15000 });
-        } catch {
-            // Loading indicator might not exist
-        }
+        // Wait for network to be idle (API calls complete)
         await this.page.waitForLoadState('networkidle');
+        // Wait for loading indicators to disappear
+        try {
+            await this.loadingIndicator.waitFor({ state: 'hidden', timeout: 10000 });
+        } catch {
+            // Loading indicator might not exist or already hidden
+        }
     }
 
     /**
      * Check if page has loaded successfully
      */
     async isLoaded(): Promise<boolean> {
-        const titleVisible = await this.pageTitle.isVisible();
-        return titleVisible;
+        try {
+            await this.pageTitle.waitFor({ state: 'visible', timeout: 5000 });
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     /**
@@ -93,6 +108,7 @@ export class InventoryPage extends BasePage {
      * Search for a product
      */
     async searchProduct(term: string): Promise<void> {
+        await this.searchInput.waitFor({ state: 'visible', timeout: 5000 });
         await this.searchInput.fill(term);
         // Wait for search debounce and API response
         await this.page.waitForTimeout(600);
@@ -133,13 +149,25 @@ export class InventoryPage extends BasePage {
      * Check if products table is visible
      */
     async isProductsTableVisible(): Promise<boolean> {
-        return await this.productsTable.isVisible();
+        try {
+            await this.productsTable.waitFor({ state: 'visible', timeout: 5000 });
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     /**
-     * Check if product dashboard stats are visible
+     * Check if export button is visible
      */
-    async isDashboardVisible(): Promise<boolean> {
-        return await this.productDashboard.isVisible();
+    async isExportButtonVisible(): Promise<boolean> {
+        return await this.exportButton.isVisible();
+    }
+
+    /**
+     * Check if import button is visible
+     */
+    async isImportButtonVisible(): Promise<boolean> {
+        return await this.importButton.isVisible();
     }
 }
