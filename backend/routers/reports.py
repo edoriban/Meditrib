@@ -1,27 +1,28 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from typing import Optional
-from datetime import date
-from backend.core.database import get_db
+
 from backend.core.crud.crud_reports import (
-    get_income_statement,
-    get_product_profitability,
-    get_monthly_trend,
-    get_financial_summary,
     get_daily_sales_trend,
-    get_top_selling_products,
+    get_dashboard_comparison,
+    get_financial_summary,
     get_fulfillment_stats,
-    get_dashboard_comparison
+    get_income_statement,
+    get_monthly_trend,
+    get_product_profitability,
+    get_top_selling_products,
 )
+from backend.core.database import get_db
 
 router = APIRouter()
 
 
 @router.get("/income-statement")
 def read_income_statement(
-    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
-    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
-    db: Session = Depends(get_db)
+    start_date: date | None = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: date | None = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
 ):
     """Get income statement (Estado de Resultados)"""
     return get_income_statement(db, start_date, end_date)
@@ -29,9 +30,9 @@ def read_income_statement(
 
 @router.get("/product-profitability")
 def read_product_profitability(
-    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
-    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
-    db: Session = Depends(get_db)
+    start_date: date | None = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: date | None = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
 ):
     """Get product profitability analysis"""
     return get_product_profitability(db, start_date, end_date)
@@ -39,8 +40,7 @@ def read_product_profitability(
 
 @router.get("/monthly-trend")
 def read_monthly_trend(
-    months: int = Query(6, description="Number of months to analyze", ge=1, le=24),
-    db: Session = Depends(get_db)
+    months: int = Query(6, description="Number of months to analyze", ge=1, le=24), db: Session = Depends(get_db)
 ):
     """Get monthly sales and expenses trend"""
     return get_monthly_trend(db, months)
@@ -54,8 +54,7 @@ def read_financial_summary(db: Session = Depends(get_db)):
 
 @router.get("/daily-trend")
 def read_daily_trend(
-    days: int = Query(90, description="Number of days to analyze", ge=7, le=365),
-    db: Session = Depends(get_db)
+    days: int = Query(90, description="Number of days to analyze", ge=7, le=365), db: Session = Depends(get_db)
 ):
     """Get daily sales and costs trend for charts"""
     return get_daily_sales_trend(db, days)

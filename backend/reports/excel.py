@@ -1,7 +1,9 @@
-import pandas as pd
-from backend.core.models import Product
 import os
 from datetime import datetime
+
+import pandas as pd
+
+from backend.core.models import Product
 
 
 def generate_product_excel(db, output_dir="reports"):

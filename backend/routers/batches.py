@@ -1,27 +1,36 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional
-from datetime import date
-from backend.core.database import get_db
-from backend.core.schemas import ProductBatch, ProductBatchCreate, ProductBatchUpdate, BatchStockMovement
+
 from backend.core.crud.crud_batches import (
-    get_product_batches, get_product_batch, create_product_batch,
-    update_product_batch, delete_product_batch, get_batch_movements,
-    get_expiring_batches, get_batches_by_product, get_batch_inventory_summary,
-    validate_batch_expiration
+    create_product_batch,
+    delete_product_batch,
+    get_batch_inventory_summary,
+    get_batch_movements,
+    get_batches_by_product,
+    get_expiring_batches,
+    get_product_batch,
+    get_product_batches,
+    update_product_batch,
+    validate_batch_expiration,
 )
+from backend.core.database import get_db
+from backend.core.schemas import BatchStockMovement, ProductBatch, ProductBatchCreate, ProductBatchUpdate
 
 router = APIRouter()
 
 
 @router.post("/", response_model=ProductBatch)
-def create_batch(batch: ProductBatchCreate, user_id: int = Query(..., description="User ID"), db: Session = Depends(get_db)):
+def create_batch(
+    batch: ProductBatchCreate, user_id: int = Query(..., description="User ID"), db: Session = Depends(get_db)
+):
     """Crear un nuevo lote de medicamento"""
     return create_product_batch(db, batch, user_id)
 
 
-@router.get("/", response_model=List[ProductBatch])
-def read_batches(product_id: Optional[int] = None, db: Session = Depends(get_db)):
+@router.get("/", response_model=list[ProductBatch])
+def read_batches(product_id: int | None = None, db: Session = Depends(get_db)):
     """Obtener lotes de medicamentos"""
     return get_product_batches(db, product_id)
 
@@ -36,7 +45,12 @@ def read_batch(batch_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{batch_id}", response_model=ProductBatch)
-def update_batch(batch_id: int, batch_update: ProductBatchUpdate, user_id: int = Query(..., description="User ID"), db: Session = Depends(get_db)):
+def update_batch(
+    batch_id: int,
+    batch_update: ProductBatchUpdate,
+    user_id: int = Query(..., description="User ID"),
+    db: Session = Depends(get_db),
+):
     """Actualizar un lote"""
     db_batch = update_product_batch(db, batch_id, batch_update, user_id)
     if db_batch is None:
@@ -54,7 +68,9 @@ def delete_batch(batch_id: int, user_id: int = Query(..., description="User ID")
 
 
 @router.get("/expiring/soon")
-def get_expiring_soon_batches(days_ahead: int = Query(30, description="Days ahead to check"), db: Session = Depends(get_db)):
+def get_expiring_soon_batches(
+    days_ahead: int = Query(30, description="Days ahead to check"), db: Session = Depends(get_db)
+):
     """Obtener lotes próximos a expirar"""
     batches = get_expiring_batches(db, days_ahead)
     return {
@@ -66,9 +82,10 @@ def get_expiring_soon_batches(days_ahead: int = Query(30, description="Days ahea
                 "batch_number": batch.batch_number,
                 "expiration_date": batch.expiration_date.isoformat(),
                 "quantity_remaining": batch.quantity_remaining,
-                "days_until_expiry": (batch.expiration_date - date.today()).days
-            } for batch in batches
-        ]
+                "days_until_expiry": (batch.expiration_date - date.today()).days,
+            }
+            for batch in batches
+        ],
     }
 
 
@@ -87,9 +104,10 @@ def get_product_batches_list(product_id: int, db: Session = Depends(get_db)):
                 "expiration_date": batch.expiration_date.isoformat(),
                 "quantity_remaining": batch.quantity_remaining,
                 "unit_cost": batch.unit_cost,
-                "supplier_name": batch.supplier.name if batch.supplier else None
-            } for batch in batches
-        ]
+                "supplier_name": batch.supplier.name if batch.supplier else None,
+            }
+            for batch in batches
+        ],
     }
 
 
@@ -105,7 +123,7 @@ def validate_batch(batch_id: int, db: Session = Depends(get_db)):
     return validate_batch_expiration(db, batch_id)
 
 
-@router.get("/{batch_id}/movements", response_model=List[BatchStockMovement])
+@router.get("/{batch_id}/movements", response_model=list[BatchStockMovement])
 def get_batch_movements_list(batch_id: int, db: Session = Depends(get_db)):
     """Obtener movimientos de stock para un lote"""
     return get_batch_movements(db, batch_id)

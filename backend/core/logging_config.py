@@ -1,10 +1,9 @@
+import json
 import logging
 import logging.handlers
-import json
-import os
 from datetime import datetime
-from typing import Dict, Any
 from pathlib import Path
+from typing import Any
 
 
 class StructuredFormatter(logging.Formatter):
@@ -23,33 +22,33 @@ class StructuredFormatter(logging.Formatter):
         }
 
         # Agregar campos extra si existen
-        if hasattr(record, 'user_id'):
+        if hasattr(record, "user_id"):
             log_entry["user_id"] = record.user_id
-        if hasattr(record, 'user_email'):
+        if hasattr(record, "user_email"):
             log_entry["user_email"] = record.user_email
-        if hasattr(record, 'ip_address'):
+        if hasattr(record, "ip_address"):
             log_entry["ip_address"] = record.ip_address
-        if hasattr(record, 'user_agent'):
+        if hasattr(record, "user_agent"):
             log_entry["user_agent"] = record.user_agent
-        if hasattr(record, 'request_id'):
+        if hasattr(record, "request_id"):
             log_entry["request_id"] = record.request_id
-        if hasattr(record, 'action'):
+        if hasattr(record, "action"):
             log_entry["action"] = record.action
-        if hasattr(record, 'resource'):
+        if hasattr(record, "resource"):
             log_entry["resource"] = record.resource
-        if hasattr(record, 'resource_id'):
+        if hasattr(record, "resource_id"):
             log_entry["resource_id"] = record.resource_id
-        if hasattr(record, 'old_values'):
+        if hasattr(record, "old_values"):
             log_entry["old_values"] = record.old_values
-        if hasattr(record, 'new_values'):
+        if hasattr(record, "new_values"):
             log_entry["new_values"] = record.new_values
-        if hasattr(record, 'duration_ms'):
+        if hasattr(record, "duration_ms"):
             log_entry["duration_ms"] = record.duration_ms
-        if hasattr(record, 'status_code'):
+        if hasattr(record, "status_code"):
             log_entry["status_code"] = record.status_code
-        if hasattr(record, 'error_type'):
+        if hasattr(record, "error_type"):
             log_entry["error_type"] = record.error_type
-        if hasattr(record, 'stack_trace'):
+        if hasattr(record, "stack_trace"):
             log_entry["stack_trace"] = record.stack_trace
 
         # Agregar excepción si existe
@@ -72,7 +71,7 @@ def setup_logging(log_level: str = "INFO", log_dir: str = "logs") -> None:
         "INFO": logging.INFO,
         "WARNING": logging.WARNING,
         "ERROR": logging.ERROR,
-        "CRITICAL": logging.CRITICAL
+        "CRITICAL": logging.CRITICAL,
     }
     level = level_map.get(log_level.upper(), logging.INFO)
 
@@ -88,9 +87,7 @@ def setup_logging(log_level: str = "INFO", log_dir: str = "logs") -> None:
     structured_formatter = StructuredFormatter()
 
     # Formatter simple para consola
-    console_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    console_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     # Handler para consola
     console_handler = logging.StreamHandler()
@@ -103,7 +100,7 @@ def setup_logging(log_level: str = "INFO", log_dir: str = "logs") -> None:
         filename=log_path / "meditrib.log",
         when="midnight",
         interval=1,
-        backupCount=30  # Mantener 30 días
+        backupCount=30,  # Mantener 30 días
     )
     general_handler.setLevel(logging.INFO)
     general_handler.setFormatter(structured_formatter)
@@ -114,7 +111,7 @@ def setup_logging(log_level: str = "INFO", log_dir: str = "logs") -> None:
         filename=log_path / "meditrib_error.log",
         when="W0",  # Rotar los domingos
         interval=1,
-        backupCount=12  # Mantener 12 semanas
+        backupCount=12,  # Mantener 12 semanas
     )
     error_handler.setLevel(logging.ERROR)
     error_handler.setFormatter(structured_formatter)
@@ -125,7 +122,7 @@ def setup_logging(log_level: str = "INFO", log_dir: str = "logs") -> None:
         filename=log_path / "user_activity.log",
         when="midnight",
         interval=1,
-        backupCount=90  # Mantener 90 días
+        backupCount=90,  # Mantener 90 días
     )
     user_activity_handler.setLevel(logging.INFO)
     user_activity_handler.setFormatter(structured_formatter)
@@ -137,10 +134,7 @@ def setup_logging(log_level: str = "INFO", log_dir: str = "logs") -> None:
     user_logger.propagate = False  # No propagar al logger raíz
 
     # Logger para auditoría (no rotativo, mantener todo)
-    audit_handler = logging.FileHandler(
-        filename=log_path / "audit.log",
-        encoding='utf-8'
-    )
+    audit_handler = logging.FileHandler(filename=log_path / "audit.log", encoding="utf-8")
     audit_handler.setLevel(logging.INFO)
     audit_handler.setFormatter(structured_formatter)
 
@@ -151,10 +145,7 @@ def setup_logging(log_level: str = "INFO", log_dir: str = "logs") -> None:
 
     # Logger para monitoreo de sistema
     system_handler = logging.handlers.TimedRotatingFileHandler(
-        filename=log_path / "system_monitor.log",
-        when="midnight",
-        interval=1,
-        backupCount=30
+        filename=log_path / "system_monitor.log", when="midnight", interval=1, backupCount=30
     )
     system_handler.setLevel(logging.INFO)
     system_handler.setFormatter(structured_formatter)
@@ -172,11 +163,11 @@ def log_user_action(
     action: str,
     resource: str,
     resource_id: Any = None,
-    old_values: Dict = None,
-    new_values: Dict = None,
+    old_values: dict = None,
+    new_values: dict = None,
     ip_address: str = None,
     user_agent: str = None,
-    request_id: str = None
+    request_id: str = None,
 ) -> None:
     """Registra una acción del usuario"""
     logger = logging.getLogger("user_activity")
@@ -204,18 +195,11 @@ def log_user_action(
 
 
 def log_audit_event(
-    event_type: str,
-    user_id: int = None,
-    details: Dict = None,
-    ip_address: str = None,
-    severity: str = "INFO"
+    event_type: str, user_id: int = None, details: dict = None, ip_address: str = None, severity: str = "INFO"
 ) -> None:
     """Registra un evento de auditoría"""
     logger = logging.getLogger("audit")
-    extra = {
-        "event_type": event_type,
-        "severity": severity
-    }
+    extra = {"event_type": event_type, "severity": severity}
 
     if user_id:
         extra["user_id"] = user_id
@@ -232,21 +216,10 @@ def log_audit_event(
         logger.info(f"Audit event: {event_type}", extra=extra)
 
 
-def log_system_health(
-    component: str,
-    metric: str,
-    value: Any,
-    status: str = "OK",
-    details: Dict = None
-) -> None:
+def log_system_health(component: str, metric: str, value: Any, status: str = "OK", details: dict = None) -> None:
     """Registra métricas de salud del sistema"""
     logger = logging.getLogger("system")
-    extra = {
-        "component": component,
-        "metric": metric,
-        "value": value,
-        "status": status
-    }
+    extra = {"component": component, "metric": metric, "value": value, "status": status}
 
     if details:
         extra.update(details)
@@ -267,16 +240,11 @@ def log_api_request(
     user_id: int = None,
     ip_address: str = None,
     user_agent: str = None,
-    request_id: str = None
+    request_id: str = None,
 ) -> None:
     """Registra una petición API"""
     logger = logging.getLogger("api")
-    extra = {
-        "method": method,
-        "path": path,
-        "status_code": status_code,
-        "duration_ms": duration_ms
-    }
+    extra = {"method": method, "path": path, "status_code": status_code, "duration_ms": duration_ms}
 
     if user_id:
         extra["user_id"] = user_id

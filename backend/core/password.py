@@ -2,6 +2,7 @@
 Password hashing utilities.
 Separated from security.py to avoid circular imports.
 """
+
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

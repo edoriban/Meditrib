@@ -1,6 +1,7 @@
-from typing import List, Union
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Union
+
 from pydantic import AnyHttpUrl, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -22,7 +23,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = [
+    BACKEND_CORS_ORIGINS: list[Union[str, AnyHttpUrl]] = [
         "http://localhost",
         "http://localhost:5173",
         "http://localhost:80",
@@ -31,7 +32,7 @@ class Settings(BaseSettings):
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+    def assemble_cors_origins(cls, v: Union[str, list[str]]) -> Union[list[str], str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, (list, str)):
@@ -41,7 +42,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=True,
         env_file=".env",
-        extra="ignore"  # Ignore extra env vars not defined here
+        extra="ignore",  # Ignore extra env vars not defined here
     )
 
 

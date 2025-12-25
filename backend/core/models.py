@@ -1,7 +1,9 @@
-from backend.core.database import Base
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Table, DateTime, Date, Boolean
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
-from datetime import datetime, date
+
+from backend.core.database import Base
 
 
 # Tenant model MUST be defined first since other models reference it
@@ -21,8 +23,9 @@ product_tag_association = Table(
     "product_tag_association",
     Base.metadata,
     Column("product_id", Integer, ForeignKey("products.id"), primary_key=True),
-    Column("tag_id", Integer, ForeignKey("product_tags.id"), primary_key=True)
+    Column("tag_id", Integer, ForeignKey("product_tags.id"), primary_key=True),
 )
+
 
 class Product(Base):
     __tablename__ = "products"
@@ -49,6 +52,7 @@ class Product(Base):
     purchase_order_items = relationship("PurchaseOrderItem", back_populates="product", cascade="all, delete")
     tags = relationship("ProductTag", secondary=product_tag_association, backref="products")
 
+
 class ProductTag(Base):
     __tablename__ = "product_tags"
     id = Column(Integer, primary_key=True, index=True)
@@ -56,6 +60,7 @@ class ProductTag(Base):
     name = Column(String, index=True)
     description = Column(String, nullable=True)
     color = Column(String, nullable=True)
+
 
 class Supplier(Base):
     __tablename__ = "suppliers"
@@ -110,6 +115,7 @@ class Role(Base):
 
 class Sale(Base):
     """Venta/Pedido principal - puede contener múltiples productos"""
+
     __tablename__ = "sales"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -124,17 +130,18 @@ class Sale(Base):
     iva_amount = Column(Float, default=0.0)
     total = Column(Float, default=0.0)
     notes = Column(String, nullable=True)
-    
+
     user_id = Column(ForeignKey("users.id"))
     user = relationship("User")
     client_id = Column(ForeignKey("clients.id"))
     client = relationship("Client", back_populates="sales")
-    
+
     items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
 
 
 class SaleItem(Base):
     """Items individuales de una venta - cada producto con su cantidad"""
+
     __tablename__ = "sale_items"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -146,7 +153,7 @@ class SaleItem(Base):
     iva_rate = Column(Float, default=0.0)
     subtotal = Column(Float, nullable=False)
     iva_amount = Column(Float, default=0.0)
-    
+
     sale = relationship("Sale", back_populates="items")
     product = relationship("Product")
 
@@ -184,6 +191,7 @@ class Report(Base):
     generated_by = Column(ForeignKey("users.id"))
     user = relationship("User")
 
+
 class PurchaseOrder(Base):
     __tablename__ = "purchase_orders"
     id = Column(Integer, primary_key=True, index=True)
@@ -199,6 +207,7 @@ class PurchaseOrder(Base):
     supplier = relationship("Supplier")
     items = relationship("PurchaseOrderItem", back_populates="purchase_order")
 
+
 class PurchaseOrderItem(Base):
     __tablename__ = "purchase_order_items"
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -213,6 +222,7 @@ class PurchaseOrderItem(Base):
 
 class ProductBatch(Base):
     """Lotes de productos con fechas de caducidad"""
+
     __tablename__ = "product_batches"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -233,6 +243,7 @@ class ProductBatch(Base):
 
 class BatchStockMovement(Base):
     """Movimientos de stock por lote"""
+
     __tablename__ = "batch_stock_movements"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -267,6 +278,7 @@ class Alert(Base):
 
 class Company(Base):
     """Empresa emisora de facturas"""
+
     __tablename__ = "companies"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -291,6 +303,7 @@ class Company(Base):
 
 class Invoice(Base):
     """Factura CFDI"""
+
     __tablename__ = "invoices"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -327,6 +340,7 @@ class Invoice(Base):
 
 class InvoiceConcept(Base):
     """Conceptos de la factura (productos/servicios)"""
+
     __tablename__ = "invoice_concepts"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -346,6 +360,7 @@ class InvoiceConcept(Base):
 
 class InvoiceTax(Base):
     """Impuestos de la factura"""
+
     __tablename__ = "invoice_taxes"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -360,6 +375,7 @@ class InvoiceTax(Base):
 
 class ExpenseCategory(Base):
     """Categorías de gastos"""
+
     __tablename__ = "expense_categories"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -373,6 +389,7 @@ class ExpenseCategory(Base):
 
 class Expense(Base):
     """Registro de gastos"""
+
     __tablename__ = "expenses"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
@@ -394,6 +411,7 @@ class Expense(Base):
 
 class AppSettings(Base):
     """Configuración de la aplicación por tenant"""
+
     __tablename__ = "app_settings"
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)

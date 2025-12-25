@@ -1,9 +1,11 @@
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from reportlab.lib import colors
-from backend.core.models import Product
 import os
 from datetime import datetime
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+
+from backend.core.models import Product
 
 
 def generate_product_report(db, output_dir="reports"):

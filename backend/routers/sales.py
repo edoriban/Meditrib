@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from typing import List
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
+from backend.core import schemas
+from backend.core.crud import crud_client, crud_products, crud_sale
 from backend.core.dependencies import get_db, get_tenant_id
-from backend.core import schemas, models
-from backend.core.crud import crud_sale, crud_products, crud_client
 
 router = APIRouter(
     prefix="/sales",
@@ -24,25 +23,20 @@ class StockIssue(BaseModel):
 
 class StockCheckResult(BaseModel):
     has_issues: bool
-    issues: List[StockIssue]
+    issues: list[StockIssue]
 
 
 class StockCheckRequest(BaseModel):
-    items: List[schemas.SaleItemCreate]
+    items: list[schemas.SaleItemCreate]
 
 
 @router.post("/check-stock", response_model=StockCheckResult)
 def check_stock_for_sale(
-    request: StockCheckRequest, 
-    db: Session = Depends(get_db),
-    tenant_id: int = Depends(get_tenant_id)
+    request: StockCheckRequest, db: Session = Depends(get_db), tenant_id: int = Depends(get_tenant_id)
 ):
     """Verifica disponibilidad de stock"""
     result = crud_sale.check_stock_availability(db, request.items, tenant_id=tenant_id)
-    return StockCheckResult(
-        has_issues=result["has_issues"],
-        issues=[StockIssue(**issue) for issue in result["issues"]]
-    )
+    return StockCheckResult(has_issues=result["has_issues"], issues=[StockIssue(**issue) for issue in result["issues"]])
 
 
 @router.post("/", response_model=schemas.Sale)
@@ -50,23 +44,23 @@ def create_sale(
     sale: schemas.SaleCreate,
     auto_adjust_stock: bool = Query(False),
     db: Session = Depends(get_db),
-    tenant_id: int = Depends(get_tenant_id)
+    tenant_id: int = Depends(get_tenant_id),
 ):
     """Crea una nueva venta"""
     # Validar cliente
     db_client = crud_client.get_client(db, client_id=sale.client_id)
     if not db_client or (db_client.tenant_id and db_client.tenant_id != tenant_id):
         raise HTTPException(status_code=404, detail="Client not found")
-    
+
     if not sale.items:
         raise HTTPException(status_code=400, detail="Sale must have at least one item")
-    
+
     # Validar productos
     for item in sale.items:
         db_product = crud_products.get_product(db, product_id=item.product_id, tenant_id=tenant_id)
         if not db_product:
             raise HTTPException(status_code=404, detail=f"Product {item.product_id} not found")
-    
+
     # Verificar stock
     if not auto_adjust_stock:
         stock_check = crud_sale.check_stock_availability(db, sale.items, tenant_id=tenant_id)
@@ -79,23 +73,14 @@ def create_sale(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/", response_model=List[schemas.Sale])
-def read_sales(
-    skip: int = 0, 
-    limit: int = 100, 
-    db: Session = Depends(get_db),
-    tenant_id: int = Depends(get_tenant_id)
-):
+@router.get("/", response_model=list[schemas.Sale])
+def read_sales(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), tenant_id: int = Depends(get_tenant_id)):
     """Obtener todas las ventas del tenant"""
     return crud_sale.get_sales(db, tenant_id=tenant_id, skip=skip, limit=limit)
 
 
 @router.get("/{sale_id}", response_model=schemas.Sale)
-def read_sale(
-    sale_id: int, 
-    db: Session = Depends(get_db),
-    tenant_id: int = Depends(get_tenant_id)
-):
+def read_sale(sale_id: int, db: Session = Depends(get_db), tenant_id: int = Depends(get_tenant_id)):
     """Obtener una venta por ID"""
     db_sale = crud_sale.get_sale(db, sale_id=sale_id, tenant_id=tenant_id)
     if not db_sale:
@@ -105,21 +90,14 @@ def read_sale(
 
 @router.put("/{sale_id}", response_model=schemas.Sale)
 def update_sale(
-    sale_id: int, 
-    sale: schemas.SaleUpdate, 
-    db: Session = Depends(get_db),
-    tenant_id: int = Depends(get_tenant_id)
+    sale_id: int, sale: schemas.SaleUpdate, db: Session = Depends(get_db), tenant_id: int = Depends(get_tenant_id)
 ):
     """Actualizar una venta"""
     return crud_sale.update_sale(db=db, sale_id=sale_id, sale_update=sale, tenant_id=tenant_id)
 
 
 @router.delete("/{sale_id}", response_model=schemas.Sale)
-def delete_sale(
-    sale_id: int, 
-    db: Session = Depends(get_db),
-    tenant_id: int = Depends(get_tenant_id)
-):
+def delete_sale(sale_id: int, db: Session = Depends(get_db), tenant_id: int = Depends(get_tenant_id)):
     """Eliminar una venta"""
     db_sale = crud_sale.delete_sale(db=db, sale_id=sale_id, tenant_id=tenant_id)
     if not db_sale:

@@ -3,33 +3,34 @@ Script para poblar la base de datos con datos iniciales de prueba.
 Ejecutar desde la raíz del proyecto: python -m backend.seed_data
 """
 
-from backend.core.database import SessionLocal, engine
-from backend.core.models import Base, Product, Inventory, Supplier, Client, ProductTag, User, Role
-from passlib.context import CryptContext
 from datetime import date, timedelta
+
+from passlib.context import CryptContext
+
+from backend.core.database import SessionLocal, engine
+from backend.core.models import Base, Client, Inventory, Product, ProductTag, Role, Supplier, User
 
 # Contexto de password (mismo que en security.py)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 def hash_password(password: str) -> str:
     """Genera un hash de la contraseña"""
     return pwd_context.hash(password)
 
+
 def seed_database():
     # Crear las tablas si no existen
     Base.metadata.create_all(bind=engine)
-    
+
     db = SessionLocal()
-    
+
     try:
         # ==================== ROLES ====================
         print("Creando roles...")
         admin_role = db.query(Role).filter(Role.name == "Administrador").first()
         if not admin_role:
-            admin_role = Role(
-                name="Administrador",
-                description="Acceso completo al sistema"
-            )
+            admin_role = Role(name="Administrador", description="Acceso completo al sistema")
             db.add(admin_role)
             db.flush()
             print("  ✓ Rol 'Administrador' creado")
@@ -44,7 +45,7 @@ def seed_database():
                 name="Administrador",
                 email="admin@meditrib.com",
                 password=hash_password("admin123"),  # Hash de la contraseña
-                role_id=admin_role.id
+                role_id=admin_role.id,
             )
             db.add(admin_user)
             db.flush()
@@ -63,7 +64,7 @@ def seed_database():
             {"name": "Antiinflamatorio", "description": "Reduce la inflamación", "color": "#4ade80"},
             {"name": "Material de curación", "description": "Gasas, vendas, jeringas", "color": "#facc15"},
         ]
-        
+
         tags = {}
         for tag_data in tags_data:
             existing = db.query(ProductTag).filter(ProductTag.name == tag_data["name"]).first()
@@ -81,10 +82,7 @@ def seed_database():
         print("\nCreando proveedores...")
         supplier = db.query(Supplier).filter(Supplier.name == "SEVI").first()
         if not supplier:
-            supplier = Supplier(
-                name="SEVI",
-                contact_info="555-123-4567"
-            )
+            supplier = Supplier(name="SEVI", contact_info="555-123-4567")
             db.add(supplier)
             db.flush()
             print("  ✓ Proveedor 'SEVI' creado")
@@ -99,7 +97,7 @@ def seed_database():
                 name="Doctor 1",
                 contact="555-987-6543",
                 address="Consultorio 101, Col. Centro, CDMX",
-                email="doctor1@consultorio.com"
+                email="doctor1@consultorio.com",
             )
             db.add(client)
             db.flush()
@@ -109,7 +107,7 @@ def seed_database():
 
         # ==================== MEDICAMENTOS ====================
         print("\nCreando medicamentos...")
-        
+
         products_data = [
             {
                 "name": "Paracetamol 500mg Tabletas (20)",
@@ -124,7 +122,7 @@ def seed_database():
                 "prescription_required": False,
                 "iva_rate": 0.0,  # Medicamento exento
                 "quantity": 100,
-                "tags": ["Analgésico"]
+                "tags": ["Analgésico"],
             },
             {
                 "name": "Ibuprofeno 400mg Tabletas (10)",
@@ -139,7 +137,7 @@ def seed_database():
                 "prescription_required": False,
                 "iva_rate": 0.0,  # Medicamento exento
                 "quantity": 80,
-                "tags": ["Analgésico", "Antiinflamatorio"]
+                "tags": ["Analgésico", "Antiinflamatorio"],
             },
             {
                 "name": "Amoxicilina 500mg Cápsulas (21)",
@@ -154,7 +152,7 @@ def seed_database():
                 "prescription_required": True,
                 "iva_rate": 0.0,  # Medicamento exento
                 "quantity": 50,
-                "tags": ["Antibiótico"]
+                "tags": ["Antibiótico"],
             },
             {
                 "name": "Jeringas 5ml (Caja 100)",
@@ -169,7 +167,7 @@ def seed_database():
                 "prescription_required": False,
                 "iva_rate": 0.16,  # Material de curación con IVA
                 "quantity": 30,
-                "tags": ["Material de curación"]
+                "tags": ["Material de curación"],
             },
             {
                 "name": "Gasas Estériles 10x10cm (100)",
@@ -184,7 +182,7 @@ def seed_database():
                 "prescription_required": False,
                 "iva_rate": 0.16,  # Material de curación con IVA
                 "quantity": 40,
-                "tags": ["Material de curación"]
+                "tags": ["Material de curación"],
             },
         ]
 
@@ -194,35 +192,32 @@ def seed_database():
                 # Extraer datos que no van en el modelo
                 quantity = med_data.pop("quantity")
                 tag_names = med_data.pop("tags")
-                
+
                 # Crear medicamento
                 product = Product(**med_data)
-                
+
                 # Agregar tags
                 for tag_name in tag_names:
                     if tag_name in tags:
                         product.tags.append(tags[tag_name])
-                
+
                 db.add(product)
                 db.flush()
-                
+
                 # Crear inventario
-                inventory = Inventory(
-                    product_id=product.id,
-                    quantity=quantity
-                )
+                inventory = Inventory(product_id=product.id, quantity=quantity)
                 db.add(inventory)
-                
+
                 print(f"  ✓ Medicamento '{med_data['name']}' creado (Stock: {quantity})")
             else:
                 print(f"  - Medicamento '{med_data['name']}' ya existe")
 
         # Confirmar todos los cambios
         db.commit()
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("✅ Base de datos poblada exitosamente!")
-        print("="*50)
-        
+        print("=" * 50)
+
         # Resumen
         print("\n📊 Resumen de datos:")
         print(f"   - Medicamentos: {db.query(Product).count()}")
@@ -230,7 +225,7 @@ def seed_database():
         print(f"   - Clientes: {db.query(Client).count()}")
         print(f"   - Tags: {db.query(ProductTag).count()}")
         print(f"   - Usuarios: {db.query(User).count()}")
-        
+
     except Exception as e:
         db.rollback()
         print(f"\n❌ Error: {e}")

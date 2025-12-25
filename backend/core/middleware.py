@@ -1,11 +1,11 @@
-import time
 import logging
-from typing import Callable
+import time
+import uuid
+from collections.abc import Callable
+
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-import uuid
-
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         user_email = None
         try:
             # Esto asume que tienes un sistema de autenticación que guarda el usuario en request.state
-            if hasattr(request.state, 'user'):
-                user_id = request.state.user.get('id')
-                user_email = request.state.user.get('email')
+            if hasattr(request.state, "user"):
+                user_id = request.state.user.get("id")
+                user_email = request.state.user.get("email")
         except:
             pass
 
@@ -50,6 +50,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
             # Registrar petición exitosa
             from backend.core.logging_config import log_api_request
+
             log_api_request(
                 method=method,
                 path=full_path,
@@ -58,7 +59,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 user_id=user_id,
                 ip_address=client_ip,
                 user_agent=user_agent,
-                request_id=request_id
+                request_id=request_id,
             )
 
             # Agregar headers de respuesta
@@ -73,8 +74,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
             # Registrar error con traceback completo
             import traceback
+
             full_traceback = traceback.format_exc()
-            
+
             logger.error(
                 f"Request failed: {method} {full_path}\n{full_traceback}",
                 extra={
@@ -84,18 +86,18 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "user_agent": user_agent,
                     "duration_ms": round(duration_ms, 2),
                     "error_type": type(e).__name__,
-                    "error_message": str(e)
-                }
+                    "error_message": str(e),
+                },
             )
 
             # Retornar respuesta de error con más detalle en desarrollo
             return JSONResponse(
                 status_code=500,
                 content={
-                    "detail": f"Internal server error: {str(e)}", 
+                    "detail": f"Internal server error: {e!s}",
                     "request_id": request_id,
-                    "error_type": type(e).__name__
-                }
+                    "error_type": type(e).__name__,
+                },
             )
 
 
@@ -120,12 +122,14 @@ class SystemHealthMiddleware(BaseHTTPMiddleware):
 
     def _perform_health_check(self):
         """Realizar chequeo básico de salud del sistema"""
-        from backend.core.logging_config import log_system_health
         from sqlalchemy import text
+
+        from backend.core.logging_config import log_system_health
 
         try:
             # Verificar conectividad a base de datos
             from backend.core.database import engine
+
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
             db_status = "OK"
@@ -135,14 +139,12 @@ class SystemHealthMiddleware(BaseHTTPMiddleware):
 
         # Registrar estado de la base de datos
         log_system_health(
-            component="database",
-            metric="connectivity",
-            value=1 if db_status == "OK" else 0,
-            status=db_status
+            component="database", metric="connectivity", value=1 if db_status == "OK" else 0, status=db_status
         )
 
         # Verificar uso de memoria (básico)
         import psutil
+
         try:
             memory = psutil.virtual_memory()
             memory_usage_percent = memory.percent
@@ -157,8 +159,8 @@ class SystemHealthMiddleware(BaseHTTPMiddleware):
                 details={
                     "total_mb": round(memory.total / 1024 / 1024, 2),
                     "available_mb": round(memory.available / 1024 / 1024, 2),
-                    "used_mb": round(memory.used / 1024 / 1024, 2)
-                }
+                    "used_mb": round(memory.used / 1024 / 1024, 2),
+                },
             )
         except ImportError:
             # psutil no disponible
@@ -168,7 +170,7 @@ class SystemHealthMiddleware(BaseHTTPMiddleware):
 
         # Verificar uso de disco
         try:
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             disk_usage_percent = disk.percent
 
             status = "OK" if disk_usage_percent < 90 else "WARNING" if disk_usage_percent < 95 else "CRITICAL"
@@ -181,8 +183,8 @@ class SystemHealthMiddleware(BaseHTTPMiddleware):
                 details={
                     "total_gb": round(disk.total / 1024 / 1024 / 1024, 2),
                     "free_gb": round(disk.free / 1024 / 1024 / 1024, 2),
-                    "used_gb": round(disk.used / 1024 / 1024 / 1024, 2)
-                }
+                    "used_gb": round(disk.used / 1024 / 1024 / 1024, 2),
+                },
             )
         except ImportError:
             pass
@@ -200,9 +202,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
             user_id = None
             user_email = None
             try:
-                if hasattr(request.state, 'user'):
-                    user_id = request.state.user.get('id')
-                    user_email = request.state.user.get('email')
+                if hasattr(request.state, "user"):
+                    user_id = request.state.user.get("id")
+                    user_email = request.state.user.get("email")
             except:
                 pass
 
@@ -224,11 +226,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
             else:
                 resource = "unknown"
 
-            action_map = {
-                "POST": "create",
-                "PUT": "update",
-                "DELETE": "delete"
-            }
+            action_map = {"POST": "create", "PUT": "update", "DELETE": "delete"}
 
             action = action_map.get(request.method, "unknown")
 
@@ -238,8 +236,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 details={
                     "method": request.method,
                     "path": path,
-                    "ip_address": request.client.host if request.client else "unknown"
-                }
+                    "ip_address": request.client.host if request.client else "unknown",
+                },
             )
 
         response = await call_next(request)

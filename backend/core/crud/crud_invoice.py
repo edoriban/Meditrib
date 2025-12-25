@@ -1,18 +1,25 @@
-from sqlalchemy.orm import Session, selectinload
-from backend.core.models import Invoice, InvoiceConcept, InvoiceTax, Company, Client, Sale, SaleItem
-from backend.core.schemas import InvoiceCreate, InvoiceUpdate, CompanyCreate, CompanyUpdate, InvoiceConceptCreate, InvoiceTaxCreate
-from typing import List, Optional
-from datetime import datetime
-import uuid
 import xml.etree.ElementTree as ET
+from datetime import datetime
 from decimal import Decimal
 
+from sqlalchemy.orm import Session, selectinload
 
-def get_invoices(db: Session, skip: int = 0, limit: int = 100) -> List[Invoice]:
+from backend.core.models import Company, Invoice, InvoiceConcept, InvoiceTax, Sale, SaleItem
+from backend.core.schemas import (
+    CompanyCreate,
+    CompanyUpdate,
+    InvoiceConceptCreate,
+    InvoiceCreate,
+    InvoiceTaxCreate,
+    InvoiceUpdate,
+)
+
+
+def get_invoices(db: Session, skip: int = 0, limit: int = 100) -> list[Invoice]:
     return db.query(Invoice).offset(skip).limit(limit).all()
 
 
-def get_invoice(db: Session, invoice_id: int) -> Optional[Invoice]:
+def get_invoice(db: Session, invoice_id: int) -> Invoice | None:
     return db.query(Invoice).filter(Invoice.id == invoice_id).first()
 
 
@@ -26,10 +33,7 @@ def create_invoice(db: Session, invoice: InvoiceCreate) -> Invoice:
     else:
         folio = invoice.folio
 
-    db_invoice = Invoice(
-        **invoice.model_dump(exclude={"concepts", "taxes"}),
-        folio=folio
-    )
+    db_invoice = Invoice(**invoice.model_dump(exclude={"concepts", "taxes"}), folio=folio)
 
     db.add(db_invoice)
     db.commit()
@@ -50,7 +54,7 @@ def create_invoice(db: Session, invoice: InvoiceCreate) -> Invoice:
     return db_invoice
 
 
-def update_invoice(db: Session, invoice_id: int, invoice_update: InvoiceUpdate) -> Optional[Invoice]:
+def update_invoice(db: Session, invoice_id: int, invoice_update: InvoiceUpdate) -> Invoice | None:
     db_invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if db_invoice:
         for key, value in invoice_update.model_dump(exclude_unset=True).items():
@@ -69,7 +73,7 @@ def delete_invoice(db: Session, invoice_id: int) -> bool:
     return False
 
 
-def generate_cfdi_xml(db: Session, invoice_id: int) -> Optional[str]:
+def generate_cfdi_xml(db: Session, invoice_id: int) -> str | None:
     """Generar XML CFDI 4.0 para la factura"""
     invoice = get_invoice(db, invoice_id)
     if not invoice or invoice.status != "draft":
@@ -138,11 +142,7 @@ def generate_cfdi_xml(db: Session, invoice_id: int) -> Optional[str]:
     xml_str = ET.tostring(root, encoding="unicode", method="xml")
 
     # Actualizar la factura con el XML generado
-    update_invoice(db, invoice_id, InvoiceUpdate(
-        status="issued",
-        cfdi_xml=xml_str,
-        certification_date=datetime.now()
-    ))
+    update_invoice(db, invoice_id, InvoiceUpdate(status="issued", cfdi_xml=xml_str, certification_date=datetime.now()))
 
     return xml_str
 
@@ -155,15 +155,15 @@ def create_company(db: Session, company: CompanyCreate) -> Company:
     return db_company
 
 
-def get_company(db: Session, company_id: int) -> Optional[Company]:
+def get_company(db: Session, company_id: int) -> Company | None:
     return db.query(Company).filter(Company.id == company_id).first()
 
 
-def get_companies(db: Session) -> List[Company]:
+def get_companies(db: Session) -> list[Company]:
     return db.query(Company).all()
 
 
-def update_company(db: Session, company_id: int, company_update: CompanyUpdate) -> Optional[Company]:
+def update_company(db: Session, company_id: int, company_update: CompanyUpdate) -> Company | None:
     """Actualizar datos de una empresa"""
     db_company = db.query(Company).filter(Company.id == company_id).first()
     if db_company:
@@ -187,12 +187,17 @@ def delete_company(db: Session, company_id: int) -> bool:
 
 def create_invoice_from_sale(db: Session, sale_id: int, payment_form: str = "01", payment_method: str = "PUE") -> dict:
     """Crear factura automáticamente desde una venta
-    
+
     Retorna:
         - Invoice si se crea exitosamente
         - dict con error si hay problemas
     """
-    sale = db.query(Sale).options(selectinload(Sale.items).selectinload(SaleItem.medicine)).filter(Sale.id == sale_id).first()
+    sale = (
+        db.query(Sale)
+        .options(selectinload(Sale.items).selectinload(SaleItem.medicine))
+        .filter(Sale.id == sale_id)
+        .first()
+    )
     if not sale:
         return {"error": "sale_not_found", "message": "La venta no existe"}
 
@@ -204,12 +209,15 @@ def create_invoice_from_sale(db: Session, sale_id: int, payment_form: str = "01"
     # Obtener la primera empresa (por ahora asumimos una sola)
     company = db.query(Company).first()
     if not company:
-        return {"error": "no_company", "message": "No hay empresa configurada. Por favor configure los datos de la empresa emisora primero."}
+        return {
+            "error": "no_company",
+            "message": "No hay empresa configurada. Por favor configure los datos de la empresa emisora primero.",
+        }
 
     # Calcular subtotal, IVA y total basado en cada item de la venta
     subtotal_sin_iva = Decimal("0")
     total_iva = Decimal("0")
-    
+
     # Agrupar por tasa de IVA para los impuestos
     iva_by_rate = {}  # {rate: {"base": amount, "iva": amount}}
 
@@ -219,41 +227,46 @@ def create_invoice_from_sale(db: Session, sale_id: int, payment_form: str = "01"
         item_subtotal = Decimal(str(item.subtotal))
         item_iva_rate = Decimal(str(item.iva_rate)) if item.iva_rate else Decimal("0")
         item_iva_amount = Decimal(str(item.iva_amount)) if item.iva_amount else Decimal("0")
-        
+
         # Calcular base sin IVA para cada concepto
         # El subtotal del item ya está sin IVA
         base_sin_iva = item_subtotal
-        
+
         subtotal_sin_iva += base_sin_iva
         total_iva += item_iva_amount
-        
+
         # Agrupar IVA por tasa
         rate_key = float(item_iva_rate)
         if rate_key not in iva_by_rate:
             iva_by_rate[rate_key] = {"base": Decimal("0"), "iva": Decimal("0")}
         iva_by_rate[rate_key]["base"] += base_sin_iva
         iva_by_rate[rate_key]["iva"] += item_iva_amount
-        
-        concepts.append(InvoiceConceptCreate(
-            quantity=item.quantity,
-            unit="PIEZA",
-            description=f"{item.medicine.name}" + (f" - {item.medicine.description}" if item.medicine.description else ""),
-            unit_price=float(item.unit_price),
-            amount=float(base_sin_iva),
-            discount=float(item.discount) if item.discount else 0.0,
-            medicine_id=item.medicine_id
-        ))
+
+        concepts.append(
+            InvoiceConceptCreate(
+                quantity=item.quantity,
+                unit="PIEZA",
+                description=f"{item.medicine.name}"
+                + (f" - {item.medicine.description}" if item.medicine.description else ""),
+                unit_price=float(item.unit_price),
+                amount=float(base_sin_iva),
+                discount=float(item.discount) if item.discount else 0.0,
+                medicine_id=item.medicine_id,
+            )
+        )
 
     # Crear impuestos agrupados por tasa
     taxes = []
     for rate, amounts in iva_by_rate.items():
         if rate > 0:  # Solo agregar impuestos con tasa mayor a 0
-            taxes.append(InvoiceTaxCreate(
-                tax_type="002",  # IVA
-                tax_rate=rate,
-                tax_amount=float(amounts["iva"]),
-                tax_base=float(amounts["base"])
-            ))
+            taxes.append(
+                InvoiceTaxCreate(
+                    tax_type="002",  # IVA
+                    tax_rate=rate,
+                    tax_amount=float(amounts["iva"]),
+                    tax_base=float(amounts["base"]),
+                )
+            )
 
     total = subtotal_sin_iva + total_iva
 
@@ -267,7 +280,7 @@ def create_invoice_from_sale(db: Session, sale_id: int, payment_form: str = "01"
         client_id=sale.client_id,
         sale_id=sale_id,
         concepts=concepts,
-        taxes=taxes
+        taxes=taxes,
     )
 
     invoice = create_invoice(db, invoice_data)

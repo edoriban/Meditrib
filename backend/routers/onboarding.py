@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
 
-from backend.core.dependencies import get_db
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from backend.core import models
+from backend.core.dependencies import get_db
 
 router = APIRouter(
     prefix="/onboarding",
@@ -22,20 +22,20 @@ class OnboardingStatus(BaseModel):
 
 class CompanySetup(BaseModel):
     name: str
-    rfc: Optional[str] = None
-    tax_regime: Optional[str] = None
-    street: Optional[str] = None
-    exterior_number: Optional[str] = None
-    interior_number: Optional[str] = None
-    neighborhood: Optional[str] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    postal_code: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    rfc: str | None = None
+    tax_regime: str | None = None
+    street: str | None = None
+    exterior_number: str | None = None
+    interior_number: str | None = None
+    neighborhood: str | None = None
+    city: str | None = None
+    state: str | None = None
+    postal_code: str | None = None
+    email: str | None = None
+    phone: str | None = None
 
 
-def get_setting(db: Session, key: str) -> Optional[str]:
+def get_setting(db: Session, key: str) -> str | None:
     setting = db.query(models.AppSettings).filter(models.AppSettings.key == key).first()
     return setting.value if setting else None
 
@@ -57,19 +57,19 @@ def get_onboarding_status(db: Session = Depends(get_db)):
     company_exists = db.query(models.Company).first() is not None
     products_exist = db.query(models.Product).first() is not None
     clients_exist = db.query(models.Client).first() is not None
-    
+
     return OnboardingStatus(
         setup_completed=setup_completed,
         company_created=company_exists,
         has_products=products_exist,
-        has_clients=clients_exist
+        has_clients=clients_exist,
     )
 
 
 @router.post("/company")
 def setup_company(company: CompanySetup, db: Session = Depends(get_db)):
     existing = db.query(models.Company).first()
-    
+
     if existing:
         for key, value in company.model_dump(exclude_unset=True).items():
             if value is not None:
@@ -89,7 +89,7 @@ def setup_company(company: CompanySetup, db: Session = Depends(get_db)):
             state=company.state or "",
             postal_code=company.postal_code or "",
             email=company.email or "",
-            phone=company.phone
+            phone=company.phone,
         )
         db.add(db_company)
         db.commit()
@@ -100,15 +100,11 @@ def setup_company(company: CompanySetup, db: Session = Depends(get_db)):
 @router.post("/default-client")
 def create_default_client(db: Session = Depends(get_db)):
     existing = db.query(models.Client).filter(models.Client.name == "Público General").first()
-    
+
     if existing:
         return existing
-    
-    default_client = models.Client(
-        name="Público General",
-        contact="Cliente de mostrador",
-        rfc="XAXX010101000"
-    )
+
+    default_client = models.Client(name="Público General", contact="Cliente de mostrador", rfc="XAXX010101000")
     db.add(default_client)
     db.commit()
     db.refresh(default_client)

@@ -1,5 +1,5 @@
-from sqlalchemy import text
 from core.database import engine  # Importa tu engine
+from sqlalchemy import text
 
 sql_command = "ALTER TABLE medicines ADD COLUMN purchase_price FLOAT;"
 

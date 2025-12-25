@@ -1,13 +1,31 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.core.database import engine, Base
-from backend.routers import products, suppliers, users, roles, sales, clients, reports as basic_reports, auth, product_tags, purchase_order, alerts, invoices, expenses, onboarding, companies
-from backend.routers import reports as financial_reports
-from backend.routers import batches
-from backend.core.middleware import RequestLoggingMiddleware, SystemHealthMiddleware, AuditMiddleware
+
+from backend.core.database import Base, engine
 from backend.core.logging_config import setup_logging
+from backend.core.middleware import AuditMiddleware, RequestLoggingMiddleware, SystemHealthMiddleware
 from backend.init_db import init_db
-import logging
+from backend.routers import (
+    alerts,
+    auth,
+    batches,
+    clients,
+    companies,
+    expenses,
+    invoices,
+    onboarding,
+    product_tags,
+    products,
+    purchase_order,
+    reports as basic_reports,
+    reports as financial_reports,
+    roles,
+    sales,
+    suppliers,
+    users,
+)
 
 # Configurar logging avanzado
 setup_logging(log_level="INFO", log_dir="logs")
@@ -63,4 +81,5 @@ def read_root():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("backend.main:app", host="0.0.0.0", port=9999, reload=True)

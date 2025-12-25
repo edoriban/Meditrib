@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
-from backend.core import models  # Importa los modelos desde la nueva ubicación
 
 # Importa los esquemas desde la nueva ubicación
-from backend.core import schemas
+from backend.core import (
+    models,  # Importa los modelos desde la nueva ubicación
+    schemas,
+)
 
 
 # Ejemplo de función CRUD usando schemas

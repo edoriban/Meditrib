@@ -1,17 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+
+from backend.core.crud.crud_alert import (
+    check_and_create_alerts,
+    create_alert,
+    delete_alert,
+    get_alert,
+    get_alerts,
+    resolve_alert,
+    update_alert,
+)
 from backend.core.database import get_db
 from backend.core.schemas import Alert, AlertCreate, AlertUpdate
-from backend.core.crud.crud_alert import (
-    get_alerts, get_alert, create_alert, update_alert,
-    delete_alert, resolve_alert, check_and_create_alerts
-)
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Alert])
+@router.get("/", response_model=list[Alert])
 def read_alerts(skip: int = 0, limit: int = 100, active_only: bool = True, db: Session = Depends(get_db)):
     alerts = get_alerts(db, skip=skip, limit=limit, active_only=active_only)
     return alerts

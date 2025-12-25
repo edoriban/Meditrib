@@ -1,12 +1,14 @@
 """
 Dependencies for FastAPI endpoints.
 """
+
 from fastapi import Depends, HTTPException
+
+from . import models
 
 # Re-export get_db from database to avoid circular imports
 from .database import get_db
 from .security import get_current_user
-from . import models
 
 # Export get_db so routers can import it from here
 __all__ = ["get_db", "get_tenant_id"]
