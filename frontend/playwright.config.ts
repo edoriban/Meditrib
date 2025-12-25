@@ -52,9 +52,19 @@ export default defineConfig({
       },
     },
 
+    // Multi-tenancy tests - manages own auth, no storage state
+    {
+      name: 'chromium-multitenancy',
+      testMatch: /multitenancy\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        // No storageState - tests manage their own login
+      },
+    },
+
     {
       name: 'chromium',
-      testIgnore: /.*\.unauth\.spec\.ts/,
+      testIgnore: [/.*\.unauth\.spec\.ts/, /multitenancy\.spec\.ts/],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',

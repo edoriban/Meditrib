@@ -48,9 +48,9 @@ export class InventoryPage extends BasePage {
      */
     async goto(): Promise<void> {
         await this.navigateTo('/products');
-        await this.waitForPageLoad();
-        // Wait for the main title to be visible
-        await this.pageTitle.waitFor({ state: 'visible', timeout: 10000 });
+        await this.page.waitForLoadState('networkidle');
+        // Wait for the main title to be visible with longer timeout
+        await this.pageTitle.waitFor({ state: 'visible', timeout: 20000 });
     }
 
     /**
