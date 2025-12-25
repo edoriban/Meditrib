@@ -47,7 +47,7 @@ export function SalesTable({ data, searchTerm, onSearchChange }: SalesTableProps
         if (sale.user?.name?.toLowerCase().includes(searchLower)) return true;
         // Buscar en ID
         if (sale.id.toString().includes(searchTerm)) return true;
-        // Buscar en nombres de medicamentos de los items
+        // Buscar en nombres de productos de los items
         if (sale.items?.some(item => item.product?.name?.toLowerCase().includes(searchLower))) return true;
         return false;
     });

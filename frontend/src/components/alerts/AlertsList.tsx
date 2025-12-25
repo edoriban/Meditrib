@@ -146,7 +146,7 @@ export function AlertsList() {
                                         </div>
                                         <p className="text-sm font-medium">{alert.message}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            Medicamento: {alert.product.name}
+                                            Producto: {alert.product.name}
                                         </p>
                                     </div>
                                 </div>

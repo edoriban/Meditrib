@@ -26,7 +26,7 @@ export const ProductEditForm: React.FC<ProductEditFormProps> = ({ form }) => {
     // Componente personalizado para renderizar cuando no hay tags
     const EmptyTagsContent = () => (
         <div className="flex flex-col items-center justify-center py-4 space-y-2">
-            <p className="text-sm text-muted-foreground">No hay tipos de medicamentos registrados</p>
+            <p className="text-sm text-muted-foreground">No hay tipos de productos registrados</p>
             <Button
                 variant="outline"
                 size="sm"
@@ -43,7 +43,7 @@ export const ProductEditForm: React.FC<ProductEditFormProps> = ({ form }) => {
             <FormInput
                 name="name"
                 control={control}
-                label="Nombre del medicamento"
+                label="Nombre del producto"
                 placeholder="Paracetamol 500mg"
                 errors={errors}
             />
@@ -51,8 +51,8 @@ export const ProductEditForm: React.FC<ProductEditFormProps> = ({ form }) => {
             <FormInput
                 name="active_substance"
                 control={control}
-                label="Ingrediente Activo"
-                placeholder="Ej: Paracetamol, Ibuprofeno, Amoxicilina"
+                label="Especificación"
+                placeholder="Ej: Material, ingrediente activo, modelo..."
                 errors={errors}
             />
 
@@ -121,12 +121,12 @@ export const ProductEditForm: React.FC<ProductEditFormProps> = ({ form }) => {
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="0">Exento (0%) - Medicamentos</SelectItem>
-                                <SelectItem value="0.16">16% - Material de curación</SelectItem>
+                                <SelectItem value="0">Exento (0%)</SelectItem>
+                                <SelectItem value="0.16">16% - Tasa general</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormDescription className="text-xs">
-                            Medicamentos: 0%, Material (gasas, jeringas): 16%
+                            Selecciona la tasa de IVA aplicable al producto
                         </FormDescription>
                         <FormMessage />
                     </FormItem>
@@ -139,7 +139,7 @@ export const ProductEditForm: React.FC<ProductEditFormProps> = ({ form }) => {
                 render={({ field }) => (
                     <FormItem>
                         <div className="flex items-center justify-between">
-                            <FormLabel>Tipos de medicamento</FormLabel>
+                            <FormLabel>Tipos de producto</FormLabel>
                             <Button
                                 variant="ghost"
                                 size="sm"

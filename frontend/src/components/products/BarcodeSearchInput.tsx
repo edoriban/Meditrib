@@ -15,7 +15,7 @@ interface BarcodeSearchInputProps {
     className?: string;
     disabled?: boolean;
     autoFocus?: boolean;
-    excludeIds?: number[]; // IDs de medicamentos a excluir de resultados
+    excludeIds?: number[]; // IDs de productos a excluir de resultados
 }
 
 const formatCurrency = (amount: number) => {
@@ -89,7 +89,7 @@ export function BarcodeSearchInput({
         setShowDropdown(true);
     };
 
-    // Manejar selección de medicamento
+    // Manejar selección de producto
     const handleSelect = (product: Product) => {
         onProductSelect(product);
         setSearchValue("");
@@ -181,7 +181,7 @@ export function BarcodeSearchInput({
                         </div>
                     ) : filteredResults.length === 0 ? (
                         <div className="py-6 text-center text-sm text-muted-foreground">
-                            No se encontraron medicamentos
+                            No se encontraron productos
                         </div>
                     ) : (
                         filteredResults.map((product) => (

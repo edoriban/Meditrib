@@ -304,7 +304,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
     const needsReplenishment = React.useMemo(() => {
         if (!filteredData) return [];
 
-        // Filtrar medicamentos con stock bajo y ordenar por prioridad
+        // Filtrar productos con stock bajo y ordenar por prioridad
         return filteredData
             .filter(med => {
                 const stock = med.inventory?.quantity || 0;
@@ -362,7 +362,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Medicamentos</h2>
+                <h2 className="text-xl font-semibold">Productos</h2>
                 <CreateProductDialog />
             </div>
 
@@ -380,7 +380,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
             {/* Controles de paginación */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Mostrando {filteredData?.length || 0} de {totalItems} medicamentos</span>
+                    <span>Mostrando {filteredData?.length || 0} de {totalItems} productos</span>
                     <span>|</span>
                     <span>Página {page} de {totalPages}</span>
                 </div>
@@ -479,7 +479,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                 ) : filteredData?.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                                            No hay medicamentos que coincidan con los filtros
+                                            No hay productos que coincidan con los filtros
                                         </TableCell>
                                     </TableRow>
                                 ) : filteredData?.map((product) => (
@@ -576,7 +576,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         <div className="p-6">
                             <h3 className="text-lg font-medium mb-2">Matriz de oportunidad de productos</h3>
                             <p className="text-sm text-muted-foreground mb-6">
-                                Analiza medicamentos por margen de ganancia y nivel de inventario
+                                Analiza productos por margen de ganancia y nivel de inventario
                             </p>
                             <div className="min-h-[500px] w-full">
                                 {filteredData?.length ? (
@@ -961,7 +961,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
             {/* Paginación inferior */}
             <div className="flex items-center justify-between mt-4">
                 <div className="text-sm text-muted-foreground">
-                    Página {page} de {totalPages} ({totalItems} medicamentos)
+                    Página {page} de {totalPages} ({totalItems} productos)
                 </div>
                 <div className="flex items-center gap-1">
                     <Button

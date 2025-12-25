@@ -53,7 +53,7 @@ export interface Sale {
 
 // Schema para crear un item de venta
 export const saleItemSchema = z.object({
-    product_id: z.number().int().positive("Selecciona un medicamento"),
+    product_id: z.number().int().positive("Selecciona un producto"),
     quantity: z.number().int().positive("La cantidad debe ser mayor a 0"),
     unit_price: z.number().positive("El precio debe ser mayor a 0"),
     discount: z.number().min(0),
@@ -82,7 +82,7 @@ export const saleCreateSchema = z.object({
     payment_status: z.string(),
     payment_method: z.string().optional(),
     notes: z.string().optional(),
-    items: z.array(saleItemSchema).min(1, "Agrega al menos un medicamento"),
+    items: z.array(saleItemSchema).min(1, "Agrega al menos un producto"),
 });
 
 export const saleUpdateSchema = saleFormSchema.partial();

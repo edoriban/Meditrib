@@ -9,8 +9,8 @@ export default function HelpPage() {
             answer: "Ve a la sección 'Ventas' en el menú lateral. Haz clic en 'Nueva Venta', selecciona el cliente, agrega los productos escaneando el código de barras o buscándolos manualmente, y finaliza la venta. Puedes aplicar descuentos y seleccionar el método de pago."
         },
         {
-            question: "¿Cómo agrego un nuevo medicamento al inventario?",
-            answer: "En la sección 'Medicamentos', haz clic en 'Agregar Medicamento'. Completa la información del producto incluyendo nombre, precio de compra, precio de venta, código de barras, laboratorio y cantidad inicial. Los medicamentos con receta deben marcarse apropiadamente."
+            question: "¿Cómo agrego un nuevo producto al inventario?",
+            answer: "En la sección 'Productos', haz clic en 'Agregar Producto'. Completa la información del producto incluyendo nombre, precio de compra, precio de venta, código de barras, laboratorio y cantidad inicial. Los productos con receta deben marcarse apropiadamente."
         },
         {
             question: "¿Cómo funcionan las alertas de stock bajo?",
@@ -30,7 +30,7 @@ export default function HelpPage() {
         },
         {
             question: "¿Cómo funcionan los lotes y fechas de caducidad?",
-            answer: "Cada entrada de medicamento puede tener un número de lote y fecha de caducidad. El sistema te alertará automáticamente cuando los productos estén próximos a caducar. Puedes ver el estado de los lotes en la sección 'Lotes'."
+            answer: "Cada entrada de producto puede tener un número de lote y fecha de caducidad. El sistema te alertará automáticamente cuando los productos estén próximos a caducar. Puedes ver el estado de los lotes en la sección 'Lotes'."
         },
         {
             question: "¿Cómo exporto reportes financieros?",
@@ -40,7 +40,7 @@ export default function HelpPage() {
 
     const modules = [
         { icon: IconShoppingCart, name: "Ventas", description: "Registro de ventas, tickets y punto de venta" },
-        { icon: IconPackage, name: "Inventario", description: "Medicamentos, lotes y control de stock" },
+        { icon: IconPackage, name: "Inventario", description: "Productos, lotes y control de stock" },
         { icon: IconUsers, name: "Clientes/Proveedores", description: "Gestión de contactos comerciales" },
         { icon: IconFileInvoice, name: "Facturación", description: "CFDI, facturas electrónicas" },
         { icon: IconChartBar, name: "Reportes", description: "Análisis financieros y estadísticas" },

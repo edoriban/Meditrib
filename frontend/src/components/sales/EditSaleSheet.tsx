@@ -96,7 +96,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Cargar medicamentos solo los que están en la lista de items (para mostrar nombres)
+    // Cargar productos solo los que están en la lista de items (para mostrar nombres)
     const { data: products } = useQuery<Product[]>({
         queryKey: ["products-for-items", items.map(i => i.product_id)],
         queryFn: async () => {
@@ -110,7 +110,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
         enabled: open && items.length > 0,
     });
 
-    // Búsqueda de medicamentos en servidor para el selector manual
+    // Búsqueda de productos en servidor para el selector manual
     const { data: searchResults, isLoading: isSearching } = useQuery<Product[]>({
         queryKey: ["product-manual-search-sheet", searchQuery],
         queryFn: async () => {
@@ -237,7 +237,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
         setItems(items.filter((_, i) => i !== index));
     };
 
-    // Combinar medicamentos de items cargados + resultados de búsqueda para lookups
+    // Combinar productos de items cargados + resultados de búsqueda para lookups
     const allProductsMap = new Map<number, Product>();
     products?.forEach(m => allProductsMap.set(m.id, m));
     searchResults?.forEach(m => allProductsMap.set(m.id, m));
@@ -258,7 +258,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
         setItems(updatedItems);
     };
 
-    // Filtrar medicamentos de búsqueda (excluyendo ya agregados)
+    // Filtrar productos de búsqueda (excluyendo ya agregados)
     const filteredProducts = (searchResults || []).filter(product => {
         const isAlreadyAdded = items.some(item => item.product_id === product.id);
         return !isAlreadyAdded;
@@ -284,7 +284,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
         if (!editability.canEdit || !sale) return;
         
         if (items.length === 0) {
-            form.setError("items", { message: "Agrega al menos un medicamento" });
+            form.setError("items", { message: "Agrega al menos un producto" });
             return;
         }
 
@@ -502,7 +502,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
                                         {productEditability.canEdit && (
                                             <div className="flex gap-2 items-end">
                                                 <div className="flex-1 relative" ref={dropdownRef}>
-                                                    <label className="text-xs font-medium">Agregar Medicamento</label>
+                                                    <label className="text-xs font-medium">Agregar Producto</label>
                                                     <div className="relative">
                                                         <IconSearch className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground z-10" />
                                                         <Input
@@ -665,7 +665,7 @@ export function EditSaleSheet({ open, onOpenChange, sale }: EditSaleSheetProps) 
 
                                         {items.length === 0 && (
                                             <p className="text-xs text-muted-foreground text-center py-3">
-                                                No hay medicamentos en este pedido
+                                                No hay productos en este pedido
                                             </p>
                                         )}
                                     </CardContent>

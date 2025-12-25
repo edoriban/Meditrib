@@ -51,7 +51,7 @@ export function SectionCards() {
             Registros nuevos del mes <IconTrendingUp className="size-4" />
           </div>
           <div className="text-muted-foreground">
-            Medicamentos registrados
+            Productos registrados
           </div>
         </CardFooter>
       </Card>
@@ -112,7 +112,7 @@ export function SectionCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Medicamento de mayor precio <IconTrendingUp className="size-4" />
+            Producto de mayor precio <IconTrendingUp className="size-4" />
           </div>
           <div className="text-muted-foreground" />
         </CardFooter>

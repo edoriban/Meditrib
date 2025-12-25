@@ -23,16 +23,16 @@ export class InventoryPage extends BasePage {
     constructor(page: Page) {
         super(page);
         // Main page title
-        this.pageTitle = page.locator('h1:has-text("Inventario de Medicamentos")');
+        this.pageTitle = page.locator('h1:has-text("Inventario de Productos")');
         // Section title within the table component
-        this.sectionTitle = page.locator('h2:has-text("Medicamentos")');
+        this.sectionTitle = page.locator('h2:has-text("Productos")');
         // Table selectors
         this.productsTable = page.locator('table');
         this.productsTableRows = page.locator('table tbody tr');
-        // Search input with placeholder "Buscar medicamentos..."
-        this.searchInput = page.locator('input[placeholder="Buscar medicamentos..."]');
-        // Total products text pattern (e.g., "50 medicamentos en total")
-        this.totalProductsText = page.locator('span:has-text("medicamentos en total")');
+        // Search input with placeholder "Buscar productos..."
+        this.searchInput = page.locator('input[placeholder="Buscar productos..."]');
+        // Total products text pattern (e.g., "50 productos en total")
+        this.totalProductsText = page.locator('span:has-text("productos en total")');
         // Action buttons
         this.exportButton = page.locator('button:has-text("Exportar")');
         this.importButton = page.locator('button:has-text("Importar Excel")');

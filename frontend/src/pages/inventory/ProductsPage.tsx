@@ -55,7 +55,7 @@ export default function ProductsPage() {
 
             // Obtener nombre del archivo del header o usar uno por defecto
             const contentDisposition = response.headers['content-disposition'];
-            let filename = `Catalogo_Medicamentos_${new Date().toISOString().split('T')[0]}.xlsx`;
+            let filename = `Catalogo_Productos_${new Date().toISOString().split('T')[0]}.xlsx`;
             if (contentDisposition) {
                 const filenameMatch = contentDisposition.match(/filename=(.+)/);
                 if (filenameMatch) {
@@ -81,12 +81,12 @@ export default function ProductsPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Inventario de Medicamentos</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">Inventario de Productos</h1>
                         <p className="text-muted-foreground mt-2">
-                            Gestiona los medicamentos disponibles, stock y precios.
+                            Gestiona los productos disponibles, stock y precios.
                             {data && (
                                 <span className="ml-2 font-medium">
-                                    ({data.total} medicamentos en total)
+                                    ({data.total} productos en total)
                                 </span>
                             )}
                         </p>

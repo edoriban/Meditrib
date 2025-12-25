@@ -77,11 +77,11 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
 
 
 
-    // Cargar medicamentos solo los que están en la lista de items (para mostrar nombres)
+    // Cargar productos solo los que están en la lista de items (para mostrar nombres)
     const { data: products } = useQuery<Product[]>({
         queryKey: ["products-for-items", items.map(i => i.product_id)],
         queryFn: async () => {
-            // Solo cargar medicamentos que están en items
+            // Solo cargar productos que están en items
             if (items.length === 0) return [];
             const promises = items.map(item =>
                 axios.get(`${BASE_API_URL}/products/${item.product_id}`)
@@ -166,11 +166,11 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
 
 
 
-    // Medicamentos cargados para lookups
+    // Productos cargados para lookups
     const allProductsMap = new Map<number, Product>();
     products?.forEach(m => allProductsMap.set(m.id, m));
 
-    // Helper para obtener medicamento por ID
+    // Helper para obtener producto por ID
     const getProductById = (id: number): Product | undefined => allProductsMap.get(id);
 
     // Calcular totales con IVA por producto
@@ -192,7 +192,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
 
     const onSubmit = async (data: SaleFormValues) => {
         if (items.length === 0) {
-            form.setError("items", { message: "Agrega al menos un medicamento" });
+            form.setError("items", { message: "Agrega al menos un producto" });
             return;
         }
 
@@ -265,7 +265,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                 <DialogHeader>
                     <DialogTitle>Nueva Venta / Pedido</DialogTitle>
                     <DialogDescription>
-                        Registra un nuevo pedido. Puedes agregar múltiples medicamentos.
+                        Registra un nuevo pedido. Puedes agregar múltiples productos.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -376,7 +376,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                         {/* Agregar productos */}
                         <Card>
                             <CardHeader className="pt-3">
-                                <CardTitle className="text-base">Agregar Medicamentos</CardTitle>
+                                <CardTitle className="text-base">Agregar Productos</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 {/* Búsqueda con código de barras */}
@@ -389,7 +389,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                         autoFocus
                                     />
                                     <p className="text-xs text-muted-foreground">
-                                        Usa un escáner de código de barras o escribe el nombre del medicamento
+                                        Usa un escáner de código de barras o escribe el nombre del producto
                                     </p>
                                 </div>
 
@@ -399,7 +399,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
-                                                    <TableHead>Medicamento</TableHead>
+                                                    <TableHead>Producto</TableHead>
                                                     <TableHead className="text-center w-[130px]">Cantidad</TableHead>
                                                     <TableHead className="text-right w-[85px]">Precio</TableHead>
                                                     {documentType === "invoice" && (
@@ -491,7 +491,7 @@ export function CreateSaleDialog({ open, onOpenChange }: CreateSaleDialogProps) 
 
                                 {items.length === 0 && (
                                     <p className="text-sm text-muted-foreground text-center py-4">
-                                        No hay medicamentos agregados
+                                        No hay productos agregados
                                     </p>
                                 )}
                             </CardContent>

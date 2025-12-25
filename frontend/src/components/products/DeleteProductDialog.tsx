@@ -28,18 +28,18 @@ export function DeleteProductDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle className="text-red-600">Eliminar medicamento</DialogTitle>
+                    <DialogTitle className="text-red-600">Eliminar producto</DialogTitle>
                     <DialogDescription>
-                        Esta acción no se puede deshacer. El medicamento será eliminado permanentemente del sistema.
+                        Esta acción no se puede deshacer. El producto será eliminado permanentemente del sistema.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
                     <p>
-                        ¿Estás seguro que deseas eliminar el medicamento <strong>{product.name}</strong>?
+                        ¿Estás seguro que deseas eliminar el producto <strong>{product.name}</strong>?
                     </p>
                     {product.inventory && product.inventory.quantity > 0 && (
                         <p className="mt-2 text-amber-600">
-                            ⚠️ Este medicamento tiene {product.inventory.quantity} unidades en inventario.
+                            ⚠️ Este producto tiene {product.inventory.quantity} unidades en inventario.
                             Al eliminarlo, también se eliminará su registro de inventario.
                         </p>
                     )}
@@ -57,7 +57,7 @@ export function DeleteProductDialog({
                         onClick={onConfirmDelete}
                         disabled={isDeleting}
                     >
-                        {isDeleting ? "Eliminando..." : "Eliminar medicamento"}
+                        {isDeleting ? "Eliminando..." : "Eliminar producto"}
                     </Button>
                 </DialogFooter>
             </DialogContent>

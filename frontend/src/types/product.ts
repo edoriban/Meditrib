@@ -15,10 +15,10 @@ export interface Product {
     laboratory?: string;
     concentration?: string;
     prescription_required: boolean;
-    iva_rate: number; // 0.0 = exento (medicamentos), 0.16 = 16% (material de curación)
+    iva_rate: number; // 0.0 = exento (productos), 0.16 = 16% (material de curación)
     sat_key?: string; // Clave SAT para facturación electrónica
-    image_path?: string; // Ruta de la imagen del medicamento
-    active_substance?: string; // Sustancia activa del medicamento
+    image_path?: string; // Ruta de la imagen del producto
+    active_substance?: string; // Sustancia activa del producto
     inventory?: {
         quantity: number;
     };
@@ -34,19 +34,21 @@ export interface ProductEditFormProps {
 
 export const productFormSchema = z.object({
     name: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
-    description: z.string().optional(),
+    description: z.string().nullish(),
     sale_price: z.number().positive({ message: "El precio de venta debe ser mayor a 0" }),
     purchase_price: z.number().positive({ message: "El precio de compra debe ser mayor a 0" }).optional(),
-    expiration_date: z.string().optional(),
-    batch_number: z.string().optional(),
-    barcode: z.string().optional(),
-    laboratory: z.string().optional(),
-    concentration: z.string().optional(),
-    prescription_required: z.boolean(),
-    iva_rate: z.number().min(0).max(1).default(0), // 0 = exento, 0.16 = 16%
-    sat_key: z.string().optional(), // Clave SAT para facturación
-    image_path: z.string().optional(), // Ruta de imagen
-    active_substance: z.string().optional(), // Sustancia activa
+    expiration_date: z.string().nullish(),
+    batch_number: z.string().nullish(),
+    barcode: z.string().nullish(),
+    // Pharmacy-specific fields - optional for other verticals (hardware stores, etc.)
+    laboratory: z.string().nullish(),
+    concentration: z.string().nullish(),
+    prescription_required: z.boolean().default(false),
+    active_substance: z.string().nullish(), // Optional: pharmacy-specific
+    // Tax and billing fields
+    iva_rate: z.number().min(0).max(1).default(0),
+    sat_key: z.string().nullish(),
+    image_path: z.string().nullish(),
     tags: z.array(z.number()).default([]),
     inventory: z
         .object({
@@ -60,50 +62,9 @@ export const productCreateSchema = productFormSchema;
 
 export const productUpdateSchema = productFormSchema.partial();
 
-export interface ProductFormValues {
-    name: string;
-    sale_price: number;
-    description?: string;
-    purchase_price?: number;
-    expiration_date?: string;
-    batch_number?: string;
-    barcode?: string;
-    laboratory?: string;
-    concentration?: string;
-    prescription_required: boolean;
-    iva_rate?: number;
-    sat_key?: string;
-    image_path?: string;
-    active_substance?: string;
-    tags?: number[];
-    inventory?: {
-        quantity: number;
-    };
-    supplier_id?: number;
-}
-
-export type ProductCreateValues = {
-    name: string;
-    sale_price: number;
-    description?: string;
-    purchase_price?: number;
-    expiration_date?: string;
-    batch_number?: string;
-    barcode?: string;
-    laboratory?: string;
-    concentration?: string;
-    prescription_required: boolean;
-    iva_rate?: number;
-    sat_key?: string;
-    image_path?: string;
-    active_substance?: string;
-    tags?: number[];
-    inventory?: {
-        quantity: number;
-    };
-    supplier_id?: number;
-};
-
+// Infer types from schemas to ensure consistency
+export type ProductFormValues = z.infer<typeof productFormSchema>;
+export type ProductCreateValues = z.infer<typeof productCreateSchema>;
 export type ProductUpdateValues = z.infer<typeof productUpdateSchema>;
 
 export const productTagSchema = z.object({

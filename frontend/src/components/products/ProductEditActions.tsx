@@ -31,7 +31,7 @@ export const ProductEditActions: React.FC<ProductEditActionsProps> = ({
                     className="w-full"
                     disabled={isDeleting}
                 >
-                    Eliminar medicamento
+                    Eliminar producto
                 </Button>
                 <DeleteProductDialog
                     product={product}

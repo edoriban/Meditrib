@@ -160,12 +160,12 @@ export function CreateProductTagDialog({ onClose }: CreateProductTagDialogProps 
                 <DialogContent className="sm:max-w-[550px]">
                     <DialogHeader>
                         <DialogTitle>
-                            {editingTag ? "Editar etiqueta" : "Gestionar etiquetas de medicamentos"}
+                            {editingTag ? "Editar etiqueta" : "Gestionar etiquetas de productos"}
                         </DialogTitle>
                         <DialogDescription>
                             {editingTag
                                 ? `Modifica la etiqueta "${editingTag.name}"`
-                                : "Crea y gestiona las etiquetas para clasificar medicamentos"
+                                : "Crea y gestiona las etiquetas para clasificar productos"
                             }
                         </DialogDescription>
                     </DialogHeader>
@@ -192,7 +192,7 @@ export function CreateProductTagDialog({ onClose }: CreateProductTagDialogProps 
                                     name="description"
                                     control={control}
                                     label="Descripción (opcional)"
-                                    placeholder="Describe brevemente este tipo de medicamento"
+                                    placeholder="Describe brevemente este tipo de producto"
                                     errors={errors}
                                 />
 

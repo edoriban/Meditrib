@@ -95,11 +95,11 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Cargar medicamentos solo los que están en la lista de items (para mostrar nombres)
+    // Cargar productos solo los que están en la lista de items (para mostrar nombres)
     const { data: products } = useQuery<Product[]>({
         queryKey: ["products-for-items", items.map(i => i.product_id)],
         queryFn: async () => {
-            // Solo cargar medicamentos que están en items
+            // Solo cargar productos que están en items
             if (items.length === 0) return [];
             const promises = items.map(item => 
                 axios.get(`${BASE_API_URL}/products/${item.product_id}`)
@@ -110,7 +110,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
         enabled: open && items.length > 0,
     });
 
-    // Búsqueda de medicamentos en servidor para el selector manual
+    // Búsqueda de productos en servidor para el selector manual
     const { data: searchResults, isLoading: isSearching } = useQuery<Product[]>({
         queryKey: ["product-manual-search", searchQuery],
         queryFn: async () => {
@@ -214,12 +214,12 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
         setItems(items.filter((_, i) => i !== index));
     };
 
-    // Combinar medicamentos de items cargados + resultados de búsqueda para lookups
+    // Combinar productos de items cargados + resultados de búsqueda para lookups
     const allProductsMap = new Map<number, Product>();
     products?.forEach(m => allProductsMap.set(m.id, m));
     searchResults?.forEach(m => allProductsMap.set(m.id, m));
     
-    // Helper para obtener medicamento por ID
+    // Helper para obtener producto por ID
     const getProductById = (id: number): Product | undefined => allProductsMap.get(id);
 
     // Actualizar cantidad de un item
@@ -237,10 +237,10 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
         setItems(updatedItems);
     };
 
-    // Filtrar medicamentos de búsqueda (excluyendo ya agregados)
+    // Filtrar productos de búsqueda (excluyendo ya agregados)
     // El filtro de stock ya viene del servidor con stock_filter: "in-stock"
     const filteredProducts = (searchResults || []).filter(product => {
-        // Excluir medicamentos ya agregados
+        // Excluir productos ya agregados
         const isAlreadyAdded = items.some(item => item.product_id === product.id);
         return !isAlreadyAdded;
     });
@@ -265,7 +265,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
         if (!editability.canEdit) return;
         
         if (items.length === 0) {
-            form.setError("items", { message: "Agrega al menos un medicamento" });
+            form.setError("items", { message: "Agrega al menos un producto" });
             return;
         }
 
@@ -491,7 +491,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                     <div className="flex gap-2 items-end">
                                         {/* Input con autocompletado */}
                                         <div className="flex-1 relative" ref={dropdownRef}>
-                                            <label className="text-sm font-medium">Agregar Medicamento</label>
+                                            <label className="text-sm font-medium">Agregar Producto</label>
                                             <div className="relative">
                                                 <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                                                 <Input
@@ -517,7 +517,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                                             </div>
                                                         ) : filteredProducts.length === 0 ? (
                                                             <div className="py-4 px-3 text-center text-sm text-muted-foreground">
-                                                                {searchQuery.length < 2 ? "Escribe al menos 2 caracteres" : "No se encontraron medicamentos"}
+                                                                {searchQuery.length < 2 ? "Escribe al menos 2 caracteres" : "No se encontraron productos"}
                                                             </div>
                                                         ) : (
                                                             filteredProducts.map((product) => (
@@ -570,7 +570,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
-                                                    <TableHead>Medicamento</TableHead>
+                                                    <TableHead>Producto</TableHead>
                                                     <TableHead className="text-center w-[130px]">Cantidad</TableHead>
                                                     <TableHead className="text-right w-[85px]">Precio</TableHead>
                                                     {documentType === "invoice" && (
@@ -662,7 +662,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: EditSaleDialogProps
 
                                 {items.length === 0 && (
                                     <p className="text-sm text-muted-foreground text-center py-4">
-                                        No hay medicamentos en este pedido
+                                        No hay productos en este pedido
                                     </p>
                                 )}
                             </CardContent>

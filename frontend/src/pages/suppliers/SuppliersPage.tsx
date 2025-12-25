@@ -26,7 +26,7 @@ export default function SuppliersPage() {
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Proveedores</h1>
                         <p className="text-muted-foreground mt-2">
-                            Gestiona los proveedores de medicamentos.
+                            Gestiona los proveedores de productos.
                         </p>
                     </div>
 

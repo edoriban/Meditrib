@@ -93,7 +93,7 @@ export default function BatchesPage() {
                         </CardHeader>
                         <CardFooter className="flex-col items-start gap-1.5 text-sm">
                             <div className="line-clamp-1 flex gap-2 font-medium">
-                                {inventorySummary.products_with_batches} medicamentos <IconTrendingUp className="size-4" />
+                                {inventorySummary.products_with_batches} productos <IconTrendingUp className="size-4" />
                             </div>
                             <div className="text-muted-foreground">
                                 Con lotes registrados
@@ -162,7 +162,7 @@ export default function BatchesPage() {
                         </CardHeader>
                         <CardFooter className="flex-col items-start gap-1.5 text-sm">
                             <div className="line-clamp-1 flex gap-2 font-medium">
-                                Medicamentos con lotes <IconTrendingDown className="size-4" />
+                                Productos con lotes <IconTrendingDown className="size-4" />
                             </div>
                             <div className="text-muted-foreground">
                                 Clasificados por producto
@@ -203,7 +203,7 @@ export default function BatchesPage() {
             {/* Batches Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Lotes de Medicamentos</CardTitle>
+                    <CardTitle>Lotes de Productos</CardTitle>
                     <CardDescription>Lista completa de lotes registrados en el sistema</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -223,7 +223,7 @@ export default function BatchesPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Medicamento</TableHead>
+                                    <TableHead>Producto</TableHead>
                                     <TableHead>Número de Lote</TableHead>
                                     <TableHead>Fecha Caducidad</TableHead>
                                     <TableHead>Estado</TableHead>

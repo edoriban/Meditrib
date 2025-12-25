@@ -45,7 +45,7 @@ test.describe('Multi-Tenancy Data Isolation', () => {
         await page.waitForLoadState('networkidle');
 
         // Wait for the page to load
-        await page.locator('h1:has-text("Inventario de Medicamentos")').waitFor({ state: 'visible', timeout: 15000 });
+        await page.locator('h1:has-text("Inventario de Productos")').waitFor({ state: 'visible', timeout: 15000 });
 
         // Generate unique product name for this test run
         productNameCreatedByTenantA = `Test-Product-TenantA-${Date.now()}`;
@@ -103,7 +103,7 @@ test.describe('Multi-Tenancy Data Isolation', () => {
         await page.waitForLoadState('networkidle');
 
         // Wait for the page to load
-        await page.locator('h1:has-text("Inventario de Medicamentos")').waitFor({ state: 'visible', timeout: 15000 });
+        await page.locator('h1:has-text("Inventario de Productos")').waitFor({ state: 'visible', timeout: 15000 });
 
         // Check products via browser fetch
         const data = await page.evaluate(async () => {

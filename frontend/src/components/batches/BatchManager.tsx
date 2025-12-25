@@ -85,7 +85,7 @@ export function BatchManager() {
                         <CardContent>
                             <div className="text-2xl font-bold">{inventorySummary.total_active_batches}</div>
                             <p className="text-xs text-muted-foreground">
-                                {inventorySummary.products_with_batches} medicamentos
+                                {inventorySummary.products_with_batches} productos
                             </p>
                         </CardContent>
                     </Card>
@@ -130,7 +130,7 @@ export function BatchManager() {
                                 {inventorySummary.batch_distribution.length}
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Medicamentos con lotes
+                                Productos con lotes
                             </p>
                         </CardContent>
                     </Card>
@@ -162,7 +162,7 @@ export function BatchManager() {
             {/* Batches Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Lotes de Medicamentos</CardTitle>
+                    <CardTitle>Lotes de Productos</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {!batches || batches.length === 0 ? (
@@ -177,7 +177,7 @@ export function BatchManager() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Medicamento</TableHead>
+                                    <TableHead>Producto</TableHead>
                                     <TableHead>Lote</TableHead>
                                     <TableHead>Fecha Caducidad</TableHead>
                                     <TableHead>Estado</TableHead>

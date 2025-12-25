@@ -109,7 +109,7 @@ const ProductDashboard: React.FC<ProductDashboardProps> = ({ products }) => {
                         Agotados del catálogo <IconTrendingDown className="size-4" />
                     </div>
                     <div className="text-muted-foreground">
-                        De {totalProducts} medicamentos
+                        De {totalProducts} productos
                     </div>
                 </CardFooter>
             </Card>

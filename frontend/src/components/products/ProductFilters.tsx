@@ -72,7 +72,7 @@ export function ProductFilters({
                 <div className="relative">
                     <IconSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar medicamentos..."
+                        placeholder="Buscar productos..."
                         className="pl-8 w-[250px] sm:w-[300px]"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -118,7 +118,7 @@ export function ProductFilters({
                                         <SelectValue placeholder="Estado de stock" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Todos los medicamentos</SelectItem>
+                                        <SelectItem value="all">Todos los productos</SelectItem>
                                         <SelectItem value="in-stock">En stock</SelectItem>
                                         <SelectItem value="out-of-stock">Sin stock</SelectItem>
                                     </SelectContent>
@@ -202,7 +202,7 @@ export function ProductFilters({
             </div>
 
             <div className="text-sm text-muted-foreground">
-                {resultsCount} medicamentos encontrados
+                {resultsCount} productos encontrados
             </div>
         </div>
     );

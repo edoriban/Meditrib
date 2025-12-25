@@ -157,7 +157,7 @@ const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: "type",
-    header: "Tipo de medicamento",
+    header: "Tipo de producto",
     cell: ({ row }) => (
       <div className="w-32">
         <Badge variant="outline" className="text-muted-foreground px-1.5">
@@ -657,7 +657,7 @@ function TableCellViewer({ item }: TableCellViewerProps) {
         <DrawerHeader className="gap-1">
           <DrawerTitle>{item.name}</DrawerTitle>
           <DrawerDescription>
-            Detalles del medicamento
+            Detalles del producto
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">

@@ -264,7 +264,7 @@ export default function AlertsPage() {
                                             <p className="font-medium">{alert.message}</p>
                                             {alert.product && (
                                                 <p className="text-sm text-muted-foreground mt-1">
-                                                    Medicamento: {alert.product.name}
+                                                    Producto: {alert.product.name}
                                                 </p>
                                             )}
                                         </div>

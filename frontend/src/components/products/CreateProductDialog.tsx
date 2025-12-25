@@ -132,7 +132,7 @@ export function CreateProductDialog() {
             form.reset();
             setLocalTags([]);
         } catch (error) {
-            console.error("Error al crear medicamento:", error);
+            console.error("Error al crear producto:", error);
         }
     };
 
@@ -149,14 +149,14 @@ export function CreateProductDialog() {
                 <DialogTrigger asChild>
                     <Button className="flex items-center gap-2">
                         <Plus size={16} />
-                        <span>Agregar medicamento</span>
+                        <span>Agregar producto</span>
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                        <DialogTitle>Agregar nuevo medicamento</DialogTitle>
+                        <DialogTitle>Agregar nuevo producto</DialogTitle>
                         <DialogDescription>
-                            Completa la información para registrar un nuevo medicamento en el sistema.
+                            Completa la información para registrar un nuevo producto en el sistema.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -167,7 +167,7 @@ export function CreateProductDialog() {
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Nombre del medicamento</FormLabel>
+                                        <FormLabel>Nombre del producto</FormLabel>
                                         <FormControl>
                                             <Input
                                                 placeholder="Ej: Clamoxin 500/125mg tabletas 10"
@@ -184,10 +184,10 @@ export function CreateProductDialog() {
                                 name="active_substance"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Ingrediente Activo</FormLabel>
+                                        <FormLabel>Especificación</FormLabel>
                                         <FormControl>
                                             <Input
-                                                placeholder="Ej: Paracetamol, Ibuprofeno, Amoxicilina"
+                                                placeholder="Ej: Material, ingrediente, modelo..."
                                                 {...field}
                                                 value={field.value || ""}
                                             />
@@ -325,10 +325,10 @@ export function CreateProductDialog() {
                                     name="laboratory"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Laboratorio</FormLabel>
+                                            <FormLabel>Fabricante / Marca</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="Ej: Pfizer"
+                                                    placeholder="Ej: Pfizer, Samsung, DeWalt..."
                                                     {...field}
                                                     value={field.value || ""}
                                                 />
@@ -373,12 +373,12 @@ export function CreateProductDialog() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="0">Exento (0%) - Medicamentos</SelectItem>
-                                                    <SelectItem value="0.16">16% - Material de curación</SelectItem>
+                                                    <SelectItem value="0">Exento (0%)</SelectItem>
+                                                    <SelectItem value="0.16">16% - Tasa general</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormDescription className="text-xs">
-                                                Medicamentos: 0%, Material (gasas, jeringas): 16%
+                                                Selecciona la tasa de IVA aplicable al producto
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -414,7 +414,7 @@ export function CreateProductDialog() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <div className="flex items-center justify-between">
-                                            <FormLabel>Tipos de medicamento</FormLabel>
+                                            <FormLabel>Tipos de producto</FormLabel>
 
                                         </div>
                                         <FormControl>
@@ -525,7 +525,7 @@ export function CreateProductDialog() {
                                     <Button variant="outline" type="button">Cancelar</Button>
                                 </DialogClose>
                                 <Button type="submit" disabled={isCreating}>
-                                    {isCreating ? "Creando..." : "Crear medicamento"}
+                                    {isCreating ? "Creando..." : "Crear producto"}
                                 </Button>
                             </DialogFooter>
                         </form>

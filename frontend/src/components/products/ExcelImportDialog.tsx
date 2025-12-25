@@ -199,10 +199,10 @@ export function ExcelImportDialog({ open, onOpenChange }: ExcelImportDialogProps
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <IconFileSpreadsheet className="h-5 w-5" />
-                        Importar Medicamentos desde Excel
+                        Importar Productos desde Excel
                     </DialogTitle>
                     <DialogDescription>
-                        {step === "upload" && "Selecciona un archivo Excel con la lista de medicamentos."}
+                        {step === "upload" && "Selecciona un archivo Excel con la lista de productos."}
                         {step === "preview" && "Revisa y ajusta los precios antes de confirmar la importación."}
                         {step === "result" && "Resultado de la importación."}
                     </DialogDescription>

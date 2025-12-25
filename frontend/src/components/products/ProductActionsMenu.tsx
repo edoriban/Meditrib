@@ -99,7 +99,7 @@ export function ProductActionsMenu({ product, onDelete, onEdit }: ProductActions
                                 }}
                             >
                                 <IconTrash className="mr-2 h-4 w-4" />
-                                Eliminar medicamento
+                                Eliminar producto
                             </button>
                         </div>
                     </div>,

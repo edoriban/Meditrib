@@ -79,7 +79,7 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              {/* Inventario - Medicamentos */}
+              {/* Inventario - Productos */}
               <Route path="/products" element={
                 <ProtectedRoute>
                   <MainLayout>

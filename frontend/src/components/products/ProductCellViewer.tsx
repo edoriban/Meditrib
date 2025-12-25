@@ -58,7 +58,7 @@ export const ProductCellViewer = forwardRef<HTMLButtonElement, ProductCellViewer
             } else {
                 updateProduct(product.id, updateData);
             }
-            toast.success(`Medicamento ${product.name} actualizado correctamente`);
+            toast.success(`Producto ${product.name} actualizado correctamente`);
         };
 
         const handleDeleteProduct = () => {
@@ -82,9 +82,9 @@ export const ProductCellViewer = forwardRef<HTMLButtonElement, ProductCellViewer
                 </DrawerTrigger>
                 <DrawerContent className="max-w-md">
                     <DrawerHeader>
-                        <DrawerTitle>Editar Medicamento</DrawerTitle>
+                        <DrawerTitle>Editar Producto</DrawerTitle>
                         <DrawerDescription>
-                            Actualiza la información del medicamento {product.name}
+                            Actualiza la información del producto {product.name}
                         </DrawerDescription>
                     </DrawerHeader>
                     <div className="px-4">
